@@ -25,3 +25,7 @@ h1 {
 .bg-blue {
     background-color: #4490CD;
 }
+
+.first-section {
+    height: 100vh;
+}
