@@ -1,0 +1,27 @@
+.bg-beige-1 {
+    background-color: #E4DED5;
+}
+
+#unique-text-1 {
+    color: #EE467E;
+}
+
+#unique-text-2 {
+    color: #4490CD;
+}
+
+h1 {
+   font-weight: 900 !important; 
+}
+
+.font-900 {
+    font-weight: 900 !important;
+}
+
+.bg-pink {
+    background-color: #EE467E;
+}
+
+.bg-blue {
+    background-color: #4490CD;
+}
