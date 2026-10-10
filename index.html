@@ -36,12 +36,12 @@
   </div>
 </footer>
 
-<script src="https://unpkg.com/three@0.149.0/build/three.min.js"></script>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.149.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.149.0/examples/jsm/"}}</script>
 <script src="js/i18n.js"></script>
 <script>document.getElementById('langSlot').outerHTML = I18N.switcher();</script>
 <script src="js/lessons.js"></script>
 <script src="js/lessons.id.js"></script>
-<script src="js/scenes.js"></script>
+<script type="module" src="js/scenes.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

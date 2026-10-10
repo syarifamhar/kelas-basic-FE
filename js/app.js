@@ -72,6 +72,12 @@
     return { ctrl: ctrl, code: code, doc: buildDoc(code.html, code.css, code.js), tab: 'html' };
   }
 
+  /* scenes.js is an ES module, so it may finish loading after this script runs */
+  function whenScenes(fn) {
+    if (window.UXScenes) fn();
+    else window.addEventListener('uxscenes:ready', fn, { once: true });
+  }
+
   function disposeScenes() {
     if (hub) { hub.dispose(); hub = null; }
     if (sc) { sc.dispose(); sc = null; }
@@ -129,7 +135,9 @@
         '<section class="levels">' + cols + '</section>' +
       '</main>';
 
-    if (window.THREE && window.UXScenes) {
+    whenScenes(function () {
+      var el = document.getElementById('hub3d');
+      if (!el || hub || S.view !== 'hub') return;
       hub = UXScenes.makeHub(document.getElementById('hub3d'), {
         lessons: LESSONS.map(function (l) { return { id: l.id, level: l.level, n: l.n, title: loc(l).title }; }),
         levels: LEVELS.map(function (lv) { return Object.assign({ name: levelName(lv.key) }, lv); }),
@@ -137,7 +145,7 @@
         doneText: t('hub.tip.done')
       });
       hub.refresh(S.done);
-    }
+    });
   }
 
   /* ───────── lesson ───────── */
@@ -258,11 +266,12 @@
     loadFrame();
     document.getElementById('good').srcdoc = buildDoc(l.good.html, '', '');
     document.getElementById('bad').srcdoc = buildDoc(l.bad.html, '', '');
-    if (l.scene && window.THREE && window.UXScenes) {
+    if (l.scene) whenScenes(function () {
       var el = document.getElementById('scene3d');
+      if (!el || sc || cur() !== l) return;
       sc = l.scene === 'box' ? UXScenes.makeBox(el) : UXScenes.makeStack(el);
       sc.update(vars());
-    }
+    });
   }
 
   function renderDoneBtn() {
