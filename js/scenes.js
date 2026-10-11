@@ -163,38 +163,65 @@ function makeStage(el, o) {
 }
 
 
-/* ───────── hub: a world of provinces joined by one highway loop ─────────
-   Province "uiux" (Pixelia) has three districts; province "frontend" (Frontera) has React City and Vue City.
-   opts: { lessons:[{id,level,title,n}], levels:[{key,name,color,hex,province,logo?}],
-           provinces:[{key,name,color}], onOpen(id), doneText, focus:'uiux'|'frontend'|'all' } */
+/* ───────── hub: a world of cities joined by one highway loop ─────────
+   City "uiux" (Pixelia) has the districts Principia (UI/UX theory) and Vectoria (Figma).
+   City "frontend" (Frontera) has Foundry (HTML/CSS/JS), React and Vue.
+   opts: { lessons:[{id,level,title,n}], levels:[{key,name,color,hex,city,logo?}],
+           cities:[{key,name,color}], onOpen(id), doneText, focus:'uiux'|'frontend'|'all' } */
 const DISTRICTS = {
-  beginner: { x: -15, z: 1.5, w: 12, d: 10 },
-  intermediate: { x: 0, z: -2.5, w: 12, d: 10 },
-  advanced: { x: 15, z: 1.5, w: 12, d: 10 },
-  react: { x: 61, z: -2, w: 16, d: 13 },
-  vue: { x: 83, z: -2, w: 16, d: 13 }
+  theory: { x: -12.5, z: -3, w: 20, d: 13, monument: true },
+  figma: { x: 8.9, z: -3, w: 16, d: 13, monument: true },
+  basics: { x: 42.5, z: -3, w: 18, d: 13, monument: true },
+  react: { x: 62, z: -3, w: 16, d: 13, monument: true },
+  vue: { x: 81.5, z: -3, w: 17, d: 13, monument: true }
 };
-const PROVINCES = {
-  uiux: { x: 0, z: -3.5, w: 50, d: 22, focus: [0, -1], radius: 46 },
-  frontend: { x: 72, z: -3.5, w: 48, d: 22, focus: [72, -2], radius: 46 },
-  all: { focus: [38, -3], radius: 122 }
+const CITIES = {
+  uiux: { x: -3.5, z: -3.5, w: 44, d: 20, focus: [-3.5, -2], radius: 50 },
+  frontend: { x: 61.5, z: -3.5, w: 60, d: 20, focus: [61.5, -2], radius: 60 },
+  all: { focus: [29, -4], radius: 138 }
 };
-const RIVER = { x0: 37, x1: 44 };
-/* the highway: one closed loop, bridges over the river on both sides */
+const RIVER = { x0: 22, x1: 28 };
+/* the highway: one closed loop around everything, bridges over the river on both sides */
 const LOOP = [
-  [-26, 0, 10], [0, 0, 10], [24, 0, 10], [30, 0.35, 10], [34, 1.5, 10], [40.5, 1.9, 10], [47, 1.5, 10], [51, 0.35, 10], [57, 0, 10], [80, 0, 10], [98, 0, 10],
-  [104, 0, 6], [106, 0, -3.5], [104, 0, -13], [98, 0, -17],
-  [80, 0, -17], [57, 0, -17], [51, 0.35, -17], [47, 1.5, -17], [40.5, 1.9, -17], [34, 1.5, -17], [30, 0.35, -17], [24, 0, -17], [0, 0, -17], [-26, 0, -17],
-  [-32, 0, -13], [-34, 0, -3.5], [-32, 0, 6]
+  [-28, 0, 11], [0, 0, 11], [14, 0, 11], [18.5, 0.35, 11], [21.5, 1.5, 11], [25, 1.9, 11], [28.5, 1.5, 11], [31.5, 0.35, 11], [36, 0, 11], [60, 0, 11], [90, 0, 11],
+  [97, 0, 7], [99, 0, -4], [97, 0, -15], [90, 0, -19],
+  [60, 0, -19], [36, 0, -19], [31.5, 0.35, -19], [28.5, 1.5, -19], [25, 1.9, -19], [21.5, 1.5, -19], [18.5, 0.35, -19], [14, 0, -19], [0, 0, -19], [-28, 0, -19],
+  [-34, 0, -15], [-36, 0, -4], [-34, 0, 7]
 ];
-/* side streets cross each province from the front highway to the back one, so nothing dead-ends */
-const STREETS = [-7.5, 7.5, 72];
+/* a ring road around each city; side streets cross the city and join the ring and the highway at both ends */
+const RINGS = { uiux: [-27.5, 20.3, -15.3, 8.2], frontend: [29.7, 93.3, -15.3, 8.2] };
+const STREETS = [-1, 52.6, 71.6];
+/* the "core" rectangle that suburbs keep out of (highway + cities) */
+const CORE = [-38.5, 101.5, -21.5, 13.5];
+
+function roundedRect(x0, x1, z0, z1, r) {
+  const pts = [];
+  const corner = (cx, cz, a0) => { for (let k = 0; k <= 3; k++) { const a = a0 + (k / 3) * Math.PI / 2; pts.push(new T.Vector3(cx + Math.cos(a) * r, 0, cz + Math.sin(a) * r)); } };
+  corner(x1 - r, z1 - r, 0); corner(x0 + r, z1 - r, Math.PI / 2); corner(x0 + r, z0 + r, Math.PI); corner(x1 - r, z0 + r, Math.PI * 1.5);
+  return pts.reverse();
+}
+/* Lay out n building slots on a grid inside a w×d district, leaving the middle free for a monument. */
+function districtSlots(n, w, d, monument) {
+  const cand = [];
+  const cols = Math.max(2, Math.floor((w - 1.6) / 3.3)), rows = Math.max(2, Math.floor((d - 1.6) / 3.4));
+  const gx = (w - 2.8) / (cols - 1), gz = (d - 3.2) / (rows - 1);
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const x = -(w - 2.8) / 2 + c * gx, z = -(d - 3.2) / 2 + r * gz;
+    if (monument && Math.abs(x) < 2.9 && z > -2.6) continue; // keep the monument and the plaza in front of it clear
+    cand.push([x, z]);
+  }
+  // spread lessons evenly over the free cells, back rows first
+  if (cand.length <= n) return cand.concat(Array.from({ length: n - cand.length }, (_, i) => [(i % 3 - 1) * 3, d / 2 + 2]));
+  const out = [], step = cand.length / n;
+  for (let i = 0; i < n; i++) out.push(cand[Math.floor(i * step)]);
+  return out;
+}
 
 function makeHub(el, opts) {
   const small = (el.clientWidth || 800) < 700 || (navigator.hardwareConcurrency || 8) <= 4;
   let hov = null, busy = false, focusKey = opts.focus || 'all', pick, hover;
   const st = makeStage(el, {
-    radius: 46, phi: 0.98, theta: 0.5, auto: 0.0008, fov: 30, ty: 1.5, noLights: true,
+    radius: 50, phi: 0.98, theta: 0.5, auto: 0.0007, fov: 30, ty: 1.5, noLights: true,
     bloom: { strength: 0.8, radius: 0.45, threshold: 0.55 },
     onHover: n => hover(n),
     onClick: n => {
@@ -207,7 +234,7 @@ function makeHub(el, opts) {
   const { scene, cam } = st;
   const rand = rng(2048);
   scene.background = new T.Color(BG);
-  scene.fog = new T.Fog(BG, 60, 190);
+  scene.fog = new T.Fog(BG, 70, 220);
 
   /* lights: moonlight + logo-colored fills */
   scene.add(new T.HemisphereLight(0x46508a, 0x07080c, 0.55));
@@ -231,104 +258,105 @@ function makeHub(el, opts) {
     const m = new T.Mesh(G.plane, new T.MeshBasicMaterial({ map: glow, color, transparent: true, opacity: opacity ?? 0.6, depthWrite: false, blending: T.AdditiveBlending, toneMapped: false }));
     m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.scale.set(s, s, 1); parent.add(m); return m;
   };
-  const blinkers = [], searchlights = [], spinners = [];
+  const blinkers = [], searchlights = [], spinners = [], smoke = [];
   const poleMat = new T.MeshStandardMaterial({ color: 0x2a3344, roughness: 0.6, metalness: 0.5 });
+  const roadMat = new T.MeshStandardMaterial({ color: 0x11151e, roughness: 0.5, metalness: 0.3, side: T.DoubleSide });
+  const dashMat = basic(0x3a4862);
 
   /* ground: mirror (desktop) under a dark, slightly see-through floor */
   let mirror = null;
   if (!small) {
-    mirror = new Reflector(new T.PlaneGeometry(400, 260), { textureWidth: 1024, textureHeight: 1024, color: 0x5a5f70, multisample: 0 });
-    mirror.rotation.x = -Math.PI / 2; mirror.position.set(36, -0.01, 0); scene.add(mirror);
+    mirror = new Reflector(new T.PlaneGeometry(420, 300), { textureWidth: 1024, textureHeight: 1024, color: 0x5a5f70, multisample: 0 });
+    mirror.rotation.x = -Math.PI / 2; mirror.position.set(30, -0.01, -4); scene.add(mirror);
   }
   /* camera distance for the focused area; pulled back on narrow screens */
-  const fitRadius = (key, w, h) => PROVINCES[key].radius * Math.max(1, Math.pow(1.7 / (w / h), 0.85));
+  const fitRadius = (key, w, h) => CITIES[key].radius * Math.max(1, Math.pow(1.7 / (w / h), 0.85));
   st.onResize = (w, h) => {
     if (mirror) mirror.getRenderTarget().setSize(Math.round(w * 0.6), Math.round(h * 0.6));
     if (!st.flight && !busy) st.orb.radius = fitRadius(focusKey, w, h);
   };
   st.onResize(el.clientWidth || 800, el.clientHeight || 500);
   st.orb.R = st.orb.radius;
-  st.orb.target.set(PROVINCES[focusKey].focus[0], 1.5, PROVINCES[focusKey].focus[1]);
+  st.orb.target.set(CITIES[focusKey].focus[0], 1.5, CITIES[focusKey].focus[1]);
 
-  const floor = new T.Mesh(new T.PlaneGeometry(400, 260), new T.MeshStandardMaterial({ color: 0x0c1017, roughness: 0.35, metalness: 0.4, transparent: !small, opacity: small ? 1 : 0.8 }));
-  floor.rotation.x = -Math.PI / 2; floor.position.x = 36; scene.add(floor);
-  const grid = new T.GridHelper(320, 160, 0x1c2635, 0x141a24); grid.position.set(36, 0.012, 0); grid.material.transparent = true; grid.material.opacity = 0.5; scene.add(grid);
+  const floor = new T.Mesh(new T.PlaneGeometry(420, 300), new T.MeshStandardMaterial({ color: 0x0c1017, roughness: 0.35, metalness: 0.4, transparent: !small, opacity: small ? 1 : 0.8 }));
+  floor.rotation.x = -Math.PI / 2; floor.position.set(30, 0, -4); scene.add(floor);
+  const grid = new T.GridHelper(360, 180, 0x1c2635, 0x141a24); grid.position.set(30, 0.012, -4); grid.material.transparent = true; grid.material.opacity = 0.45; scene.add(grid);
 
-  /* province pads with a glowing border, and the river between them */
-  const provColor = {};
-  opts.provinces.forEach(p => { provColor[p.key] = p.color; });
-  Object.keys(PROVINCES).filter(k => k !== 'all').forEach(k => {
-    const P = PROVINCES[k];
-    const pad = new T.Mesh(G.box, new T.MeshStandardMaterial({ color: 0x0f141d, roughness: 0.9 })); pad.scale.set(P.w, 0.04, P.d); pad.position.set(P.x, 0.02, P.z); scene.add(pad);
-    const e = new T.LineSegments(G.boxE, basic(provColor[k] || CYAN, { transparent: true, opacity: 0.35 })); e.scale.copy(pad.scale); e.position.copy(pad.position); scene.add(e);
+  /* city pads with a glowing border, and the river between them */
+  const cityColor = {};
+  opts.cities.forEach(c => { cityColor[c.key] = c.color; });
+  ['uiux', 'frontend'].forEach(k => {
+    const C = CITIES[k];
+    const pad = new T.Mesh(G.box, new T.MeshStandardMaterial({ color: 0x0f141d, roughness: 0.9 })); pad.scale.set(C.w, 0.04, C.d); pad.position.set(C.x, 0.02, C.z); scene.add(pad);
+    const e = new T.LineSegments(G.boxE, basic(cityColor[k] || CYAN, { transparent: true, opacity: 0.35 })); e.scale.copy(pad.scale); e.position.copy(pad.position); scene.add(e);
   });
   const waterTex = canvasTex(64, 256, (g, w, h) => {
     g.fillStyle = '#000'; g.fillRect(0, 0, w, h);
     for (let i = 0; i < 26; i++) { g.fillStyle = 'rgba(127,212,255,' + (0.15 + rand() * 0.4) + ')'; g.fillRect(rand() * w, rand() * h, 2 + rand() * 10, 1.5); }
   });
-  waterTex.wrapS = waterTex.wrapT = T.RepeatWrapping; waterTex.repeat.set(1, 18);
-  const water = new T.Mesh(new T.PlaneGeometry(RIVER.x1 - RIVER.x0, 260), new T.MeshStandardMaterial({ color: 0x06202e, emissive: 0x7FD4FF, emissiveMap: waterTex, emissiveIntensity: 0.9, roughness: 0.15, metalness: 0.6 }));
-  water.rotation.x = -Math.PI / 2; water.position.set((RIVER.x0 + RIVER.x1) / 2, 0.016, 0); scene.add(water);
-  [RIVER.x0, RIVER.x1].forEach(x => { const b = new T.Mesh(G.box, basic(0x7FD4FF, { transparent: true, opacity: 0.5 })); b.scale.set(0.06, 0.04, 260); b.position.set(x, 0.03, 0); scene.add(b); });
+  waterTex.wrapS = waterTex.wrapT = T.RepeatWrapping; waterTex.repeat.set(1, 20);
+  const water = new T.Mesh(new T.PlaneGeometry(RIVER.x1 - RIVER.x0, 300), new T.MeshStandardMaterial({ color: 0x06202e, emissive: 0x7FD4FF, emissiveMap: waterTex, emissiveIntensity: 0.9, roughness: 0.15, metalness: 0.6 }));
+  water.rotation.x = -Math.PI / 2; water.position.set((RIVER.x0 + RIVER.x1) / 2, 0.016, -4); scene.add(water);
+  [RIVER.x0, RIVER.x1].forEach(x => { const b = new T.Mesh(G.box, basic(0x7FD4FF, { transparent: true, opacity: 0.5 })); b.scale.set(0.06, 0.04, 300); b.position.set(x, 0.03, -4); scene.add(b); });
 
-  /* the highway loop: a ribbon along a closed curve */
-  const curve = new T.CatmullRomCurve3(LOOP.map(p => new T.Vector3(p[0], p[1], p[2])), true, 'centripetal');
-  const SAMPLES = 640, HW = 1.35, pts = curve.getSpacedPoints(SAMPLES), normals = [], tangents = [];
-  const center = new T.Vector3(36, 0, -3.5);
-  for (let i = 0; i < SAMPLES; i++) {
-    const t = curve.getTangentAt(i / SAMPLES); tangents.push(t);
-    normals.push(new T.Vector3(-t.z, 0, t.x).normalize());
-  }
-  const ribbon = new Float32Array(SAMPLES * 2 * 3), idx = [];
-  for (let i = 0; i < SAMPLES; i++) {
-    const p = pts[i], n = normals[i];
-    ribbon.set([p.x + n.x * HW, p.y + 0.05, p.z + n.z * HW, p.x - n.x * HW, p.y + 0.05, p.z - n.z * HW], i * 6);
-    const a = i * 2, b = ((i + 1) % SAMPLES) * 2;
-    idx.push(a, a + 1, b, a + 1, b + 1, b);
-  }
-  const rgeo = new T.BufferGeometry(); rgeo.setAttribute('position', new T.BufferAttribute(ribbon, 3)); rgeo.setIndex(idx); rgeo.computeVertexNormals();
-  scene.add(new T.Mesh(rgeo, new T.MeshStandardMaterial({ color: 0x11151e, roughness: 0.5, metalness: 0.3, side: T.DoubleSide })));
-  // glowing guard rails in the logo colors
-  [[1, CYAN], [-1, MAGENTA]].forEach(([s, c]) => {
-    const arr = [];
-    for (let i = 0; i <= SAMPLES; i++) { const k = i % SAMPLES, p = pts[k], n = normals[k]; arr.push(p.x + n.x * HW * s, p.y + 0.12, p.z + n.z * HW * s); }
-    const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(arr, 3));
-    scene.add(new T.Line(g, basic(c, { transparent: true, opacity: 0.75 })));
-  });
-  // lane dashes, bridge pillars and lamps
-  const dashMat = basic(0x3a4862);
-  for (let i = 0; i < SAMPLES; i += 4) {
-    const p = pts[i], t = tangents[i];
-    const d = new T.Mesh(G.box, dashMat); d.scale.set(0.1, 0.02, 0.8); d.position.set(p.x, p.y + 0.07, p.z);
-    d.lookAt(p.x + t.x, p.y + 0.07 + t.y, p.z + t.z); scene.add(d);
-    if (p.y > 0.7 && i % 12 === 0) {
-      const pil = new T.Mesh(G.box, poleMat); pil.scale.set(0.5, p.y, 0.5); pil.position.set(p.x, p.y / 2, p.z); scene.add(pil);
+  /* a road ribbon along a closed curve; returns sampled points for traffic and lamps */
+  function loopRoad(curve, width, samples, rails, lamps) {
+    const pts = curve.getSpacedPoints(samples), normals = [], tangents = [], hw = width / 2;
+    for (let i = 0; i < samples; i++) { const t = curve.getTangentAt(i / samples); tangents.push(t); normals.push(new T.Vector3(-t.z, 0, t.x).normalize()); }
+    const arr = new Float32Array(samples * 6), idx = [];
+    for (let i = 0; i < samples; i++) {
+      const p = pts[i], n = normals[i];
+      arr.set([p.x + n.x * hw, p.y + 0.05, p.z + n.z * hw, p.x - n.x * hw, p.y + 0.05, p.z - n.z * hw], i * 6);
+      const a = i * 2, b = ((i + 1) % samples) * 2; idx.push(a, a + 1, b, a + 1, b + 1, b);
     }
+    const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(arr, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+    scene.add(new T.Mesh(geo, roadMat));
+    if (rails) rails.forEach(([s, c]) => {
+      const a = [];
+      for (let i = 0; i <= samples; i++) { const k = i % samples, p = pts[k], n = normals[k]; a.push(p.x + n.x * hw * s, p.y + 0.12, p.z + n.z * hw * s); }
+      const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(a, 3));
+      scene.add(new T.Line(g, basic(c, { transparent: true, opacity: 0.75 })));
+    });
+    for (let i = 0; i < samples; i += 4) {
+      const p = pts[i], t = tangents[i];
+      const d = new T.Mesh(G.box, dashMat); d.scale.set(0.1, 0.02, 0.8); d.position.set(p.x, p.y + 0.07, p.z); d.lookAt(p.x + t.x, p.y + 0.07 + t.y, p.z + t.z); scene.add(d);
+      if (p.y > 0.7 && i % 12 === 0) { const pil = new T.Mesh(G.box, poleMat); pil.scale.set(0.5, p.y, 0.5); pil.position.set(p.x, p.y / 2, p.z); scene.add(pil); }
+    }
+    if (lamps) {
+      let center = new T.Vector3(); pts.forEach(p => center.add(p)); center.divideScalar(pts.length);
+      for (let i = 0; i < samples; i += lamps) {
+        const p = pts[i], n = normals[i];
+        const out = p.clone().addScaledVector(n, 1).distanceTo(center) > p.clone().addScaledVector(n, -1).distanceTo(center) ? 1 : -1;
+        const lx = p.x + n.x * (hw + 0.45) * out, lz = p.z + n.z * (hw + 0.45) * out, ly = p.y;
+        const pole = new T.Mesh(G.cyl, poleMat); pole.scale.set(0.05, 1.9, 0.05); pole.position.set(lx, ly + 0.95, lz); scene.add(pole);
+        const odd = (i / lamps) % 2;
+        const bulb = new T.Mesh(G.sphere, basic(odd ? 0xffd9f6 : 0xc9f4ff)); bulb.scale.setScalar(0.09); bulb.position.set(lx - n.x * 0.4 * out, ly + 1.82, lz - n.z * 0.4 * out); scene.add(bulb);
+        addGlow(scene, bulb.position.x, ly + 0.1, bulb.position.z, 2.6, odd ? MAGENTA : CYAN, 0.32);
+      }
+    }
+    return { curve, length: curve.getLength() };
   }
-  for (let i = 0; i < SAMPLES; i += 20) {
-    const p = pts[i], n = normals[i];
-    const out = p.clone().addScaledVector(n, 1).distanceTo(center) > p.clone().addScaledVector(n, -1).distanceTo(center) ? 1 : -1;
-    const lx = p.x + n.x * (HW + 0.45) * out, lz = p.z + n.z * (HW + 0.45) * out, ly = p.y;
-    const pole = new T.Mesh(G.cyl, poleMat); pole.scale.set(0.05, 1.9, 0.05); pole.position.set(lx, ly + 0.95, lz); scene.add(pole);
-    const col = (i / 20) % 2 ? 0xffd9f6 : 0xc9f4ff;
-    const bulb = new T.Mesh(G.sphere, basic(col)); bulb.scale.setScalar(0.09); bulb.position.set(lx - n.x * 0.4 * out, ly + 1.82, lz - n.z * 0.4 * out); scene.add(bulb);
-    addGlow(scene, bulb.position.x, ly + 0.1, bulb.position.z, 2.6, (i / 20) % 2 ? MAGENTA : CYAN, 0.32);
-  }
-  // side streets: straight roads from the front highway to the back one
-  const roadMat = new T.MeshStandardMaterial({ color: 0x11151e, roughness: 0.5, metalness: 0.3 });
+  const highway = loopRoad(new T.CatmullRomCurve3(LOOP.map(p => new T.Vector3(p[0], p[1], p[2])), true, 'centripetal'), 2.7, 760, [[1, CYAN], [-1, MAGENTA]], 22);
+  const rings = Object.keys(RINGS).map(k => {
+    const r = RINGS[k];
+    return loopRoad(new T.CatmullRomCurve3(roundedRect(r[0], r[1], r[2], r[3], 2.4), true, 'centripetal'), 1.7, 420, [[1, cityColor[k] || CYAN]], 30);
+  });
+  // side streets: straight roads from the back highway, across the ring, to the front highway
   STREETS.forEach(x => {
-    const r = new T.Mesh(G.box, roadMat); r.scale.set(2.2, 0.06, 24.6); r.position.set(x, 0.04, -3.5); scene.add(r);
-    for (let z = -15; z <= 8; z += 2) { const d = new T.Mesh(G.box, dashMat); d.scale.set(0.1, 0.02, 0.8); d.position.set(x, 0.08, z); scene.add(d); }
+    const r = new T.Mesh(G.box, roadMat); r.scale.set(2.1, 0.06, 28.6); r.position.set(x, 0.045, -4); scene.add(r);
+    for (let z = -17; z <= 9; z += 2) { const d = new T.Mesh(G.box, dashMat); d.scale.set(0.1, 0.02, 0.8); d.position.set(x, 0.085, z); scene.add(d); }
   });
 
   /* building pieces */
   const pad2 = n => (n < 10 ? '0' : '') + n;
   const FACADE = {
-    beginner: { wall: '#2a2723', unlit: '#14161c', lit: ['#FFD58A', '#FFC877', '#FFE7B0'], roof: 0x3a2f2a },
-    intermediate: { wall: '#1b2232', unlit: '#0e131d', lit: ['#DCD3FF', '#B9A3FF', '#E6EDF3', '#9FD8FF'], roof: 0x1a1f2c },
-    advanced: { wall: '#151926', unlit: '#0b0e16', lit: ['#FFC877', '#FF93B5', '#7FD4FF', '#FFFFFF'], roof: 0x141824 },
+    theory: { wall: '#202723', unlit: '#101512', lit: ['#7EF2C3', '#E6EDF3', '#FFE7B0'], roof: 0x1d2a25 },
+    figma: { wall: '#1d1a26', unlit: '#0e0c14', lit: ['#A259FF', '#1ABCFE', '#0ACF83', '#FF7262', '#E6EDF3'], roof: 0x1a1724 },
+    basics: { wall: '#2a1d18', unlit: '#140e0b', lit: ['#FF8A4C', '#F7DF1E', '#7FD4FF', '#FFD58A'], roof: 0x2a2220 },
     react: { wall: '#121b26', unlit: '#0a1018', lit: ['#61DAFB', '#B8EEFF', '#E6EDF3'], roof: 0x101823 },
-    vue: { wall: '#13201d', unlit: '#0a1311', lit: ['#42B883', '#9BE8C4', '#E6EDF3'], roof: 0x35495E }
+    vue: { wall: '#13201d', unlit: '#0a1311', lit: ['#42B883', '#9BE8C4', '#E6EDF3'], roof: 0x35495E },
+    town: { wall: '#1a1f29', unlit: '#0c0f15', lit: ['#FFD58A', '#FFE7B0', '#C9F4FF', '#FFC877'], roof: 0x2a2f3d }
   };
   const tiles = {};
   Object.keys(FACADE).forEach((k, i) => {
@@ -349,9 +377,9 @@ function makeHub(el, opts) {
     bld.edges.push(e.material);
     return y + h;
   };
+  const prism = (w, h, d) => { const s = new T.Shape(); s.moveTo(-w / 2, 0); s.lineTo(w / 2, 0); s.lineTo(0, h); s.closePath(); const geo = new T.ExtrudeGeometry(s, { depth: d, bevelEnabled: false }); geo.translate(0, 0, -d / 2); return geo; };
   const gable = (g, w, d, h, y, color, edgeHex) => {
-    const s = new T.Shape(); s.moveTo(-w / 2, 0); s.lineTo(w / 2, 0); s.lineTo(0, h); s.closePath();
-    const geo = new T.ExtrudeGeometry(s, { depth: d, bevelEnabled: false }); geo.translate(0, 0, -d / 2);
+    const geo = prism(w, h, d);
     const m = new T.Mesh(geo, roofMat(color)); m.position.y = y; g.add(m);
     const e = new T.LineSegments(new T.EdgesGeometry(geo), new T.LineBasicMaterial({ color: edgeHex, transparent: true, opacity: 0.7 })); e.position.y = y; g.add(e);
     return y + h;
@@ -368,64 +396,73 @@ function makeHub(el, opts) {
     blinkers.push({ m: tip, phase: rand() * 6 });
   };
   const tree = (parent, x, z, s, tint) => {
-    const trunk = new T.Mesh(G.cyl, new T.MeshStandardMaterial({ color: 0x3a2c22, roughness: 0.9 })); trunk.scale.set(0.07 * s, 0.5 * s, 0.07 * s); trunk.position.set(x, 0.6 + 0.25 * s, z); parent.add(trunk);
+    const trunk = new T.Mesh(G.cyl, new T.MeshStandardMaterial({ color: 0x3a2c22, roughness: 0.9 })); trunk.scale.set(0.07 * s, 0.5 * s, 0.07 * s); trunk.position.set(x, 0.25 * s, z); parent.add(trunk);
     const leaves = new T.Mesh(G.cone, new T.MeshStandardMaterial({ color: 0x173a2d, emissive: tint || 0x7EF2C3, emissiveIntensity: 0.12, roughness: 0.8, flatShading: true }));
-    leaves.scale.set(0.42 * s, 1.0 * s, 0.42 * s); leaves.position.set(x, 0.6 + 0.5 * s + 0.45 * s, z); parent.add(leaves);
+    leaves.scale.set(0.42 * s, 1.0 * s, 0.42 * s); leaves.position.set(x, 0.5 * s + 0.45 * s, z); parent.add(leaves);
   };
   const billboard = (parent, x, z, tex, ry) => {
     const pole = new T.Mesh(G.box, poleMat); pole.scale.set(0.1, 2.4, 0.1); pole.position.set(x, 1.2, z); parent.add(pole);
     [1, -1].forEach(s => {
       const bb = new T.Mesh(G.plane, new T.MeshBasicMaterial({ map: tex, toneMapped: false })); bb.scale.set(2, 1, 1);
-      bb.position.set(x, 2.7, z + s * 0.06); bb.rotation.y = (ry || 0) + (s < 0 ? Math.PI : 0); parent.add(bb);
+      bb.position.set(x + (ry ? s * 0.06 : 0), 2.7, z + (ry ? 0 : s * 0.06)); bb.rotation.y = (ry || 0) + (s < 0 ? Math.PI : 0); parent.add(bb);
     });
   };
-  const logoBoardTex = draw => canvasTex(256, 128, (g, w, h) => {
-    g.fillStyle = '#0b0e14'; g.fillRect(0, 0, w, h);
-    draw(g, w, h);
-  });
+  const boardTex = draw => canvasTex(256, 128, (g, w, h) => { g.fillStyle = '#0b0e14'; g.fillRect(0, 0, w, h); draw(g, w, h); });
+  const FIGMA_PATHS = [['#f24e1e', 'M0 9.5A9.5 9.5 0 0 0 9.5 19H19V0H9.5A9.5 9.5 0 0 0 0 9.5z'], ['#ff7262', 'M19 0v19h9.5a9.5 9.5 0 1 0 0-19H19z'], ['#a259ff', 'M0 28.5A9.5 9.5 0 0 0 9.5 38H19V19H9.5A9.5 9.5 0 0 0 0 28.5z'], ['#1abcfe', 'M19 28.5a9.5 9.5 0 1 1 19 0 9.5 9.5 0 0 1-19 0z'], ['#0acf83', 'M0 47.5A9.5 9.5 0 0 1 9.5 38H19v9.5a9.5 9.5 0 1 1-19 0z']];
+  const VUE_PATHS = [['#41B883', 'M204.8 0H256L128 220.8L0 0h97.92L128 51.2L157.44 0h47.36Z'], ['#41B883', 'm0 0l128 220.8L256 0h-51.2L128 132.48L50.56 0H0Z'], ['#35495E', 'M50.56 0L128 133.12L204.8 0h-47.36L128 51.2L97.92 0H50.56Z']];
+  const drawPaths = (g, paths, x, y, s) => { g.save(); g.translate(x, y); g.scale(s, s); paths.forEach(([c, d]) => { g.fillStyle = c; g.fill(new Path2D(d)); }); g.restore(); };
+  const TECH = { html: 0xFF8A4C, css: 0x7FD4FF, js: 0xF7DF1E };
+  const techOf = id => (id.indexOf('html') === 0 ? 'html' : (id === 'js-dom' || id === 'state') ? 'js' : 'css');
 
   /* builders per district theme. Each returns the top height of the building. */
   const BUILD = {
-    /* kampung: warm houses with gable roofs, chimneys and lantern strings */
-    beginner(g, l, i, bld) {
-      const floors = 1 + (i % 3), h = 0.9 * floors + 0.3;
-      let y = boxTier(g, 'beginner', 2.2, h, 2.0, 0, bld, FACADE.beginner.roof);
-      y = gable(g, 2.6, 2.3, 1.0, y, 0x4a3328, bld.hex);
-      if (i % 2 === 0) { const ch = new T.Mesh(G.box, roofMat(0x3b302b)); ch.scale.set(0.25, 0.6, 0.25); ch.position.set(0.6, y - 0.5, -0.4); g.add(ch); }
-      const door = new T.Mesh(G.plane, basic(0xFFD58A)); door.scale.set(0.35, 0.6, 1); door.position.set(0, 0.3, 1.011); g.add(door);
+    /* Principia: academy halls with columns and pediments, a dome on some */
+    theory(g, l, i, bld) {
+      const floors = 1 + (i % 3), w = 2.3, d = 1.9, h = 0.85 * floors + 0.35;
+      const base = new T.Mesh(G.box, roofMat(0x2b3530)); base.scale.set(w + 0.4, 0.2, d + 0.5); base.position.y = 0.1; g.add(base);
+      let y = boxTier(g, 'theory', w, h, d, 0.2, bld, FACADE.theory.roof);
+      const colMat = new T.MeshStandardMaterial({ color: 0xd9e4de, emissive: 0x7EF2C3, emissiveIntensity: 0.12, roughness: 0.5 });
+      for (let k = 0; k < 4; k++) { const c = new T.Mesh(G.cyl, colMat); c.scale.set(0.09, h, 0.09); c.position.set(-0.8 + k * 0.53, 0.2 + h / 2, d / 2 + 0.22); g.add(c); }
+      if (i % 4 === 3) {
+        const dome = new T.Mesh(new T.SphereGeometry(0.85, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), new T.MeshStandardMaterial({ color: 0x2b3a33, emissive: 0x7EF2C3, emissiveIntensity: 0.3, roughness: 0.4 }));
+        dome.position.y = y; g.add(dome); y += 0.85;
+      } else y = gable(g, w + 0.3, d + 0.5, 0.75, y, 0x26332d, bld.hex);
       sign(g, pad2(l.n), bld.color, y, bld);
       return y;
     },
-    /* kota: setback towers with water tanks, rooftop units and antennas */
-    intermediate(g, l, i, bld) {
-      const H = 3.2 + i * 0.7;
-      let y = boxTier(g, 'intermediate', 2.2, H * 0.55, 2.2, 0, bld, FACADE.intermediate.roof);
-      y = boxTier(g, 'intermediate', 1.75, H * 0.3, 1.75, y, bld, FACADE.intermediate.roof);
-      y = boxTier(g, 'intermediate', 1.25, H * 0.15, 1.25, y, bld, FACADE.intermediate.roof);
-      const tank = new T.Mesh(G.cyl, new T.MeshStandardMaterial({ color: 0x2b3142, roughness: 0.6 })); tank.scale.set(0.28, 0.45, 0.28); tank.position.set(-0.3, y + 0.23, 0.2); g.add(tank);
-      const ac = new T.Mesh(G.box, new T.MeshStandardMaterial({ color: 0x3a4256 })); ac.scale.set(0.35, 0.2, 0.3); ac.position.set(0.35, y + 0.1, -0.25); g.add(ac);
-      if (i % 2 === 1) antenna(g, 0.35, y, 0.3, 1.2, 0xFF5A6E);
-      sign(g, pad2(l.n), bld.color, y + (i % 2 ? 1.2 : 0.5), bld);
+    /* Vectoria: Figma-colored towers topped with the logo's shapes */
+    figma(g, l, i, bld) {
+      const pal = [0xF24E1E, 0xFF7262, 0xA259FF, 0x1ABCFE, 0x0ACF83];
+      const h = 2.6 + i * 0.75;
+      let y = boxTier(g, 'figma', 2, h, 2, 0, bld, FACADE.figma.roof);
+      const col = pal[i % pal.length], m = new T.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.55, roughness: 0.4 });
+      const top = i % 2 ? new T.Mesh(new T.SphereGeometry(0.75, 24, 16), m) : new T.Mesh(new T.CylinderGeometry(0.75, 0.75, 0.7, 24, 1, false, 0, Math.PI), m);
+      if (i % 2) top.position.y = y + 0.75; else { top.rotation.z = Math.PI / 2; top.rotation.y = Math.PI / 2; top.position.y = y + 0.05; }
+      g.add(top); y += i % 2 ? 1.5 : 0.8;
+      const ring = new T.Mesh(new T.TorusGeometry(1.25, 0.03, 6, 40), basic(0x0D99FF)); ring.rotation.x = Math.PI / 2; ring.position.y = h * 0.5; g.add(ring);
+      bld.spin.push({ m: ring, s: 0.5, axis: 'z' });
+      sign(g, pad2(l.n), bld.color, y, bld);
       return y;
     },
-    /* pusat kota futuristik: tapered hex towers, holo rings and spires */
-    advanced(g, l, i, bld) {
-      const H = 5.4 + i * 0.95, rb = 1.0, rt = 0.66;
-      const fm = facade('advanced', Math.PI * 2 * rb, H, bld);
-      const body = new T.Mesh(new T.CylinderGeometry(rt, rb, H, 6, 1), [fm, roofMat(FACADE.advanced.roof), roofMat(FACADE.advanced.roof)]);
-      body.position.y = H / 2; g.add(body);
-      const e = new T.LineSegments(new T.EdgesGeometry(body.geometry), new T.LineBasicMaterial({ color: bld.hex, transparent: true, opacity: 0.6 })); e.position.copy(body.position); g.add(e); bld.edges.push(e.material);
-      const ringMat = basic(i % 2 ? 0xFF93B5 : bld.hex, { transparent: true, opacity: 0.85 });
-      [0.45, 0.75].forEach((k, ri) => {
-        const ring = new T.Mesh(new T.TorusGeometry(0.9 + (1 - k) * 0.4, 0.025, 6, 48), ringMat);
-        ring.rotation.x = Math.PI / 2; ring.position.y = H * k; g.add(ring);
-        bld.spin.push({ m: ring, s: (ri ? -1 : 1) * (0.3 + rand() * 0.3) });
-      });
-      antenna(g, 0, H, 0, 1.4 + (i % 2) * 0.8, 0xFF5A6E);
-      sign(g, pad2(l.n), bld.color, H + 2.2 + (i % 2) * 0.8, bld);
-      return H + 1.4;
+    /* Foundry: workshops with sawtooth roofs and a smoking chimney, tinted by HTML / CSS / JS */
+    basics(g, l, i, bld) {
+      const tech = techOf(l.id), tc = TECH[tech];
+      const h = 1.3 + (i % 3) * 0.55;
+      let y = boxTier(g, 'basics', 2.6, h, 2.1, 0, bld, FACADE.basics.roof);
+      for (let k = 0; k < 3; k++) { const geo = prism(0.86, 0.5, 2.1), m = new T.Mesh(geo, roofMat(0x3a2a24)); m.position.set(-0.86 + k * 0.86, y, 0); g.add(m); }
+      const strip = new T.Mesh(G.box, basic(tc)); strip.scale.set(2.62, 0.08, 2.12); strip.position.y = h * 0.62; g.add(strip);
+      const ch = new T.Mesh(G.cyl, roofMat(0x4a3a33)); ch.scale.set(0.22, 1.6 + (i % 2) * 0.6, 0.22); ch.position.set(0.9, y + ch.scale.y / 2, -0.55); g.add(ch);
+      const band = new T.Mesh(new T.TorusGeometry(0.24, 0.04, 6, 20), basic(tc)); band.rotation.x = Math.PI / 2; band.position.set(0.9, y + ch.scale.y - 0.15, -0.55); g.add(band);
+      for (let k = 0; k < 3; k++) {
+        const puff = new T.Mesh(G.sphere, new T.MeshBasicMaterial({ color: 0x8a96aa, transparent: true, opacity: 0.25, depthWrite: false }));
+        puff.position.set(0.9, y + ch.scale.y, -0.55); g.add(puff);
+        smoke.push({ m: puff, base: y + ch.scale.y, k: k / 3, x: 0.9, z: -0.55 });
+      }
+      y += 0.5;
+      sign(g, pad2(l.n), bld.color, y + 0.3, bld);
+      return y;
     },
-    /* React City: towers of stacked "component" modules, each joined by a glowing seam, with an orbit ring on top */
+    /* React: towers of stacked "component" modules joined by glowing seams, with an orbit ring on top */
     react(g, l, i, bld) {
       const mods = 3 + (i % 3);
       let y = 0;
@@ -441,7 +478,7 @@ function makeHub(el, opts) {
       sign(g, pad2(l.n), bld.color, y + 1.1, bld);
       return y + 0.9;
     },
-    /* Vue City: terraced garden towers with green ledges and little bushes */
+    /* Vue: terraced garden towers with green ledges and little bushes */
     vue(g, l, i, bld) {
       const tiers = 3 + (i % 2);
       let y = 0;
@@ -464,55 +501,67 @@ function makeHub(el, opts) {
     }
   };
 
-  /* district decorations */
+  /* district monuments and decorations (centered on the district) */
+  const plazaAt = (top, color, r) => {
+    const plaza = new T.Mesh(new T.CylinderGeometry(r, r, 0.05, 48), new T.MeshStandardMaterial({ color: 0x10161f, roughness: 0.4, metalness: 0.5 })); plaza.position.set(0, 0.03, 0); top.add(plaza);
+    addGlow(top, 0, 0.07, 0, r * 2.9, color, 0.35);
+  };
   const DECOR = {
-    beginner(top) {
-      const path = new T.MeshStandardMaterial({ color: 0x2a2620, roughness: 0.95 });
-      [[0, 0, 10.5, 0.7], [0, 0, 0.7, 8.5]].forEach(p => { const m = new T.Mesh(G.box, path); m.scale.set(p[2], 0.02, p[3]); m.position.set(p[0], 0.01, p[1]); top.add(m); });
-      [[-5, -4.2, 1], [5.1, -4.1, 1.1], [-5.2, 3.8, 0.9], [5.2, 4, 1], [-4.6, 0.2, 0.8], [4.7, 0.1, 0.85], [0, 4.3, 0.7], [-2.5, 4.4, 0.75], [2.6, 4.4, 0.75]].forEach(t => tree(top, t[0], t[1], t[2]));
-      const lanterns = [[-5, 3.8], [-1.8, 4.3], [1.8, 4.3], [5.2, 4]];
-      for (let k = 0; k < lanterns.length - 1; k++) {
-        const a = lanterns[k], b = lanterns[k + 1];
-        for (let s = 1; s < 6; s++) {
-          const t = s / 6, bulb = new T.Mesh(G.sphere, basic([0xFFD58A, 0xFF93B5, 0x7EF2C3][s % 3])); bulb.scale.setScalar(0.06);
-          bulb.position.set(a[0] + (b[0] - a[0]) * t, 1.25 - Math.sin(t * Math.PI) * 0.3, a[1] + (b[1] - a[1]) * t); top.add(bulb);
-          blinkers.push({ m: bulb, phase: rand() * 6, soft: true });
-        }
-      }
-      addGlow(top, 0, 0.03, 0, 9, 0xFFC877, 0.12);
+    /* Principia: a round temple (tholos) with a glowing dome */
+    theory(top, D) {
+      plazaAt(top, 0x7EF2C3, 2.4);
+      const colMat = new T.MeshStandardMaterial({ color: 0xd9e4de, emissive: 0x7EF2C3, emissiveIntensity: 0.18, roughness: 0.5 });
+      const base = new T.Mesh(new T.CylinderGeometry(1.9, 2.1, 0.35, 32), roofMat(0x2b3530)); base.position.y = 0.18; top.add(base);
+      for (let k = 0; k < 10; k++) { const a = k / 10 * Math.PI * 2, c = new T.Mesh(G.cyl, colMat); c.scale.set(0.12, 2.2, 0.12); c.position.set(Math.cos(a) * 1.6, 1.45, Math.sin(a) * 1.6); top.add(c); }
+      const roof = new T.Mesh(new T.CylinderGeometry(1.95, 1.95, 0.25, 32), roofMat(0x2b3530)); roof.position.y = 2.68; top.add(roof);
+      const dome = new T.Mesh(new T.SphereGeometry(1.7, 28, 12, 0, Math.PI * 2, 0, Math.PI / 2), new T.MeshStandardMaterial({ color: 0x23332c, emissive: 0x7EF2C3, emissiveIntensity: 0.45, roughness: 0.35 })); dome.position.y = 2.8; top.add(dome);
+      const orb = new T.Mesh(G.sphere, basic(0x7EF2C3)); orb.scale.setScalar(0.28); orb.position.y = 4.8; top.add(orb);
+      spinners.push({ m: orb, s: 0, bob: 4.8 });
+      for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2 + 0.3; tree(top, Math.cos(a) * (D.w / 2 - 0.9), Math.sin(a) * (D.d / 2 - 0.9) * 0.2 + (k < 3 ? D.d / 2 - 0.9 : -D.d / 2 + 0.9), 0.7); }
     },
-    intermediate(top) {
-      const line = basic(0x2a3144);
-      for (let k = -2; k <= 2; k++) { const m = new T.Mesh(G.box, line); m.scale.set(11, 0.015, 0.03); m.position.set(0, 0.01, k * 2.2); top.add(m); }
-      [[-5.2, 4.2], [5.2, 4.2], [-5.2, -4.3], [5.2, -4.3]].forEach(p => tree(top, p[0], p[1], 0.7));
-      billboard(top, -5.3, 0.6, logoBoardTex((g, w, h) => {
-        const gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, '#22D3FF'); gr.addColorStop(0.5, '#8B5CFF'); gr.addColorStop(1, '#FF3DF0');
-        g.strokeStyle = gr; g.lineWidth = 8; g.strokeRect(6, 6, w - 12, h - 12);
-        g.fillStyle = gr; g.font = '700 46px "Space Grotesk", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('sha-labs', w / 2, h / 2 + 2);
+    /* Vectoria: the Figma logo as a standing sculpture */
+    figma(top) {
+      plazaAt(top, 0xA259FF, 2.4);
+      const S = 4.6 / 57, logo = new T.Group();
+      const shapes = [
+        ['#f24e1e', s => { s.moveTo(19, 57); s.lineTo(9.5, 57); s.absarc(9.5, 47.5, 9.5, Math.PI / 2, Math.PI * 1.5, false); s.lineTo(19, 38); }],
+        ['#ff7262', s => { s.moveTo(19, 57); s.lineTo(28.5, 57); s.absarc(28.5, 47.5, 9.5, Math.PI / 2, -Math.PI / 2, true); s.lineTo(19, 38); }],
+        ['#a259ff', s => { s.moveTo(19, 38); s.lineTo(9.5, 38); s.absarc(9.5, 28.5, 9.5, Math.PI / 2, Math.PI * 1.5, false); s.lineTo(19, 19); }],
+        ['#1abcfe', s => { s.absarc(28.5, 28.5, 9.5, 0, Math.PI * 2, false); }],
+        ['#0acf83', s => { s.moveTo(19, 19); s.lineTo(9.5, 19); s.absarc(9.5, 9.5, 9.5, Math.PI / 2, Math.PI, false); s.absarc(9.5, 9.5, 9.5, Math.PI, Math.PI * 2, false); s.lineTo(19, 19); }]
+      ];
+      shapes.forEach(([c, draw]) => {
+        const s = new T.Shape(); draw(s);
+        const geo = new T.ExtrudeGeometry(s, { depth: 6, bevelEnabled: true, bevelSize: 0.6, bevelThickness: 0.6, bevelSegments: 2, curveSegments: 24 });
+        geo.translate(-19, 0, -3); geo.scale(S, S, S);
+        logo.add(new T.Mesh(geo, new T.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.55, roughness: 0.35 })));
+      });
+      logo.position.set(0, 0.9, 0); top.add(logo);
+      spinners.push({ m: logo, s: 0.3 });
+      const ped = new T.Mesh(new T.CylinderGeometry(0.5, 0.7, 0.9, 6), roofMat(0x221d2e)); ped.position.y = 0.45; top.add(ped);
+      billboard(top, -6.4, 5.2, boardTex((g, w, h) => {
+        g.strokeStyle = '#A259FF'; g.lineWidth = 5; g.strokeRect(6, 6, w - 12, h - 12);
+        drawPaths(g, FIGMA_PATHS, 30, 20, 1.55);
+        g.fillStyle = '#E6EDF3'; g.font = '700 34px "Space Grotesk", sans-serif'; g.textBaseline = 'middle'; g.fillText('Figma', 110, h / 2 + 2);
       }));
     },
-    advanced(top) {
-      const gridTex = canvasTex(256, 256, (g, w, h) => {
-        g.fillStyle = '#000'; g.fillRect(0, 0, w, h); g.strokeStyle = '#FFC877'; g.globalAlpha = 0.5; g.lineWidth = 2;
-        for (let k = 0; k <= 8; k++) { g.beginPath(); g.moveTo(k * 32, 0); g.lineTo(k * 32, h); g.moveTo(0, k * 32); g.lineTo(w, k * 32); g.stroke(); }
+    /* Foundry: three glowing pillars for HTML, CSS and JS */
+    basics(top) {
+      plazaAt(top, 0xFF8A4C, 2.4);
+      [['html', '</>', -1.1], ['css', '{ }', 0], ['js', 'JS', 1.1]].forEach(([k, txt, x], j) => {
+        const h = 2.6 + j * 0.7, c = TECH[k];
+        const p = new T.Mesh(G.box, new T.MeshStandardMaterial({ color: 0x1a1512, emissive: c, emissiveIntensity: 0.35, roughness: 0.4 })); p.scale.set(0.85, h, 0.85); p.position.set(x, h / 2, 0); top.add(p);
+        const e = new T.LineSegments(G.boxE, basic(c)); e.scale.copy(p.scale); e.position.copy(p.position); top.add(e);
+        const sp = new T.Sprite(new T.SpriteMaterial({ map: signTex(txt, '#' + new T.Color(c).getHexString()), toneMapped: false, transparent: true, depthWrite: false }));
+        sp.scale.set(1.5, 0.56, 1); sp.position.set(x, h + 0.6, 0); top.add(sp);
       });
-      const tilesM = new T.Mesh(G.plane, new T.MeshBasicMaterial({ map: gridTex, transparent: true, opacity: 0.35, blending: T.AdditiveBlending, depthWrite: false, toneMapped: false }));
-      tilesM.rotation.x = -Math.PI / 2; tilesM.scale.set(11.6, 9.6, 1); tilesM.position.y = 0.012; top.add(tilesM);
-      const beamGeo = new T.ConeGeometry(0.8, 22, 24, 1, true); beamGeo.translate(0, -11, 0); beamGeo.rotateX(Math.PI);
-      [[-5.4, 4.4, 0xFFC877], [5.4, 4.4, 0xFF93B5]].forEach((p, k) => {
-        const base = new T.Group(); base.position.set(p[0], 0, p[1]); top.add(base);
-        const lamp = new T.Mesh(G.cyl, poleMat); lamp.scale.set(0.25, 0.3, 0.25); lamp.position.y = 0.15; base.add(lamp);
-        const beam = new T.Mesh(beamGeo, new T.MeshBasicMaterial({ color: p[2], transparent: true, opacity: 0.05, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide, toneMapped: false }));
-        beam.position.y = 0.3; base.add(beam);
-        searchlights.push({ beam, k });
-      });
+      [[-7.4, 5.4], [7.4, 5.4], [-7.4, -5.4], [7.4, -5.4]].forEach(p => { const crate = new T.Mesh(G.box, roofMat(0x3a2a24)); crate.scale.set(0.7, 0.5, 0.7); crate.position.set(p[0], 0.25, p[1]); top.add(crate); });
     },
-    /* React City: a giant spinning atom over the central plaza */
+    /* React: a giant spinning atom over the central plaza */
     react(top) {
-      const plaza = new T.Mesh(new T.CylinderGeometry(2.4, 2.4, 0.05, 48), new T.MeshStandardMaterial({ color: 0x0d1a24, roughness: 0.4, metalness: 0.5 })); plaza.position.set(0, 0.03, 0.2); top.add(plaza);
-      addGlow(top, 0, 0.07, 0.2, 7, 0x61DAFB, 0.35);
-      const ped = new T.Mesh(new T.CylinderGeometry(0.35, 0.6, 2.2, 6), new T.MeshStandardMaterial({ color: 0x1a2533, metalness: 0.6, roughness: 0.4 })); ped.position.set(0, 1.1, 0.2); top.add(ped);
-      const atom = new T.Group(); atom.position.set(0, 4.2, 0.2); top.add(atom);
+      plazaAt(top, 0x61DAFB, 2.4);
+      const ped = new T.Mesh(new T.CylinderGeometry(0.35, 0.6, 2.2, 6), new T.MeshStandardMaterial({ color: 0x1a2533, metalness: 0.6, roughness: 0.4 })); ped.position.set(0, 1.1, 0); top.add(ped);
+      const atom = new T.Group(); atom.position.set(0, 4.2, 0); top.add(atom);
       const nucleus = new T.Mesh(G.sphere, basic(0x61DAFB)); nucleus.scale.setScalar(0.42); atom.add(nucleus);
       const electrons = [];
       [0, Math.PI / 3, -Math.PI / 3].forEach((rz, k) => {
@@ -521,9 +570,8 @@ function makeHub(el, opts) {
         const e = new T.Mesh(G.sphere, basic(0xE6FBFF)); e.scale.setScalar(0.14); orbit.add(e);
         electrons.push({ e, a: k * 2.1 });
       });
-      spinners.push({ m: atom, s: 0.35, axis: 'y', electrons });
-      [[-6.6, 5.4], [6.6, 5.4], [-6.8, -5.6], [6.8, -5.6]].forEach(p => { const lp = new T.Mesh(G.cyl, poleMat); lp.scale.set(0.05, 1.6, 0.05); lp.position.set(p[0], 0.8, p[1]); top.add(lp); const b = new T.Mesh(G.sphere, basic(0x61DAFB)); b.scale.setScalar(0.1); b.position.set(p[0], 1.65, p[1]); top.add(b); });
-      billboard(top, 7.2, 0, logoBoardTex((g, w, h) => {
+      spinners.push({ m: atom, s: 0.35, electrons });
+      billboard(top, 6.9, 0, boardTex((g, w, h) => {
         g.strokeStyle = '#61DAFB'; g.lineWidth = 5; g.strokeRect(6, 6, w - 12, h - 12);
         g.save(); g.translate(58, h / 2); g.strokeStyle = '#61DAFB'; g.lineWidth = 3;
         [0, 60, 120].forEach(a => { g.save(); g.rotate(a * Math.PI / 180); g.beginPath(); g.ellipse(0, 0, 34, 13, 0, 0, Math.PI * 2); g.stroke(); g.restore(); });
@@ -531,23 +579,21 @@ function makeHub(el, opts) {
         g.fillStyle = '#E6EDF3'; g.font = '700 34px "Space Grotesk", sans-serif'; g.textBaseline = 'middle'; g.fillText('React', 108, h / 2 + 2);
       }), Math.PI / 2);
     },
-    /* Vue City: the V logo standing in a garden */
-    vue(top) {
-      const lawn = new T.Mesh(new T.CylinderGeometry(2.6, 2.6, 0.05, 48), new T.MeshStandardMaterial({ color: 0x10241b, emissive: 0x42B883, emissiveIntensity: 0.06, roughness: 0.9 })); lawn.position.set(0, 0.03, 0.2); top.add(lawn);
-      addGlow(top, 0, 0.07, 0.2, 7, 0x42B883, 0.35);
+    /* Vue: the V logo standing in a garden */
+    vue(top, D) {
+      const lawn = new T.Mesh(new T.CylinderGeometry(2.6, 2.6, 0.05, 48), new T.MeshStandardMaterial({ color: 0x10241b, emissive: 0x42B883, emissiveIntensity: 0.06, roughness: 0.9 })); lawn.position.set(0, 0.03, 0); top.add(lawn);
+      addGlow(top, 0, 0.07, 0, 7, 0x42B883, 0.35);
       const S = 3.4 / 256, mk = pts => { const s = new T.Shape(); pts.forEach((p, k) => { const x = (p[0] - 128) * S, y = (220.8 - p[1]) * S; k ? s.lineTo(x, y) : s.moveTo(x, y); }); s.closePath(); return s; };
       const ext = { depth: 0.35, bevelEnabled: true, bevelSize: 0.03, bevelThickness: 0.03, bevelSegments: 1 };
       const outer = new T.Mesh(new T.ExtrudeGeometry(mk([[0, 0], [50.56, 0], [128, 132.48], [204.8, 0], [256, 0], [128, 220.8]]), ext), new T.MeshStandardMaterial({ color: 0x42B883, emissive: 0x42B883, emissiveIntensity: 0.75, roughness: 0.4 }));
       const inner = new T.Mesh(new T.ExtrudeGeometry(mk([[50.56, 0], [97.92, 0], [128, 51.2], [157.44, 0], [204.8, 0], [128, 133.12]]), ext), new T.MeshStandardMaterial({ color: 0x35495E, emissive: 0x35495E, emissiveIntensity: 0.6, roughness: 0.4 }));
       const logo = new T.Group(); [outer, inner].forEach(m => { m.position.z = -0.175; logo.add(m); });
-      logo.position.set(0, 1.4, 0.2); top.add(logo);
-      spinners.push({ m: logo, s: 0.3, axis: 'y' });
-      [[-6.6, 5.2, 0.9], [6.6, 5.2, 0.9], [-6.8, -5.6, 1], [6.8, -5.6, 1], [-2.8, 5.6, 0.7], [2.8, 5.6, 0.7], [0, -6, 0.8]].forEach(p => tree(top, p[0], p[1], p[2], 0x42B883));
-      billboard(top, -7.2, 0, logoBoardTex((g, w, h) => {
+      logo.position.set(0, 1.4, 0); top.add(logo);
+      spinners.push({ m: logo, s: 0.3 });
+      [[-D.w / 2 + 0.9, 5.2, 0.9], [D.w / 2 - 0.9, 5.2, 0.9], [-D.w / 2 + 0.9, -5.4, 1], [D.w / 2 - 0.9, -5.4, 1]].forEach(p => tree(top, p[0], p[1], p[2], 0x42B883));
+      billboard(top, -7.6, 0, boardTex((g, w, h) => {
         g.strokeStyle = '#42B883'; g.lineWidth = 5; g.strokeRect(6, 6, w - 12, h - 12);
-        const s = 0.32, ox = 26, oy = (h - 221 * s) / 2, poly = (pts, c) => { g.fillStyle = c; g.beginPath(); pts.forEach((p, k) => k ? g.lineTo(ox + p[0] * s, oy + p[1] * s) : g.moveTo(ox + p[0] * s, oy + p[1] * s)); g.closePath(); g.fill(); };
-        poly([[0, 0], [50.56, 0], [128, 132.48], [204.8, 0], [256, 0], [128, 220.8]], '#42B883');
-        poly([[50.56, 0], [97.92, 0], [128, 51.2], [157.44, 0], [204.8, 0], [128, 133.12]], '#35495E');
+        drawPaths(g, VUE_PATHS, 26, (h - 221 * 0.32) / 2, 0.32);
         g.fillStyle = '#E6EDF3'; g.font = '700 34px "Space Grotesk", sans-serif'; g.textBaseline = 'middle'; g.fillText('Vue', 128, h / 2 + 2);
       }), -Math.PI / 2);
     }
@@ -555,30 +601,27 @@ function makeHub(el, opts) {
 
   /* build every district and its lesson buildings */
   const blds = [], hits = [], labels = [];
-  const SLOTS = {
-    small: [[-3.4, -2.3], [0, -2.6], [3.4, -2.3], [-1.8, 2], [1.8, 2]],
-    city: [[-5.2, -3.8], [0, -4.4], [5.2, -3.8], [-4.4, 3.4], [4.4, 3.4]]
-  };
-  const PF_COLOR = { beginner: 0x101a17, intermediate: 0x121722, advanced: 0x0f111b, react: 0x0d151d, vue: 0x0e1915 };
+  const PF_COLOR = { theory: 0x0f1a16, figma: 0x14111d, basics: 0x1a1411, react: 0x0d151d, vue: 0x0e1915 };
   opts.levels.forEach(lv => {
     const D = DISTRICTS[lv.key]; if (!D) return;
     const pf = new T.Mesh(G.box, new T.MeshStandardMaterial({ color: PF_COLOR[lv.key] || 0x121722, roughness: 0.85 })); pf.scale.set(D.w, 0.6, D.d); pf.position.set(D.x, 0.3, D.z); scene.add(pf);
     const pe = new T.LineSegments(G.boxE, new T.LineBasicMaterial({ color: lv.hex, transparent: true, opacity: 0.6 })); pe.scale.copy(pf.scale); pe.position.copy(pf.position); scene.add(pe);
     const top = new T.Group(); top.position.set(D.x, 0.6, D.z); scene.add(top);
-    if (DECOR[lv.key]) DECOR[lv.key](top);
-    const slots = D.w > 12 ? SLOTS.city : SLOTS.small;
-    opts.lessons.filter(l => l.level === lv.key).forEach((l, i) => {
-      const sl = slots[i] || [((i - 5) % 3 - 1) * 3.4, 4.2];
+    if (DECOR[lv.key]) DECOR[lv.key](top, D);
+    const list = opts.lessons.filter(l => l.level === lv.key);
+    const slots = districtSlots(list.length, D.w, D.d, D.monument);
+    list.forEach((l, i) => {
+      const sl = slots[i];
       const g = new T.Group(); g.position.set(sl[0], 0, sl[1]); top.add(g);
       const bld = { id: l.id, title: l.title, num: pad2(l.n), color: lv.color, hex: lv.hex, facades: [], edges: [], spin: [], done: false, lift: 0, glow: 0 };
-      const h = (BUILD[lv.key] || BUILD.intermediate)(g, l, i, bld);
+      const h = (BUILD[lv.key] || BUILD.theory)(g, l, i, bld);
       // completion beacon: a light pillar + halo, faded in when done
       const pillar = new T.Mesh(G.cyl, basic(lv.hex, { transparent: true, opacity: 0, blending: T.AdditiveBlending, depthWrite: false }));
       pillar.scale.set(0.07, 18, 0.07); pillar.position.y = h + 9; g.add(pillar);
       const halo = addGlow(g, 0, 0.03, 0, 4.2, lv.hex, 0);
       Object.assign(bld, { group: g, pillar, halo, top: h + 1.6, x: D.x + sl[0], z: D.z + sl[1] });
       const hit = new T.Mesh(G.box, new T.MeshBasicMaterial()); hit.visible = false;
-      hit.scale.set(2.6, h + 0.2, 2.6); hit.position.set(sl[0], (h + 0.2) / 2, sl[1]); top.add(hit);
+      hit.scale.set(2.7, h + 0.2, 2.7); hit.position.set(sl[0], (h + 0.2) / 2, sl[1]); top.add(hit);
       hit.userData = bld; hits.push(hit); blds.push(bld);
     });
     const chip = 'padding:4px 8px;background:rgba(13,16,22,.85);border:1px solid #263042;border-radius:6px;display:flex;align-items:center;gap:6px';
@@ -586,17 +629,96 @@ function makeHub(el, opts) {
     const div = lv.logo ? st.labelHTML('<span style="width:16px;height:16px;display:inline-flex">' + lv.logo + '</span>' + name, lv.color, chip) : st.label(name, lv.color, chip);
     labels.push({ div, pos: new T.Vector3(D.x, 0.7, D.z + D.d / 2 + 0.4) });
   });
-  /* province name signs */
-  opts.provinces.forEach(p => {
-    const P = PROVINCES[p.key]; if (!P) return;
-    const c = '#' + new T.Color(p.color).getHexString();
-    const div = st.label(p.name, c, 'padding:6px 12px;background:rgba(11,14,20,.85);border:1px solid ' + c + ';border-radius:8px;font-size:13px;letter-spacing:.14em;box-shadow:0 0 18px ' + c + '33');
-    labels.push({ div, pos: new T.Vector3(P.x, 11, P.z - 3), province: true });
+  /* city name signs floating over each city */
+  opts.cities.forEach(c => {
+    const C = CITIES[c.key]; if (!C) return;
+    const col = '#' + new T.Color(c.color).getHexString();
+    const div = st.label(c.name, col, 'padding:6px 12px;background:rgba(11,14,20,.85);border:1px solid ' + col + ';border-radius:8px;font-size:13px;letter-spacing:.14em;box-shadow:0 0 18px ' + col + '33');
+    labels.push({ div, pos: new T.Vector3(C.x, 12, C.z - 3) });
   });
 
-  /* traffic: cars on the loop (both directions) and on the side streets */
+  /* ───── the town: houses, shophouses (ruko), apartments and trees, as instanced meshes ───── */
+  const town = [];
+  const variant = (w, h, d, roof) => {
+    const geo = new T.BoxGeometry(w, h, d); geo.translate(0, h / 2, 0);
+    const uv = geo.attributes.uv, faceSize = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]];
+    for (let f = 0; f < 6; f++) for (let v = 0; v < 4; v++) { const k = f * 4 + v; uv.setXY(k, uv.getX(k) * faceSize[f][0] / 2.2, uv.getY(k) * faceSize[f][1] / 2.2); }
+    return { geo, w, h, d, roof };
+  };
+  const VARIANTS = {
+    house: variant(1.7, 1.2, 1.6, 'gable'),
+    house2: variant(1.9, 2.0, 1.7, 'gable'),
+    ruko: variant(2.6, 2.3, 1.8, 'awning'),
+    apt: variant(2.1, 3.8, 2.1, 'flat'),
+    tower: variant(1.9, 6.4, 1.9, 'flat')
+  };
+  const townTiles = tiles.town;
+  const townMat = new T.MeshStandardMaterial({ map: townTiles.normal.map, emissive: 0xffffff, emissiveMap: townTiles.normal.emissive, emissiveIntensity: 0.55, roughness: 0.7, metalness: 0.15 });
+  const townRoof = new T.MeshStandardMaterial({ color: 0x232936, roughness: 0.85 });
+  const spots = { house: [], house2: [], ruko: [], apt: [], tower: [] }, treeSpots = [];
+  const inCore = (x, z) => x > CORE[0] && x < CORE[1] && z > CORE[2] && z < CORE[3];
+  const inRiver = x => x > RIVER.x0 - 1.6 && x < RIVER.x1 + 1.6;
+  for (let x = -64; x <= 126; x += 3.3) for (let z = -48; z <= 38; z += 3.4) {
+    const jx = x + (rand() - 0.5) * 0.8, jz = z + (rand() - 0.5) * 0.8;
+    if (inCore(jx, jz) || inRiver(jx)) continue;
+    const dist = Math.max(0, Math.max(CORE[2] - jz, jz - CORE[3], CORE[0] - jx, jx - CORE[1]));
+    const r = rand();
+    if (r < 0.18) { treeSpots.push([jx, jz, 0.7 + rand() * 0.6]); continue; }
+    if (r < 0.26) continue;
+    // taller buildings further out, small homes and ruko near the highway
+    let kind;
+    if (dist < 8) kind = rand() < 0.45 ? 'ruko' : (rand() < 0.6 ? 'house' : 'house2');
+    else if (dist < 18) kind = ['house', 'house2', 'ruko', 'apt'][Math.floor(rand() * 4)];
+    else kind = rand() < 0.55 ? 'apt' : 'tower';
+    spots[kind].push([jx, jz, Math.floor(rand() * 4) * Math.PI / 2]);
+  }
+  // a row of ruko and houses tucked behind the districts inside each city, facing the ring road
+  [[-26, 19.5], [30.5, 92.5]].forEach(([x0, x1]) => {
+    for (let x = x0 + 1.4; x < x1 - 1; x += 2.9) {
+      if (STREETS.some(s => Math.abs(s - x) < 2.4)) continue;
+      spots[rand() < 0.5 ? 'ruko' : 'house'].push([x, -11.6, Math.PI]);
+    }
+  });
+  const dummy = new T.Object3D(), tint = new T.Color();
+  const TINTS = [0xffffff, 0xd8e6ff, 0xffe9d6, 0xe6ffe9, 0xf1e6ff];
+  const AWNING = [0xFF7262, 0x7FD4FF, 0x7EF2C3, 0xFFC877, 0xB9A3FF, 0xFF93B5];
+  Object.keys(VARIANTS).forEach(k => {
+    const V = VARIANTS[k], list = spots[k]; if (!list.length) return;
+    const body = new T.InstancedMesh(V.geo, [townMat, townMat, townRoof, townRoof, townMat, townMat], list.length);
+    list.forEach((s, i) => {
+      dummy.position.set(s[0], 0, s[1]); dummy.rotation.set(0, s[2], 0); dummy.scale.setScalar(1); dummy.updateMatrix();
+      body.setMatrixAt(i, dummy.matrix); body.setColorAt(i, tint.set(TINTS[i % TINTS.length]));
+    });
+    scene.add(body); town.push(body);
+    if (V.roof === 'gable') {
+      const roof = new T.InstancedMesh(prism(V.w + 0.3, 0.75, V.d + 0.2), townRoof, list.length);
+      list.forEach((s, i) => { dummy.position.set(s[0], V.h, s[1]); dummy.rotation.set(0, s[2] + Math.PI / 2, 0); dummy.updateMatrix(); roof.setMatrixAt(i, dummy.matrix); });
+      scene.add(roof); town.push(roof);
+    } else if (V.roof === 'awning') {
+      const aw = new T.InstancedMesh(G.box, new T.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.25, roughness: 0.6 }), list.length);
+      list.forEach((s, i) => {
+        const fx = Math.sin(s[2]) * (V.d / 2 + 0.25), fz = Math.cos(s[2]) * (V.d / 2 + 0.25);
+        dummy.position.set(s[0] + fx, 1.05, s[1] + fz); dummy.rotation.set(0, s[2], 0); dummy.scale.set(V.w, 0.08, 0.55); dummy.updateMatrix();
+        aw.setMatrixAt(i, dummy.matrix); aw.setColorAt(i, tint.set(AWNING[i % AWNING.length]));
+      });
+      dummy.scale.setScalar(1);
+      scene.add(aw); town.push(aw);
+    }
+  });
+  if (treeSpots.length) {
+    const trunks = new T.InstancedMesh(G.cyl, new T.MeshStandardMaterial({ color: 0x3a2c22, roughness: 0.9 }), treeSpots.length);
+    const crowns = new T.InstancedMesh(G.cone, new T.MeshStandardMaterial({ color: 0x173a2d, emissive: 0x7EF2C3, emissiveIntensity: 0.1, roughness: 0.8, flatShading: true }), treeSpots.length);
+    treeSpots.forEach((t, i) => {
+      dummy.rotation.set(0, 0, 0);
+      dummy.position.set(t[0], 0.25 * t[2], t[1]); dummy.scale.set(0.07 * t[2], 0.5 * t[2], 0.07 * t[2]); dummy.updateMatrix(); trunks.setMatrixAt(i, dummy.matrix);
+      dummy.position.set(t[0], 0.95 * t[2], t[1]); dummy.scale.set(0.45 * t[2], 1.05 * t[2], 0.45 * t[2]); dummy.updateMatrix(); crowns.setMatrixAt(i, dummy.matrix);
+    });
+    scene.add(trunks); scene.add(crowns); town.push(trunks, crowns);
+  }
+
+  /* traffic: cars on the highway, around each city's ring road, and on the side streets */
   const cars = [];
-  const carCols = [0x7FD4FF, 0xB9A3FF, 0xFF93B5, 0x7EF2C3, 0xFFC877, 0xE6EDF3, 0x61DAFB, 0x42B883];
+  const carCols = [0x7FD4FF, 0xB9A3FF, 0xFF93B5, 0x7EF2C3, 0xFFC877, 0xE6EDF3, 0x61DAFB, 0x42B883, 0xFF8A4C, 0xA259FF];
   const makeCar = i => {
     const c = new T.Group();
     const body = new T.Mesh(G.box, new T.MeshStandardMaterial({ color: carCols[i % carCols.length], roughness: 0.35, metalness: 0.5 })); body.scale.set(0.48, 0.28, 0.95); body.position.y = 0.24; c.add(body);
@@ -606,25 +728,31 @@ function makeHub(el, opts) {
       const h1 = new T.Mesh(G.box, head); h1.scale.set(0.1, 0.07, 0.04); h1.position.set(x, 0.26, 0.48); c.add(h1);
       const t1 = new T.Mesh(G.box, tail); t1.scale.set(0.1, 0.07, 0.04); t1.position.set(x, 0.26, -0.48); c.add(t1);
     });
-    const beam = addGlow(c, 0, 0.05, 1.3, 1.8, 0xcfefff, 0.25); beam.scale.set(1.1, 2.2, 1);
+    if (!small) { const beam = addGlow(c, 0, 0.05, 1.3, 1.8, 0xcfefff, 0.25); beam.scale.set(1.1, 2.2, 1); }
     scene.add(c); return c;
   };
-  const LOOP_LEN = curve.getLength();
-  for (let i = 0; i < (small ? 10 : 16); i++) {
-    const c = makeCar(i), dir = i % 2 ? -1 : 1;
-    c.userData = { loop: true, dir, speed: 3.2 + rand() * 2.6, u: rand(), lane: dir > 0 ? 0.62 : -0.62 };
-    cars.push(c);
-  }
+  let ci = 0;
+  const addLoopCars = (road, n, lane, speed) => {
+    for (let i = 0; i < n; i++) {
+      const c = makeCar(ci++), dir = i % 2 ? -1 : 1;
+      c.userData = { road, dir, speed: speed + rand() * 2.2, u: (i + rand() * 0.5) / n, lane: dir > 0 ? lane : -lane };
+      cars.push(c);
+    }
+  };
+  addLoopCars(highway, small ? 12 : 20, 0.62, 3.4);
+  rings.forEach(r => addLoopCars(r, small ? 6 : 10, 0.4, 2.4));
   STREETS.forEach((x, k) => {
-    const c = makeCar(k + 2), dir = k % 2 ? -1 : 1;
-    c.userData = { loop: false, dir, speed: 2.4, pos: rand() * 22 - 15, lane: x + (dir > 0 ? 0.5 : -0.5), min: -15.5, max: 8.5 };
-    cars.push(c);
+    [1, -1].forEach(dir => {
+      const c = makeCar(ci++);
+      c.userData = { street: true, dir, speed: 2.2 + rand(), pos: rand() * 26 - 17, lane: x + (dir > 0 ? 0.5 : -0.5), min: -18.5, max: 10.5 };
+      cars.push(c);
+    });
   });
   const tmpP = new T.Vector3(), tmpT = new T.Vector3();
 
-  /* drones: blinking lights circling each province, one carrying a spotlight */
+  /* drones: blinking lights circling each city, one per city carrying a spotlight */
   const drones = [];
-  [[0, 16, 10.5, 0.16, 0xFF3DF0], [0, 11, 12.5, -0.22, 0x22D3FF], [72, 15, 10, 0.18, 0x61DAFB], [72, 10, 12, -0.2, 0x42B883]].forEach((d, k) => {
+  [[-3.5, 18, 11, 0.16, 0xFF3DF0], [-3.5, 12, 13, -0.22, 0x22D3FF], [61.5, 22, 10, 0.14, 0x61DAFB], [61.5, 14, 12.5, -0.2, 0x42B883], [61.5, 8, 9, 0.24, 0xFF8A4C]].forEach((d, k) => {
     const g = new T.Group();
     const body = new T.Mesh(G.box, new T.MeshStandardMaterial({ color: 0x232a3a, metalness: 0.6, roughness: 0.4 })); body.scale.set(0.5, 0.12, 0.5); g.add(body);
     [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(p => { const r = new T.Mesh(G.cyl, new T.MeshBasicMaterial({ color: 0x8aa0c0, transparent: true, opacity: 0.35 })); r.scale.set(0.2, 0.01, 0.2); r.position.set(p[0] * 0.33, 0.08, p[1] * 0.33); g.add(r); });
@@ -640,10 +768,10 @@ function makeHub(el, opts) {
   });
 
   /* floating particles in the logo colors */
-  const N = small ? 260 : 700, pos = new Float32Array(N * 3), col = new Float32Array(N * 3), vel = new Float32Array(N);
+  const N = small ? 300 : 800, pos = new Float32Array(N * 3), col = new Float32Array(N * 3), vel = new Float32Array(N);
   const pal = [new T.Color(CYAN), new T.Color(VIOLET), new T.Color(MAGENTA)];
   for (let i = 0; i < N; i++) {
-    pos[i * 3] = -40 + rand() * 150; pos[i * 3 + 1] = rand() * 20; pos[i * 3 + 2] = (rand() - 0.5) * 50;
+    pos[i * 3] = -50 + rand() * 170; pos[i * 3 + 1] = rand() * 22; pos[i * 3 + 2] = -4 + (rand() - 0.5) * 60;
     const c = pal[i % 3]; col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b; vel[i] = 0.15 + rand() * 0.45;
   }
   const pgeo = new T.BufferGeometry(); pgeo.setAttribute('position', new T.BufferAttribute(pos, 3)); pgeo.setAttribute('color', new T.BufferAttribute(col, 3));
@@ -685,28 +813,30 @@ function makeHub(el, opts) {
     });
     spinners.forEach(s => {
       s.m.rotation.y += s.s * d;
+      if (s.bob) s.m.position.y = s.bob + Math.sin(t * 1.4) * 0.18;
       if (s.electrons) s.electrons.forEach(e => { e.a += d * 2.2; e.e.position.set(Math.cos(e.a) * 2, Math.sin(e.a) * 0.76, 0); });
     });
+    smoke.forEach(s => { const k = (t * 0.25 * speed + s.k) % 1; s.m.position.set(s.x + k * 0.4, s.base + k * 1.6, s.z); s.m.scale.setScalar(0.12 + k * 0.3); s.m.material.opacity = 0.3 * (1 - k); });
     blinkers.forEach(k => { const on = Math.sin(t * (k.soft ? 1.6 : 3) + k.phase); k.m.visible = k.soft ? true : on > -0.2; if (k.soft) k.m.scale.setScalar(0.05 + (on + 1) * 0.012); });
     waterTex.offset.y -= d * 0.08;
     cars.forEach(c => {
       const u = c.userData;
-      if (u.loop) {
-        u.u = (u.u + u.dir * u.speed * d / LOOP_LEN + 1) % 1;
-        curve.getPointAt(u.u, tmpP); curve.getTangentAt(u.u, tmpT);
+      if (u.road) {
+        u.u = (u.u + u.dir * u.speed * d / u.road.length + 1) % 1;
+        u.road.curve.getPointAt(u.u, tmpP); u.road.curve.getTangentAt(u.u, tmpT);
         const nx = -tmpT.z, nz = tmpT.x, len = Math.hypot(nx, nz) || 1;
         c.position.set(tmpP.x + nx / len * u.lane, tmpP.y + 0.06, tmpP.z + nz / len * u.lane);
         c.lookAt(c.position.x + tmpT.x * u.dir, c.position.y + tmpT.y * u.dir, c.position.z + tmpT.z * u.dir);
       } else {
         u.pos += u.dir * u.speed * d;
         if (u.pos > u.max) u.pos = u.min; if (u.pos < u.min) u.pos = u.max;
-        c.position.set(u.lane, 0.08, u.pos); c.rotation.set(0, u.dir > 0 ? 0 : Math.PI, 0);
+        c.position.set(u.lane, 0.09, u.pos); c.rotation.set(0, u.dir > 0 ? 0 : Math.PI, 0);
       }
     });
     drones.forEach(dr => { dr.a += dr.s * d; dr.g.position.set(dr.cx + Math.cos(dr.a) * dr.r, dr.y + Math.sin(t * 1.3 + dr.r) * 0.3, -3 + Math.sin(dr.a) * dr.r * 0.55); dr.g.rotation.y += d; });
     searchlights.forEach(s => { s.beam.rotation.z = Math.sin(t * 0.5 + s.k * 2) * 0.45; s.beam.rotation.x = Math.cos(t * 0.37 + s.k) * 0.35; });
     const p = pgeo.attributes.position.array;
-    for (let i = 0; i < N; i++) { p[i * 3 + 1] += vel[i] * d; p[i * 3] += Math.sin(t + i) * 0.002 * speed; if (p[i * 3 + 1] > 20) p[i * 3 + 1] = 0; }
+    for (let i = 0; i < N; i++) { p[i * 3 + 1] += vel[i] * d; p[i * 3] += Math.sin(t + i) * 0.002 * speed; if (p[i * 3 + 1] > 22) p[i * 3 + 1] = 0; }
     pgeo.attributes.position.needsUpdate = true;
     labels.forEach(lb => {
       const q = st.project(lb.pos);
@@ -719,20 +849,16 @@ function makeHub(el, opts) {
     b.done = done.indexOf(b.id) >= 0;
     b.facades.forEach(f => { const want = b.done ? f.doneMap : f.normalMap; if (f.m.emissiveMap !== want) { f.m.emissiveMap = want; f.m.needsUpdate = true; } });
   });
-  /* fly the camera to a province ('uiux', 'frontend') or the whole map ('all') */
+  /* fly the camera to a city ('uiux', 'frontend') or the whole map ('all') */
   st.focus = key => {
-    if (!PROVINCES[key] || busy) return;
+    if (!CITIES[key] || busy) return;
     focusKey = key;
-    const P = PROVINCES[key];
-    st.flyTo(new T.Vector3(P.focus[0], 1.5, P.focus[1]), fitRadius(key, el.clientWidth || 800, el.clientHeight || 500), key === 'all' ? 0.9 : 0.98, () => {}, 0, 1300);
+    const C = CITIES[key];
+    st.flyTo(new T.Vector3(C.focus[0], 1.5, C.focus[1]), fitRadius(key, el.clientWidth || 800, el.clientHeight || 500), key === 'all' ? 0.9 : 0.98, () => {}, 0, 1300);
   };
   return st;
 }
 
-/* ───────── flow scene: a 3D component tree for the frontend lessons ─────────
-   opts: { nodes:[{id,label,sub?,parent?(id or [ids]),kind?,ghost?}], color }
-   kind: 'comp' (default) | 'state' | 'computed' | 'effect' | 'dom'
-   messages: {type:'tree',nodes} · {type:'render',id} · {type:'flow',from,to,kind:'prop'|'emit'|'state'} */
 function makeFlow(el, opts) {
   const st = makeStage(el, { radius: 13, phi: 1.12, theta: 0.32, auto: 0.0012, fov: 35, ty: 0 });
   const { scene } = st;
@@ -882,6 +1008,173 @@ function makeFlow(el, opts) {
   return st;
 }
 
+
+/* ───────── explain scene: a declarative 3D explainer ─────────
+   opts.build(vars, ctx) returns { items:[…], cam?:{ r, ty, phi } } and is called again whenever the
+   controls change (or every frame when opts.live). The engine keeps one object per item id and
+   animates it to its new position, size, rotation, color and opacity.
+   item: { id, shape:'box'|'cyl'|'sphere'|'cone'|'torus'|'oct'|'hex'|'pyr'|'text'|'line',
+           p:[x,y,z], s:[x,y,z], r:[x,y,z], c:'#hex', e:emissive, o:opacity, flat:bool (unlit, true color),
+           edges:bool|'#hex', label:'text', lc:'#hex', ly:offset, glow:bool, snap:bool,
+           text (shape 'text'), size (text height), pts:[[x,y,z],…] (shape 'line') }
+   ctx: { data (last ux.state from the playground), t (seconds), tr(en, id), lang } */
+function makeExplain(el, opts) {
+  const st = makeStage(el, { radius: 14, phi: 1.05, theta: 0.55, auto: opts.live ? 0.0006 : 0.0014, fov: 35, ty: 1 });
+  const { scene } = st;
+  const grid = new T.GridHelper(48, 48, 0x1c2635, 0x141a24); grid.position.y = -0.01; scene.add(grid);
+  const GEO = {
+    box: new T.BoxGeometry(1, 1, 1),
+    cyl: new T.CylinderGeometry(0.5, 0.5, 1, 36),
+    hex: new T.CylinderGeometry(0.5, 0.5, 1, 6),
+    sphere: new T.SphereGeometry(0.5, 28, 18),
+    cone: new T.ConeGeometry(0.5, 1, 28),
+    pyr: new T.ConeGeometry(0.5, 1, 4),
+    torus: new T.TorusGeometry(0.5, 0.06, 12, 56),
+    oct: new T.OctahedronGeometry(0.5)
+  };
+  GEO.pyr.rotateY(Math.PI / 4);
+  const EDGES = {};
+  const edgesOf = shape => EDGES[shape] || (EDGES[shape] = new T.EdgesGeometry(GEO[shape], 20));
+  const glow = glowTex();
+  const items = new Map();
+  let vars = {}, data = null, built = { items: [] }, camSet = false;
+  const ctx = { data: null, t: 0, lang: document.documentElement.lang || 'en' };
+  ctx.tr = (en, id) => (ctx.lang === 'id' && id != null ? id : en);
+
+  const textTex = (text, color, font) => {
+    const c = document.createElement('canvas'), g = c.getContext('2d');
+    const f = font || '700 44px "Space Grotesk", sans-serif';
+    g.font = f; const w = Math.min(1024, Math.ceil(g.measureText(text).width) + 24);
+    c.width = w; c.height = 64; g.font = f; g.textBaseline = 'middle'; g.textAlign = 'center';
+    g.shadowColor = '#000'; g.shadowBlur = 10; g.fillStyle = color; g.fillText(text, w / 2, 34);
+    const tex = new T.CanvasTexture(c); tex.anisotropy = 4;
+    return { tex, aspect: w / 64 };
+  };
+  const makeSprite = (text, color, h, mono) => {
+    const { tex, aspect } = textTex(text, color, mono ? '600 38px "JetBrains Mono", monospace' : null);
+    const sp = new T.Sprite(new T.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
+    sp.userData = { aspect, h }; sp.scale.set(h * aspect, h, 1); return sp;
+  };
+  const setSpriteText = (sp, text, color, h, mono) => {
+    sp.material.map.dispose();
+    const { tex, aspect } = textTex(text, color, mono ? '600 38px "JetBrains Mono", monospace' : null);
+    sp.material.map = tex; sp.material.needsUpdate = true; sp.userData.aspect = aspect; sp.userData.h = h;
+  };
+
+  function create(spec) {
+    const o = { spec, shape: spec.shape || 'box', cur: { p: new T.Vector3(), s: new T.Vector3(0.01, 0.01, 0.01), r: new T.Vector3(), o: 0, e: 0 }, color: new T.Color(spec.c || '#7FD4FF') };
+    if (o.shape === 'text') {
+      o.obj = makeSprite(spec.text || '', spec.c || '#E6EDF3', spec.size || 0.5, spec.mono);
+      o.key = (spec.text || '') + '|' + (spec.c || '') + '|' + (spec.size || 0.5);
+      scene.add(o.obj);
+    } else if (o.shape === 'line') {
+      const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(new Float32Array(64 * 3), 3));
+      o.obj = new T.Line(g, new T.LineBasicMaterial({ color: o.color, transparent: true, opacity: 0 }));
+      o.obj.frustumCulled = false; scene.add(o.obj);
+    } else {
+      const mat = spec.flat ? new T.MeshBasicMaterial({ color: o.color, transparent: true, opacity: 0 })
+        : new T.MeshStandardMaterial({ color: o.color, emissive: o.color.clone(), emissiveIntensity: 0, roughness: 0.42, metalness: 0.15, transparent: true, opacity: 0 });
+      o.obj = new T.Mesh(GEO[o.shape] || GEO.box, mat);
+      if (spec.edges) { o.edges = new T.LineSegments(edgesOf(GEO[o.shape] ? o.shape : 'box'), new T.LineBasicMaterial({ color: spec.edges === true ? o.color : new T.Color(spec.edges), transparent: true, opacity: 0 })); o.obj.add(o.edges); }
+      scene.add(o.obj);
+    }
+    if (spec.glow) { o.halo = new T.Sprite(new T.SpriteMaterial({ map: glow, color: o.color, transparent: true, opacity: 0, blending: T.AdditiveBlending, depthWrite: false })); scene.add(o.halo); }
+    if (spec.snap) { o.cur.p.fromArray(spec.p || [0, 0, 0]); o.cur.s.fromArray(spec.s || [1, 1, 1]); o.cur.r.fromArray(spec.r || [0, 0, 0]); o.cur.o = spec.o ?? 1; }
+    else o.cur.p.fromArray(spec.p || [0, 0, 0]);
+    items.set(spec.id, o);
+    return o;
+  }
+  function drop(o) {
+    [o.obj, o.halo, o.label].forEach(x => { if (!x) return; scene.remove(x); if (x.material) { if (x.material.map && x.material.map !== glow) x.material.map.dispose(); x.material.dispose(); } if (x.geometry && x.isLine) x.geometry.dispose(); });
+    if (o.edges) o.edges.material.dispose();
+    items.delete(o.spec.id);
+  }
+  function apply(list) {
+    const seen = new Set();
+    list.forEach(spec => {
+      if (!spec || spec.id == null) return;
+      seen.add(spec.id);
+      let o = items.get(spec.id);
+      if (o && (o.shape !== (spec.shape || 'box') || !!o.spec.flat !== !!spec.flat || !!o.edges !== !!spec.edges)) { drop(o); o = null; }
+      if (!o) o = create(spec);
+      o.dying = false; o.spec = spec;
+      o.color.set(spec.c || '#7FD4FF');
+      if (o.shape === 'text') {
+        const key = (spec.text || '') + '|' + (spec.c || '') + '|' + (spec.size || 0.5);
+        if (key !== o.key) { setSpriteText(o.obj, spec.text || '', spec.c || '#E6EDF3', spec.size || 0.5, spec.mono); o.key = key; }
+      }
+      if (spec.label) {
+        const key = spec.label + '|' + (spec.lc || '#E6EDF3');
+        if (!o.label) { o.label = makeSprite(spec.label, spec.lc || '#E6EDF3', spec.lh || 0.42, spec.lmono); scene.add(o.label); }
+        else if (o.labelKey !== key) setSpriteText(o.label, spec.label, spec.lc || '#E6EDF3', spec.lh || 0.42, spec.lmono);
+        o.labelKey = key;
+      } else if (o.label) { scene.remove(o.label); o.label.material.map.dispose(); o.label.material.dispose(); o.label = null; }
+    });
+    items.forEach(o => { if (!seen.has(o.spec.id)) o.dying = true; });
+    if (built.cam) {
+      if (built.cam.r) st.orb.radius = built.cam.r;
+      if (built.cam.phi && !camSet) st.orb.phi = built.cam.phi;
+      camSet = true;
+    }
+  }
+  function rebuild() {
+    ctx.data = data; ctx.lang = document.documentElement.lang || 'en';
+    try { built = opts.build(vars, ctx) || { items: [] }; } catch (e) { built = { items: [] }; console.warn('explainer', e); }
+    apply(built.items || []);
+  }
+  st.update = vs => { vars = vs || {}; rebuild(); };
+  st.message = m => { if (m && m.type === 'state') { data = m.data; rebuild(); } };
+
+  const tv = new T.Vector3(), ts = new T.Vector3(), tr = new T.Vector3();
+  st.tick = ({ t, dt }) => {
+    ctx.t = t;
+    if (opts.live) rebuild();
+    const k = Math.min(1, dt * 9);
+    if (built.cam && built.cam.ty != null) st.orb.target.y += (built.cam.ty - st.orb.target.y) * k * 0.5;
+    items.forEach(o => {
+      const s = o.spec, snap = s.snap;
+      const want = o.dying ? 0 : (s.o ?? 1);
+      const kk = snap && !o.dying ? 1 : k;
+      if (o.shape === 'line') {
+        const arr = o.obj.geometry.attributes.position.array, pts = s.pts || [];
+        pts.slice(0, 64).forEach((p, i) => arr.set(p, i * 3));
+        o.obj.geometry.setDrawRange(0, Math.min(64, pts.length)); o.obj.geometry.attributes.position.needsUpdate = true;
+        o.cur.o += (want - o.cur.o) * k; o.obj.material.opacity = o.cur.o; o.obj.material.color.lerp(o.color, k);
+        if (o.dying && o.cur.o < 0.02) drop(o);
+        return;
+      }
+      tv.fromArray(s.p || [0, 0, 0]); ts.fromArray(s.s || [1, 1, 1]); tr.fromArray(s.r || [0, 0, 0]);
+      if (o.dying) ts.multiplyScalar(0.01);
+      o.cur.p.lerp(tv, kk); o.cur.s.lerp(ts, kk); o.cur.r.lerp(tr, kk); o.cur.o += (want - o.cur.o) * kk;
+      o.cur.e += ((s.e ?? 0.25) - o.cur.e) * kk;
+      if (o.shape === 'text') {
+        o.obj.position.copy(o.cur.p);
+        const h = o.obj.userData.h * (o.cur.s.x / Math.max(0.01, (s.s || [1])[0] || 1));
+        o.obj.scale.set(h * o.obj.userData.aspect, h, 1);
+        o.obj.material.opacity = o.cur.o;
+      } else {
+        o.obj.position.copy(o.cur.p); o.obj.scale.copy(o.cur.s); o.obj.rotation.set(o.cur.r.x, o.cur.r.y, o.cur.r.z);
+        const m = o.obj.material;
+        m.color.lerp(o.color, kk); m.opacity = o.cur.o; m.depthWrite = o.cur.o > 0.95;
+        if (m.emissive) { m.emissive.copy(m.color); m.emissiveIntensity = o.cur.e; }
+        if (o.edges) o.edges.material.opacity = Math.min(1, o.cur.o * 1.2);
+      }
+      if (o.halo) { o.halo.position.copy(o.cur.p); o.halo.scale.setScalar(Math.max(o.cur.s.x, o.cur.s.y) * 2.6); o.halo.material.color.copy(o.color); o.halo.material.opacity = o.cur.o * 0.55; }
+      if (o.label) {
+        const top = o.shape === 'text' ? 0.4 : o.cur.s.y / 2;
+        o.label.position.set(o.cur.p.x, o.cur.p.y + top + 0.32 + (s.ly || 0), o.cur.p.z);
+        const h = o.label.userData.h; o.label.scale.set(h * o.label.userData.aspect, h, 1);
+        o.label.material.opacity = o.cur.o;
+      }
+      if (o.dying && o.cur.o < 0.02) drop(o);
+    });
+  };
+  const baseDispose = st.dispose;
+  st.dispose = () => { baseDispose(); Object.values(GEO).forEach(g => g.dispose()); Object.values(EDGES).forEach(g => g.dispose()); glow.dispose(); };
+  rebuild();
+  return st;
+}
+
 /* ───────── lesson scenes ───────── */
 function makeBox(el) {
   const st = makeStage(el, { radius: 10, phi: 1.05, theta: 0.75, auto: 0.003, fov: 35 });
@@ -952,5 +1245,6 @@ function makeStack(el) {
 }
 
 
-window.UXScenes = { makeHub, makeFlow, makeBox, makeStack };
+
+window.UXScenes = { makeHub, makeFlow, makeExplain, makeBox, makeStack };
 window.dispatchEvent(new Event('uxscenes:ready'));
