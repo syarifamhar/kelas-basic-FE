@@ -212,8 +212,9 @@ function districtSlots(n, w, d, monument) {
   }
   // spread lessons evenly over the free cells, back rows first
   if (cand.length <= n) return cand.concat(Array.from({ length: n - cand.length }, (_, i) => [(i % 3 - 1) * 3, d / 2 + 2]));
-  const out = [], step = cand.length / n;
-  for (let i = 0; i < n; i++) out.push(cand[Math.floor(i * step)]);
+  const out = [], step = cand.length / n, taken = new Set();
+  for (let i = 0; i < n; i++) { const k = Math.floor(i * step); taken.add(k); out.push(cand[k]); }
+  out.free = cand.filter((_, k) => !taken.has(k)); // empty lots, filled with decorations
   return out;
 }
 
@@ -259,6 +260,7 @@ function makeHub(el, opts) {
     m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.scale.set(s, s, 1); parent.add(m); return m;
   };
   const blinkers = [], searchlights = [], spinners = [], smoke = [];
+  const dummy = new T.Object3D();
   const poleMat = new T.MeshStandardMaterial({ color: 0x2a3344, roughness: 0.6, metalness: 0.5 });
   const roadMat = new T.MeshStandardMaterial({ color: 0x11151e, roughness: 0.5, metalness: 0.3, side: T.DoubleSide });
   const dashMat = basic(0x3a4862);
@@ -599,6 +601,174 @@ function makeHub(el, opts) {
     }
   };
 
+  /* ───── street life inside each district: sidewalks, lamps, string lights, benches, people,
+     and themed decorations in the empty lots ───── */
+  const lampSpots = [], benchSpots = [], bulbSpots = [], studSpots = [], walkers = [];
+  const APRON = 1.3;
+  const LOT = {
+    /* Principia: an obelisk in a small garden with benches and a hedge ring */
+    theory(top, x, z, k) {
+      const ped = new T.Mesh(G.box, roofMat(0x2b3530)); ped.scale.set(0.9, 0.3, 0.9); ped.position.set(x, 0.15, z); top.add(ped);
+      const ob = new T.Mesh(new T.CylinderGeometry(0.12, 0.3, 2.4, 4), new T.MeshStandardMaterial({ color: 0xd9e4de, emissive: 0x7EF2C3, emissiveIntensity: 0.15, roughness: 0.5 })); ob.position.set(x, 1.5, z); ob.rotation.y = Math.PI / 4; top.add(ob);
+      const tip = new T.Mesh(G.sphere, basic(0x7EF2C3)); tip.scale.setScalar(0.12); tip.position.set(x, 2.8, z); top.add(tip); blinkers.push({ m: tip, phase: k, soft: true });
+      const hedge = new T.Mesh(new T.TorusGeometry(1.0, 0.16, 6, 24), new T.MeshStandardMaterial({ color: 0x173a2d, emissive: 0x7EF2C3, emissiveIntensity: 0.12, flatShading: true })); hedge.rotation.x = Math.PI / 2; hedge.position.set(x, 0.12, z); top.add(hedge);
+      benchSpots.push([top, x - 1.2, z, Math.PI / 2], [top, x + 1.2, z, -Math.PI / 2]);
+    },
+    /* Vectoria: Figma's shapes as a slowly turning sculpture */
+    figma(top, x, z, k) {
+      const pal = [0xF24E1E, 0xA259FF, 0x1ABCFE, 0x0ACF83, 0xFF7262];
+      const ped = new T.Mesh(new T.CylinderGeometry(0.7, 0.8, 0.35, 24), roofMat(0x221d2e)); ped.position.set(x, 0.17, z); top.add(ped);
+      const g = new T.Group(); g.position.set(x, 0.35, z); top.add(g);
+      const mk = (geo, c, px, py, pz) => { const m = new T.Mesh(geo, new T.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.5, roughness: 0.35 })); m.position.set(px, py, pz); g.add(m); return m; };
+      mk(new T.BoxGeometry(0.7, 0.7, 0.7), pal[k % 5], -0.25, 0.35, 0);
+      mk(new T.SphereGeometry(0.38, 20, 14), pal[(k + 2) % 5], 0.3, 0.38, 0.1);
+      mk(new T.ConeGeometry(0.32, 0.8, 20), pal[(k + 3) % 5], 0.05, 1.05, -0.05);
+      spinners.push({ m: g, s: 0.4 });
+      benchSpots.push([top, x, z + 1.3, 0]);
+    },
+    /* Foundry: a glowing kiln and stacked crates */
+    basics(top, x, z, k) {
+      const kiln = new T.Mesh(new T.CylinderGeometry(0.75, 0.9, 1.3, 10), roofMat(0x3a2a24)); kiln.position.set(x, 0.65, z); top.add(kiln);
+      const mouth = new T.Mesh(G.plane, basic(0xFF8A4C)); mouth.scale.set(0.6, 0.45, 1); mouth.position.set(x, 0.45, z + 0.86); top.add(mouth);
+      addGlow(top, x, 0.04, z + 1.2, 2.2, 0xFF8A4C, 0.5);
+      for (let c = 0; c < 3; c++) { const cr = new T.Mesh(G.box, roofMat(0x4a3428)); cr.scale.set(0.55, 0.45, 0.55); cr.position.set(x + 1.15, 0.23 + (c === 2 ? 0.45 : 0), z - 0.4 + (c === 1 ? 0.6 : 0)); top.add(cr); }
+      for (let p = 0; p < 2; p++) { const puff = new T.Mesh(G.sphere, new T.MeshBasicMaterial({ color: 0x8a96aa, transparent: true, opacity: 0.25, depthWrite: false })); top.add(puff); smoke.push({ m: puff, base: 1.3, k: p / 2, x: x, z: z }); }
+    },
+    /* React: a hologram cube that keeps re-rendering inside a wireframe */
+    react(top, x, z, k) {
+      const pad = new T.Mesh(new T.CylinderGeometry(0.8, 0.8, 0.12, 6), roofMat(0x1a2533)); pad.position.set(x, 0.06, z); top.add(pad);
+      addGlow(top, x, 0.14, z, 2.6, 0x61DAFB, 0.5);
+      const g = new T.Group(); g.position.set(x, 1.3, z); top.add(g);
+      const frame = new T.LineSegments(G.boxE, basic(0x61DAFB)); frame.scale.setScalar(1.1); g.add(frame);
+      const core = new T.Mesh(G.box, new T.MeshStandardMaterial({ color: 0x61DAFB, emissive: 0x61DAFB, emissiveIntensity: 0.8, transparent: true, opacity: 0.7 })); core.scale.setScalar(0.5); g.add(core);
+      spinners.push({ m: g, s: 0.7, bob: 1.3 + 0 });
+      g.userData.bobBase = 1.3;
+    },
+    /* Vue: a fountain with a green glowing jet */
+    vue(top, x, z, k) {
+      const basin = new T.Mesh(new T.CylinderGeometry(0.95, 1.05, 0.3, 28), roofMat(0x2a3a35)); basin.position.set(x, 0.15, z); top.add(basin);
+      const water = new T.Mesh(new T.CylinderGeometry(0.85, 0.85, 0.05, 28), new T.MeshStandardMaterial({ color: 0x0c3a2a, emissive: 0x42B883, emissiveIntensity: 0.7, roughness: 0.1 })); water.position.set(x, 0.3, z); top.add(water);
+      const jet = new T.Mesh(new T.CylinderGeometry(0.05, 0.12, 1.0, 10), new T.MeshBasicMaterial({ color: 0x9BE8C4, transparent: true, opacity: 0.7, toneMapped: false })); jet.position.set(x, 0.8, z); top.add(jet);
+      const drop = new T.Mesh(G.sphere, basic(0xC9F7E2)); drop.scale.setScalar(0.14); drop.position.set(x, 1.35, z); top.add(drop);
+      spinners.push({ m: drop, s: 0, bob: 1.35 });
+      for (let f = 0; f < 6; f++) { const a = f / 6 * Math.PI * 2; bulbSpots.push([top, x + Math.cos(a) * 1.25, 0.12, z + Math.sin(a) * 1.25, f % 2 ? 0x42B883 : 0xFFD58A]); }
+      benchSpots.push([top, x, z - 1.5, Math.PI]);
+    }
+  };
+  /* sidewalks in front of and behind each district, with lamps, string lights, benches and people */
+  /* a glowing pattern on each district's ground */
+  const GROUND = {
+    theory: (g, w, h) => { g.strokeStyle = 'rgba(126,242,195,.22)'; g.lineWidth = 2; for (let y = 0; y < h; y += 32) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); for (let x = (y / 32) % 2 ? 0 : 24; x < w; x += 48) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 32); g.stroke(); } } },
+    figma: (g, w, h) => { g.fillStyle = 'rgba(162,89,255,.55)'; for (let y = 8; y < h; y += 16) for (let x = 8; x < w; x += 16) { g.beginPath(); g.arc(x, y, 1.6, 0, Math.PI * 2); g.fill(); } },
+    basics: (g, w, h) => { g.strokeStyle = 'rgba(255,138,76,.22)'; g.lineWidth = 3; for (let y = 0; y < h; y += 64) for (let x = 0; x < w; x += 64) { g.strokeRect(x + 2, y + 2, 60, 60); g.fillStyle = 'rgba(255,138,76,.35)'; [[8, 8], [56, 8], [8, 56], [56, 56]].forEach(p => { g.beginPath(); g.arc(x + p[0], y + p[1], 2.5, 0, Math.PI * 2); g.fill(); }); } },
+    react: (g, w, h) => { const r = rng(7); g.strokeStyle = 'rgba(97,218,251,.5)'; g.fillStyle = 'rgba(97,218,251,.8)'; g.lineWidth = 2; for (let i = 0; i < 26; i++) { let x = Math.floor(r() * 16) * 16, y = Math.floor(r() * 16) * 16; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 4; k++) { if (r() < 0.5) x += (r() < 0.5 ? -1 : 1) * 32; else y += (r() < 0.5 ? -1 : 1) * 32; g.lineTo(x, y); } g.stroke(); g.beginPath(); g.arc(x, y, 3.5, 0, Math.PI * 2); g.fill(); } },
+    vue: (g, w, h) => { const r = rng(9); for (let i = 0; i < 900; i++) { g.fillStyle = 'rgba(66,184,131,' + (0.12 + r() * 0.3) + ')'; g.fillRect(r() * w, r() * h, 2, 3 + r() * 3); } }
+  };
+  const propSpots = [];
+  const PROPS = {
+    theory: r => [['cone', 0.5, 0.95, 0.5, 0x1f5c40], ['sphere', 0.5, 0.4, 0.5, 0x1f5c40]][r < 0.6 ? 0 : 1],
+    figma: r => [['box', 0.45, 0.45, 0.45, [0xF24E1E, 0xA259FF, 0x1ABCFE, 0x0ACF83, 0xFF7262][Math.floor(r * 50) % 5]], ['sphere', 0.45, 0.45, 0.45, [0xA259FF, 0x1ABCFE, 0xFF7262][Math.floor(r * 30) % 3]]][r < 0.5 ? 0 : 1],
+    basics: r => [['cyl', 0.36, 0.55, 0.36, [0x8a4a2a, 0x2a5a8a, 0x8a7a2a][Math.floor(r * 30) % 3]], ['box', 0.5, 0.4, 0.5, 0x4a3428]][r < 0.6 ? 0 : 1],
+    react: r => ['box', 0.16, 0.9, 0.16, 0x1a2a3a],
+    vue: r => [['cone', 0.5, 1.0, 0.5, 0x1f6b48], ['sphere', 0.45, 0.35, 0.45, 0x2f8a5f]][r < 0.55 ? 0 : 1]
+  };
+  function furnish(lv, D, top, free, used) {
+    free.forEach((sl, k) => (LOT[lv.key] || LOT.theory)(top, sl[0], sl[1], k));
+    // ground pattern
+    const gt = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#000'; g.fillRect(0, 0, w, h); (GROUND[lv.key] || GROUND.theory)(g, w, h); });
+    gt.wrapS = gt.wrapT = T.RepeatWrapping; gt.repeat.set(D.w / 6, D.d / 6);
+    const ground = new T.Mesh(G.plane, new T.MeshBasicMaterial({ map: gt, transparent: true, opacity: 0.85, blending: T.AdditiveBlending, depthWrite: false, toneMapped: false }));
+    ground.rotation.x = -Math.PI / 2; ground.scale.set(D.w - 0.1, D.d - 0.1, 1); ground.position.y = 0.006; top.add(ground);
+    // small props in the gaps between buildings, the monument and the path
+    const taken = used.concat(free).map(p => [p[0], p[1], 1.75]).concat([[0, 0, 2.9]]);
+    const placed = [];
+    for (let tries = 0; tries < 260 && placed.length < Math.round(D.w * D.d / 9); tries++) {
+      const x = (rand() - 0.5) * (D.w - 0.9), z = (rand() - 0.5) * (D.d - 0.9);
+      if (Math.abs(x) < 1.0 && z > 1.8) continue;
+      if (taken.some(p => Math.hypot(p[0] - x, p[1] - z) < p[2])) continue;
+      if (placed.some(p => Math.hypot(p[0] - x, p[1] - z) < 1.0)) continue;
+      placed.push([x, z]);
+      const pr = (PROPS[lv.key] || PROPS.theory)(rand()), sc = 0.8 + rand() * 0.5;
+      propSpots.push([top, x, z, pr[0], pr[1] * sc, pr[2] * sc, pr[3] * sc, pr[4], rand() * Math.PI]);
+      if (lv.key === 'react') bulbSpots.push([top, x, pr[2] * sc + 0.05, z, 0x61DAFB]);
+      if (lv.key === 'basics' && rand() < 0.3) bulbSpots.push([top, x, pr[2] * sc + 0.05, z, 0xFF8A4C]);
+      if (lv.key === 'vue' && rand() < 0.35) bulbSpots.push([top, x, 0.08, z + 0.35, [0xFFD58A, 0xFF93B5, 0xB9A3FF][Math.floor(rand() * 3)]]);
+    }
+    // a lit path from the front edge to the monument plaza
+    const path = new T.Mesh(G.box, new T.MeshStandardMaterial({ color: 0x1b2331, roughness: 0.7 })); path.scale.set(1.3, 0.02, D.d / 2 - 2.2); path.position.set(0, 0.01, D.d / 4 + 1.1); top.add(path);
+    for (let z = 2.6; z < D.d / 2 - 0.2; z += 0.7) [-0.75, 0.75].forEach(x => studSpots.push([top, x, z, lv.hex]));
+    [1, -1].forEach(side => {
+      const zc = side * (D.d / 2 + APRON / 2);
+      const apron = new T.Mesh(G.box, new T.MeshStandardMaterial({ color: 0x18202c, roughness: 0.8 })); apron.scale.set(D.w, 0.3, APRON); apron.position.set(D.x, 0.15, D.z + zc); scene.add(apron);
+      const edge = new T.Mesh(G.box, basic(lv.hex, { transparent: true, opacity: 0.45 })); edge.scale.set(D.w, 0.03, 0.05); edge.position.set(D.x, 0.31, D.z + zc + side * APRON / 2); scene.add(edge);
+      const lamps = [];
+      for (let x = -D.w / 2 + 0.8; x <= D.w / 2 - 0.6; x += 2.5) { lamps.push(x); lampSpots.push([D.x + x, D.z + zc + side * 0.42, lv.hex]); }
+      lamps.forEach((x, i) => { if (i % 2 === 1) benchSpots.push([scene, D.x + x - 1.25, D.z + zc - side * 0.25, side > 0 ? 0 : Math.PI, 0.3]); });
+      if (side > 0) for (let i = 0; i < lamps.length - 1; i++) {
+        const a = lamps[i], b = lamps[i + 1];
+        for (let s = 1; s < 6; s++) { const t = s / 6; bulbSpots.push([scene, D.x + a + (b - a) * t, 1.85 - Math.sin(t * Math.PI) * 0.35, D.z + zc + 0.42, [lv.hex, 0xFFD58A, 0xFF93B5][s % 3]]); }
+      }
+      const n = Math.max(3, Math.round(D.w / 3.5));
+      for (let i = 0; i < n; i++) walkers.push({ x0: D.x - D.w / 2 + 0.4, x1: D.x + D.w / 2 - 0.4, z: D.z + zc + (rand() - 0.5) * 0.5, pos: rand(), dir: rand() < 0.5 ? -1 : 1, speed: 0.025 + rand() * 0.02 });
+    });
+  }
+  /* everything repeated is instanced, so hundreds of lamps and people stay cheap */
+  function buildStreetLife() {
+    const at = (parent, x, y, z) => { const v = new T.Vector3(x, y, z); if (parent !== scene) parent.localToWorld(v); return v; };
+    scene.updateMatrixWorld(true);
+    const inst = (geo, mat, list, place) => {
+      if (!list.length) return null;
+      const m = new T.InstancedMesh(geo, mat, list.length);
+      list.forEach((it, i) => { place(it, i); dummy.updateMatrix(); m.setMatrixAt(i, dummy.matrix); });
+      scene.add(m); return m;
+    };
+    const lampCol = new T.Color();
+    const poles = inst(G.cyl, poleMat, lampSpots, it => { dummy.position.set(it[0], 0.3 + 0.8, it[1]); dummy.rotation.set(0, 0, 0); dummy.scale.set(0.045, 1.6, 0.045); });
+    const heads = inst(G.sphere, new T.MeshBasicMaterial({ toneMapped: false }), lampSpots, it => { dummy.position.set(it[0], 1.98, it[1]); dummy.scale.setScalar(0.1); });
+    if (heads) lampSpots.forEach((it, i) => heads.setColorAt(i, lampCol.set(it[2]).lerp(new T.Color(0xffffff), 0.45)));
+    const pools = inst(G.plane, new T.MeshBasicMaterial({ map: glow, transparent: true, opacity: 0.4, depthWrite: false, blending: T.AdditiveBlending, toneMapped: false }), lampSpots, it => { dummy.position.set(it[0], 0.33, it[1]); dummy.rotation.set(-Math.PI / 2, 0, 0); dummy.scale.set(2.4, 2.4, 1); });
+    if (pools) lampSpots.forEach((it, i) => pools.setColorAt(i, lampCol.set(it[2])));
+    dummy.rotation.set(0, 0, 0);
+    const bulbs = inst(G.sphere, new T.MeshBasicMaterial({ toneMapped: false }), bulbSpots, it => { const v = at(it[0], it[1], it[2], it[3]); dummy.position.copy(v); dummy.scale.setScalar(0.065); });
+    if (bulbs) bulbSpots.forEach((it, i) => bulbs.setColorAt(i, lampCol.set(it[4])));
+    const studs = inst(G.sphere, new T.MeshBasicMaterial({ toneMapped: false }), studSpots, it => { const v = at(it[0], it[1], 0.05, it[2]); dummy.position.copy(v); dummy.scale.setScalar(0.06); });
+    if (studs) studSpots.forEach((it, i) => studs.setColorAt(i, lampCol.set(it[3])));
+    const seat = inst(G.box, new T.MeshStandardMaterial({ color: 0x6b4a35, roughness: 0.8 }), benchSpots, it => { const v = at(it[0], it[1], (it[4] || 0) + 0.22, it[2]); dummy.position.copy(v); dummy.rotation.set(0, it[3], 0); dummy.scale.set(0.9, 0.08, 0.32); });
+    const back = inst(G.box, new T.MeshStandardMaterial({ color: 0x6b4a35, roughness: 0.8 }), benchSpots, it => { const v = at(it[0], it[1] - Math.sin(it[3]) * 0.14, (it[4] || 0) + 0.42, it[2] - Math.cos(it[3]) * 0.14); dummy.position.copy(v); dummy.rotation.set(0, it[3], 0); dummy.scale.set(0.9, 0.3, 0.06); });
+    dummy.rotation.set(0, 0, 0); dummy.scale.setScalar(1);
+    // props: [parent, x, z, kind, width, height, depth, color, rotY]; G.sphere/cone/cyl have radius 1, G.box is 1 wide
+    const PROP_GEO = { box: G.box, cyl: G.cyl, cone: G.cone, sphere: G.sphere };
+    Object.keys(PROP_GEO).forEach(kind => {
+      const list = propSpots.filter(p => p[3] === kind);
+      const m = inst(PROP_GEO[kind], new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6, flatShading: kind === 'cone' }), list, it => {
+        const w = kind === 'box' ? it[4] : it[4] / 2, h = kind === 'sphere' ? it[5] / 2 : it[5];
+        dummy.position.copy(at(it[0], it[1], kind === 'sphere' ? h : it[5] / 2, it[2]));
+        dummy.rotation.set(0, it[8], 0); dummy.scale.set(w, h, kind === 'box' ? it[6] : w);
+      });
+      if (m) list.forEach((it, i) => m.setColorAt(i, lampCol.set(it[7])));
+    });
+    dummy.rotation.set(0, 0, 0); dummy.scale.setScalar(1);
+    // people: a body and a head each, moved every frame
+    const PEOPLE = [0x7FD4FF, 0xFFC877, 0xFF93B5, 0x7EF2C3, 0xB9A3FF, 0xE6EDF3, 0xFF8A4C];
+    walkers.bodies = new T.InstancedMesh(G.cyl, new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 }), walkers.length);
+    walkers.headsM = new T.InstancedMesh(G.sphere, new T.MeshStandardMaterial({ color: 0xe8c9a8, roughness: 0.6 }), walkers.length);
+    walkers.forEach((w, i) => walkers.bodies.setColorAt(i, lampCol.set(PEOPLE[i % PEOPLE.length])));
+    walkers.bodies.instanceMatrix.setUsage(T.DynamicDrawUsage); walkers.headsM.instanceMatrix.setUsage(T.DynamicDrawUsage);
+    scene.add(walkers.bodies); scene.add(walkers.headsM);
+  }
+  function moveWalkers(d, t) {
+    if (!walkers.bodies) return;
+    walkers.forEach((w, i) => {
+      w.pos += w.dir * w.speed * d * 1.4;
+      if (w.pos > 1) { w.pos = 1; w.dir = -1; } else if (w.pos < 0) { w.pos = 0; w.dir = 1; }
+      const x = w.x0 + (w.x1 - w.x0) * w.pos, bob = Math.abs(Math.sin(t * 7 + i)) * 0.04;
+      dummy.rotation.set(0, 0, 0);
+      dummy.position.set(x, 0.3 + 0.17 + bob, w.z); dummy.scale.set(0.09, 0.34, 0.09); dummy.updateMatrix(); walkers.bodies.setMatrixAt(i, dummy.matrix);
+      dummy.position.set(x, 0.3 + 0.42 + bob, w.z); dummy.scale.setScalar(0.085); dummy.updateMatrix(); walkers.headsM.setMatrixAt(i, dummy.matrix);
+    });
+    walkers.bodies.instanceMatrix.needsUpdate = true; walkers.headsM.instanceMatrix.needsUpdate = true;
+  }
+
   /* build every district and its lesson buildings */
   const blds = [], hits = [], labels = [];
   const PF_COLOR = { theory: 0x0f1a16, figma: 0x14111d, basics: 0x1a1411, react: 0x0d151d, vue: 0x0e1915 };
@@ -624,11 +794,13 @@ function makeHub(el, opts) {
       hit.scale.set(2.7, h + 0.2, 2.7); hit.position.set(sl[0], (h + 0.2) / 2, sl[1]); top.add(hit);
       hit.userData = bld; hits.push(hit); blds.push(bld);
     });
+    furnish(lv, D, top, slots.free || [], slots);
     const chip = 'padding:4px 8px;background:rgba(13,16,22,.85);border:1px solid #263042;border-radius:6px;display:flex;align-items:center;gap:6px';
     const name = lv.name.toUpperCase().replace(/[&<>]/g, '');
     const div = lv.logo ? st.labelHTML('<span style="width:16px;height:16px;display:inline-flex">' + lv.logo + '</span>' + name, lv.color, chip) : st.label(name, lv.color, chip);
-    labels.push({ div, pos: new T.Vector3(D.x, 0.7, D.z + D.d / 2 + 0.4) });
+    labels.push({ div, pos: new T.Vector3(D.x, 0.7, D.z + D.d / 2 + 1.5) });
   });
+  buildStreetLife();
   /* city name signs floating over each city */
   opts.cities.forEach(c => {
     const C = CITIES[c.key]; if (!C) return;
@@ -676,10 +848,10 @@ function makeHub(el, opts) {
   [[-26, 19.5], [30.5, 92.5]].forEach(([x0, x1]) => {
     for (let x = x0 + 1.4; x < x1 - 1; x += 2.9) {
       if (STREETS.some(s => Math.abs(s - x) < 2.4)) continue;
-      spots[rand() < 0.5 ? 'ruko' : 'house'].push([x, -11.6, Math.PI]);
+      spots[rand() < 0.5 ? 'ruko' : 'house'].push([x, -12.5, Math.PI]);
     }
   });
-  const dummy = new T.Object3D(), tint = new T.Color();
+  const tint = new T.Color();
   const TINTS = [0xffffff, 0xd8e6ff, 0xffe9d6, 0xe6ffe9, 0xf1e6ff];
   const AWNING = [0xFF7262, 0x7FD4FF, 0x7EF2C3, 0xFFC877, 0xB9A3FF, 0xFF93B5];
   Object.keys(VARIANTS).forEach(k => {
@@ -819,6 +991,7 @@ function makeHub(el, opts) {
     smoke.forEach(s => { const k = (t * 0.25 * speed + s.k) % 1; s.m.position.set(s.x + k * 0.4, s.base + k * 1.6, s.z); s.m.scale.setScalar(0.12 + k * 0.3); s.m.material.opacity = 0.3 * (1 - k); });
     blinkers.forEach(k => { const on = Math.sin(t * (k.soft ? 1.6 : 3) + k.phase); k.m.visible = k.soft ? true : on > -0.2; if (k.soft) k.m.scale.setScalar(0.05 + (on + 1) * 0.012); });
     waterTex.offset.y -= d * 0.08;
+    moveWalkers(d, t);
     cars.forEach(c => {
       const u = c.userData;
       if (u.road) {
