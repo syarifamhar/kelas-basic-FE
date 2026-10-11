@@ -161,10 +161,10 @@
   /* ───────── character creator ───────── */
   var CR = null;
   var CR_ROWS = [
-    ['body', [['skin', 'swatch', 'SKIN'], ['height', 'range'], ['build', 'seg', 'build']]],
+    ['body', [['body', 'seg', 'body'], ['skin', 'swatch', 'SKIN'], ['height', 'range'], ['build', 'seg', 'build']]],
     ['face', [['eyes', 'swatch', 'EYE_COLORS'], ['hair', 'seg', 'hair'], ['hairColor', 'swatch', 'HAIR_COLORS']]],
     ['outfit', [['top', 'seg', 'top'], ['topColor', 'swatch', 'CLOTH'], ['bottom', 'seg', 'bottom'], ['bottomColor', 'swatch', 'CLOTH'], ['shoes', 'seg', 'shoes'], ['shoesColor', 'swatch', 'CLOTH']]],
-    ['extra', [['glasses', 'toggle'], ['cap', 'toggle'], ['backpack', 'toggle']]]
+    ['extra', [['beard', 'toggle'], ['glasses', 'toggle'], ['cap', 'toggle'], ['backpack', 'toggle']]]
   ];
   function creatorPanel() {
     var O = UXScenes.characterOptions, look = CR.look;
@@ -180,7 +180,7 @@
           }).join('') + '</div>';
           else if (kind === 'range') body = '<input type="range" id="crHeight" min="0.9" max="1.1" step="0.01" value="' + (look.height || 1) + '" aria-label="' + esc(t('cr.height')) + '">';
           else body = '<button type="button" class="cr-toggle' + (val ? ' is-on' : '') + '" data-ck="' + k + '" data-cv="toggle" aria-pressed="' + !!val + '"><i></i></button>';
-          return '<div class="cr-row cr-' + kind + '"><span>' + esc(t('cr.' + k)) + '</span>' + body + '</div>';
+          return '<div class="cr-row cr-' + kind + '"><span>' + esc(t(k === 'body' ? 'cr.bodyType' : 'cr.' + k)) + '</span>' + body + '</div>';
         }).join('') + '</div>';
       }).join('');
   }

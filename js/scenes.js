@@ -818,7 +818,7 @@ function makeHub(el, opts) {
     });
     dummy.rotation.set(0, 0, 0); dummy.scale.setScalar(1);
     // people: real (low-detail) humans with random looks, spread evenly over the districts
-    const max = small ? 8 : 16, every = Math.max(1, Math.ceil(walkers.length / max));
+    const max = small ? 6 : 10, every = Math.max(1, Math.ceil(walkers.length / max));
     walkers.forEach((w, i) => {
       if (i % every) return;
       w.ch = makeCharacter(T, randomLook(rand), { detail: 'low' });
@@ -1805,7 +1805,7 @@ function makeCreator(el, look) {
   const ring = new T.Mesh(new T.TorusGeometry(0.78, 0.012, 8, 96), new T.MeshBasicMaterial({ color: 0x7EF2C3, toneMapped: false })); ring.rotation.x = Math.PI / 2; ring.position.y = 0.0; scene.add(ring);
   const ch = makeCharacter(T, look); ch.group.scale.setScalar(1); scene.add(ch.group);
   const shade = () => ch.group.traverse(o => { if (o.isMesh) o.castShadow = true; });
-  shade();
+  shade(); ch.ready.then(shade);
   let spin = 0.35, view = 'full';
   st.tick = ({ dt }) => { ch.animate(dt, 0); if (!st.flight) ch.group.rotation.y += spin * dt * 0.3; };
   st.setLook = l => { ch.setLook(l); shade(); };
@@ -1813,7 +1813,7 @@ function makeCreator(el, look) {
   st.view = v => {
     view = v;
     const face = v === 'face', h = (ch.look.height || 1);
-    st.flyTo(new T.Vector3(0, face ? 1.66 * h : 0.95, 0), face ? 1.1 : 4.6, face ? 1.5 : 1.32, () => {}, 0, 600);
+    st.flyTo(new T.Vector3(0, face ? 1.5 * h : 0.95, 0), face ? 1.15 : 4.6, face ? 1.66 : 1.32, () => {}, 0, 600);
   };
   st.spin = on => { spin = on ? 0.35 : 0; if (!on) ch.group.rotation.y = 0; };
   const base = st.dispose; st.dispose = () => { ch.dispose(); base(); env.dispose(); pmrem.dispose(); };
