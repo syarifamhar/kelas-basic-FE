@@ -9,11 +9,13 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeBufferGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { makeCharacter, randomLook, DEFAULT_LOOK, OPTIONS, SKIN, HAIR_COLORS, EYE_COLORS, CLOTH } from './character.js';
+import { makeCharacter, randomLook, normLook, DEFAULT_LOOK, OPTIONS, BODY_RANGE, SKIN, HAIR_COLORS, EYE_COLORS, CLOTH } from './character.js';
 import { carGeometry, carMaterials, resetShared, treeGeometry, benchGeometry, lampPostGeometry, propGeometry, shadowTexture, townGeometry, awningGeometry, tierTrim, entranceGeometry } from './models.js';
 
 const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const BG = 0x0B0E14;
+/* people in the city: 1 world unit ≈ 3.5 m (a car is 1.3 long, a house 2.3 wide), so a 1.72 m person is 0.5 tall */
+const PSCALE = 1 / 3.5;
 // sha-labs logo gradient
 const CYAN = 0x22D3FF, VIOLET = 0x8B5CFF, MAGENTA = 0xFF3DF0;
 
@@ -84,7 +86,7 @@ function makeStage(el, o) {
     composer.addPass(bloom);
   }
   let W = 1, H = 1;
-  const st = { T, r, scene, cam, orb, el, cv, tick: null, hoverCursor: null, flight: null, onResize: null };
+  const st = { T, r, scene, cam, orb, el, cv, tick: null, hoverCursor: null, flight: null, onResize: null, bloom };
   const size = () => {
     W = el.clientWidth || 600; H = el.clientHeight || 400;
     r.setSize(W, H, false); cam.aspect = W / H; cam.updateProjectionMatrix();
@@ -261,10 +263,12 @@ function makeHub(el, opts) {
   scene.background = new T.Color(BG);
   scene.fog = new T.Fog(BG, 70, 220);
 
-  /* lights: moonlight + logo-colored fills */
-  scene.add(new T.HemisphereLight(0x46508a, 0x07080c, 0.55));
-  scene.add(new T.AmbientLight(0xffffff, 0.12));
-  const moon = new T.DirectionalLight(0xbfd4ff, 0.45); moon.position.set(-10, 30, 18); scene.add(moon);
+  /* lights: sun, moon, sky + logo-colored fills (set by the time of day, see dayNight below) */
+  const hemi = new T.HemisphereLight(0x46508a, 0x07080c, 0.55); scene.add(hemi);
+  const amb = new T.AmbientLight(0xffffff, 0.12); scene.add(amb);
+  const moon = new T.DirectionalLight(0xbfd4ff, 0.45); moon.position.set(-10, 30, 18); scene.add(moon); scene.add(moon.target);
+  const sun = new T.DirectionalLight(0xfff3e0, 0); scene.add(sun); scene.add(sun.target);
+  const nightOnly = [], bulbMats = [];
   const fillC = new T.DirectionalLight(CYAN, 0.25); fillC.position.set(-30, 10, 10); scene.add(fillC);
   const fillM = new T.DirectionalLight(MAGENTA, 0.22); fillM.position.set(30, 10, -10); scene.add(fillM);
 
@@ -313,16 +317,16 @@ function makeHub(el, opts) {
   st.orb.R = st.orb.radius;
   st.orb.target.set(CITIES[focusKey].focus[0], 1.5, CITIES[focusKey].focus[1]);
 
-  const floor = new T.Mesh(new T.PlaneGeometry(420, 300), new T.MeshStandardMaterial({ color: 0x0c1017, roughness: 0.4, metalness: 0.4 }));
+  const floor = new T.Mesh(new T.PlaneGeometry(420, 300), new T.MeshStandardMaterial({ color: 0x0c1017, roughness: 0.4, metalness: 0.4, map: tex('grass_diff.jpg', 70, 50), normalMap: tex('grass_nor.jpg', 70, 50) }));
   floor.rotation.x = -Math.PI / 2; floor.position.set(30, 0, -4); scene.add(floor);
   const grid = new T.GridHelper(360, 180, 0x1c2635, 0x141a24); grid.position.set(30, 0.012, -4); grid.material.transparent = true; grid.material.opacity = 0.45; scene.add(grid);
 
   /* city pads with a glowing border, and the river between them */
-  const cityColor = {};
+  const cityColor = {}, pads = [];
   opts.cities.forEach(c => { cityColor[c.key] = c.color; });
   ['uiux', 'frontend'].forEach(k => {
     const C = CITIES[k];
-    const pad = new T.Mesh(G.box, new T.MeshStandardMaterial({ color: 0x0f141d, roughness: 0.9 })); pad.scale.set(C.w, 0.04, C.d); pad.position.set(C.x, 0.02, C.z); scene.add(pad);
+    const pad = new T.Mesh(G.box, pavement(C.w / 3, C.d / 3)); pad.material.color.set(0x0f141d); pad.scale.set(C.w, 0.04, C.d); pad.position.set(C.x, 0.02, C.z); scene.add(pad); pads.push(pad.material);
     const e = new T.LineSegments(G.boxE, basic(cityColor[k] || CYAN, { transparent: true, opacity: 0.35 })); e.scale.copy(pad.scale); e.position.copy(pad.position); scene.add(e);
   });
   const waterTex = canvasTex(64, 256, (g, w, h) => {
@@ -405,6 +409,7 @@ function makeHub(el, opts) {
   const lampPosts = (list, bulbSize) => {
     if (!list.length) return;
     const posts = new T.InstancedMesh(MODELS.lamp, [poleMat], list.length), bulbs = new T.InstancedMesh(G.bulb, new T.MeshBasicMaterial({ toneMapped: false }), list.length), c = new T.Color();
+    bulbMats.push(bulbs.material);
     list.forEach((it, i) => {
       const sc = it[5] || 1;
       dummy.position.set(it[0], it[1], it[2]); dummy.rotation.set(0, it[3], 0); dummy.scale.setScalar(sc); dummy.updateMatrix(); posts.setMatrixAt(i, dummy.matrix);
@@ -435,7 +440,7 @@ function makeHub(el, opts) {
   const facade = (lv, w, h, bld) => {
     const set = tiles[lv], rep = tx => { const c = tx.clone(); c.needsUpdate = true; c.repeat.set(Math.max(1, w / 2.2), Math.max(1, h / 2.2)); return c; };
     const m = new T.MeshStandardMaterial({ map: rep(set.normal.map), emissive: 0xffffff, emissiveMap: rep(set.normal.emissive), emissiveIntensity: 0.9, roughness: 0.65, metalness: 0.2 });
-    bld.facades.push({ m, normalMap: m.emissiveMap, doneMap: rep(set.done.emissive) });
+    m.userData.selfGlow = true; bld.facades.push({ m, normalMap: m.emissiveMap, doneMap: rep(set.done.emissive) });
     return m;
   };
   const roofMat = c => new T.MeshStandardMaterial({ color: c, roughness: 0.8, metalness: 0.1 });
@@ -794,16 +799,16 @@ function makeHub(el, opts) {
       list.forEach((it, i) => { place(it, i); dummy.updateMatrix(); m.setMatrixAt(i, dummy.matrix); });
       scene.add(m); return m;
     };
-    const lampCol = new T.Color();
+    const lampCol = new T.Color(), bulbMat = () => { const m = new T.MeshBasicMaterial({ toneMapped: false }); bulbMats.push(m); return m; };
     lampPosts(lampSpots.map(it => [it[0], 0.3, it[1], -it[3] * Math.PI / 2, new T.Color(it[2]).lerp(new T.Color(0xffffff), 0.45).getHex(), 0.95]), 0.075);
     const pools = inst(G.plane, new T.MeshBasicMaterial({ map: glow, transparent: true, opacity: 0.4, depthWrite: false, blending: T.AdditiveBlending, toneMapped: false }), lampSpots, it => { dummy.position.set(it[0], 0.33, it[1] + it[3] * 0.4); dummy.rotation.set(-Math.PI / 2, 0, 0); dummy.scale.set(2.4, 2.4, 1); });
-    if (pools) lampSpots.forEach((it, i) => pools.setColorAt(i, lampCol.set(it[2])));
+    if (pools) { lampSpots.forEach((it, i) => pools.setColorAt(i, lampCol.set(it[2]))); nightOnly.push([pools.material, 'opacity', 0.4]); }
     dummy.rotation.set(0, 0, 0);
-    const bulbs = inst(G.bulb, new T.MeshBasicMaterial({ toneMapped: false }), bulbSpots, it => { const v = at(it[0], it[1], it[2], it[3]); dummy.position.copy(v); dummy.scale.setScalar(0.065); });
+    const bulbs = inst(G.bulb, bulbMat(), bulbSpots, it => { const v = at(it[0], it[1], it[2], it[3]); dummy.position.copy(v); dummy.scale.setScalar(0.065); });
     if (bulbs) bulbSpots.forEach((it, i) => bulbs.setColorAt(i, lampCol.set(it[4])));
-    const studs = inst(G.bulb, new T.MeshBasicMaterial({ toneMapped: false }), studSpots, it => { const v = at(it[0], it[1], 0.05, it[2]); dummy.position.copy(v); dummy.scale.setScalar(0.06); });
+    const studs = inst(G.bulb, bulbMat(), studSpots, it => { const v = at(it[0], it[1], 0.05, it[2]); dummy.position.copy(v); dummy.scale.setScalar(0.06); });
     if (studs) studSpots.forEach((it, i) => studs.setColorAt(i, lampCol.set(it[3])));
-    inst(MODELS.bench, [new T.MeshStandardMaterial({ color: 0x8a5a3a, roughness: 0.7 }), new T.MeshStandardMaterial({ color: 0x2a3344, roughness: 0.4, metalness: 0.6 })], benchSpots, it => { const v = at(it[0], it[1], it[4] || 0, it[2]); dummy.position.copy(v); dummy.rotation.set(0, it[3], 0); dummy.scale.setScalar(1); });
+    inst(MODELS.bench, [new T.MeshStandardMaterial({ color: 0x8a5a3a, roughness: 0.7 }), new T.MeshStandardMaterial({ color: 0x2a3344, roughness: 0.4, metalness: 0.6 })], benchSpots, it => { const v = at(it[0], it[1], it[4] || 0, it[2]); dummy.position.copy(v); dummy.rotation.set(0, it[3], 0); dummy.scale.setScalar(0.6); });
     dummy.rotation.set(0, 0, 0); dummy.scale.setScalar(1);
     // props: [parent, x, z, kind, width, height, depth, color, rotY]; G.sphere/cone/cyl have radius 1, G.box is 1 wide
     ['box', 'cyl', 'cone', 'sphere'].forEach(kind => {
@@ -822,7 +827,7 @@ function makeHub(el, opts) {
     walkers.forEach((w, i) => {
       if (i % every) return;
       w.ch = makeCharacter(T, randomLook(rand), { detail: 'low' });
-      w.ch.group.scale.setScalar(0.5); scene.add(w.ch.group); addShadow(w.ch.group, 0.75, 0.75);
+      w.ch.group.scale.setScalar(PSCALE); scene.add(w.ch.group); addShadow(w.ch.group, 1.6, 1.6);
       w.face = w.dir > 0 ? Math.PI / 2 : -Math.PI / 2; w.wait = 0;
     });
     walkers.ready = true;
@@ -839,7 +844,7 @@ function makeHub(el, opts) {
       let v = 0;
       w.wait -= d;
       if (w.wait <= 0) {
-        w.pos += w.dir * w.speed * d * 1.4; v = w.speed * 1.4 * Math.abs(w.x1 - w.x0);
+        w.pos += w.dir * w.speed * d * 0.7; v = w.speed * 0.7 * Math.abs(w.x1 - w.x0);
         if (w.pos > 1 || w.pos < 0) { w.pos = Math.min(1, Math.max(0, w.pos)); w.dir *= -1; w.wait = 0.5 + Math.random() * 1.2; }
         else if (Math.random() < d * 0.05) w.wait = 1.5 + Math.random() * 3;
       }
@@ -848,16 +853,17 @@ function makeHub(el, opts) {
       w.face += df * Math.min(1, d * 4);
       w.ch.group.position.set(w.x0 + (w.x1 - w.x0) * w.pos, 0.3, w.z);
       w.ch.group.rotation.y = w.face;
-      if (near) w.ch.animate(d, Math.abs(df) > 0.4 ? 0.25 : v / 1.6);
+      if (near) w.ch.animate(d, Math.abs(df) > 0.4 ? 0.25 : Math.min(1.3, v / 0.42));
     });
   }
 
   /* build every district and its lesson buildings */
   const blds = [], hits = [], labels = [];
-  const PF_COLOR = { theory: 0x0f1a16, figma: 0x14111d, basics: 0x1a1411, react: 0x0d151d, vue: 0x0e1915 };
+  const PF_COLOR = { theory: 0x0f1a16, figma: 0x14111d, basics: 0x1a1411, react: 0x0d151d, vue: 0x0e1915 }, plinths = [];
   opts.levels.forEach(lv => {
     const D = DISTRICTS[lv.key]; if (!D) return;
     const pf = new T.Mesh(G.box, new T.MeshStandardMaterial({ color: PF_COLOR[lv.key] || 0x121722, roughness: 0.85 })); pf.scale.set(D.w, 0.6, D.d); pf.position.set(D.x, 0.3, D.z); scene.add(pf);
+    plinths.push({ m: pf.material, night: new T.Color(PF_COLOR[lv.key] || 0x121722), day: new T.Color(PF_COLOR[lv.key] || 0x121722).lerp(new T.Color(0x8e949c), 0.7) });
     const pe = new T.LineSegments(G.boxE, new T.LineBasicMaterial({ color: lv.hex, transparent: true, opacity: 0.6 })); pe.scale.copy(pf.scale); pe.position.copy(pf.position); scene.add(pe);
     const top = new T.Group(); top.position.set(D.x, 0.6, D.z); scene.add(top);
     if (DECOR[lv.key]) DECOR[lv.key](top, D);
@@ -1084,7 +1090,8 @@ function makeHub(el, opts) {
       const col = k ? 0x61DAFB : MAGENTA;
       const spot = new T.SpotLight(col, 2.2, 30, 0.32, 0.6, 1.2); g.add(spot); g.add(spot.target); spot.target.position.set(0, -10, 0);
       const coneGeo = new T.ConeGeometry(2.6, 10, 24, 1, true); coneGeo.translate(0, -5, 0);
-      g.add(new T.Mesh(coneGeo, new T.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.07, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide, toneMapped: false })));
+      const cone = new T.Mesh(coneGeo, new T.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.07, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide, toneMapped: false }));
+      g.add(cone); nightOnly.push([spot, 'intensity', 2.2], [cone.material, 'opacity', 0.07]);
     }
     scene.add(g); drones.push({ g, cx: d[0], r: d[1], y: d[2], s: d[3], a: k * 2.1 });
   });
@@ -1097,7 +1104,8 @@ function makeHub(el, opts) {
     const c = pal[i % 3]; col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b; vel[i] = 0.15 + rand() * 0.45;
   }
   const pgeo = new T.BufferGeometry(); pgeo.setAttribute('position', new T.BufferAttribute(pos, 3)); pgeo.setAttribute('color', new T.BufferAttribute(col, 3));
-  scene.add(new T.Points(pgeo, new T.PointsMaterial({ size: 0.22, map: glow, vertexColors: true, transparent: true, opacity: 0.8, depthWrite: false, blending: T.AdditiveBlending, toneMapped: false })));
+  const motes = new T.PointsMaterial({ size: 0.22, map: glow, vertexColors: true, transparent: true, opacity: 0.8, depthWrite: false, blending: T.AdditiveBlending, toneMapped: false });
+  scene.add(new T.Points(pgeo, motes)); nightOnly.push([motes, 'opacity', 0.8, 0.15]);
 
   /* hover tooltip */
   const tip = st.label('', '#E6EDF3', 'display:none;letter-spacing:0;padding:8px 12px;background:#1A2130;border:1px solid #263042;border-radius:8px;font:500 13px "IBM Plex Sans",sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.4)');
@@ -1125,7 +1133,7 @@ function makeHub(el, opts) {
       const isH = hov && hov.userData === b;
       b.lift += ((isH ? 0.35 : 0) - b.lift) * 0.15; b.group.position.y = b.lift;
       b.glow += ((b.done ? 1 : 0) - b.glow) * 0.06;
-      const ei = 0.42 + b.glow * 1.1 + (isH ? 0.5 : 0);
+      const ei = (0.42 + b.glow * 1.1) * glowK + (isH ? 0.5 : 0);
       b.facades.forEach(f => { f.m.emissiveIntensity = ei; });
       b.edges.forEach(m => { m.opacity = 0.45 + b.glow * 0.5 + (isH ? 0.3 : 0); });
       b.pillar.material.opacity = b.glow * (0.32 + Math.sin(t * 2 + b.x) * 0.08);
@@ -1145,7 +1153,7 @@ function makeHub(el, opts) {
     guides.forEach((g, i) => {
       let df = g.faceT - g.face; while (df > Math.PI) df -= Math.PI * 2; while (df < -Math.PI) df += Math.PI * 2;
       g.face += df * Math.min(1, dt * 5); g.ch.group.rotation.y = g.face;
-      g.ch.animate(dt, Math.abs(df) > 0.3 ? 0.2 : 0); g.mark.position.y = 1.6 + Math.sin(t * 3 + i) * 0.1;
+      g.ch.animate(dt, Math.abs(df) > 0.3 ? 0.2 : 0); g.mark.position.y = 1.05 + Math.sin(t * 3 + i) * 0.06;
     });
     if (quest) { beacon.position.set(quest.x, quest.top + 2.6 + Math.sin(t * 4) * 0.25, quest.z); beacon.rotation.y += dt * 2; beaconRing.scale.setScalar(1 + Math.sin(t * 3) * 0.06); }
     if (ex) exploreTick(dt, t);
@@ -1201,7 +1209,7 @@ function makeHub(el, opts) {
     return false;
   };
   const onBridge = z => Math.abs(z - 11) < 1.25 || Math.abs(z + 19) < 1.25;
-  const blocked = (x, z) => x < -62 || x > 126 || z < -48 || z > 38 || (x > RIVER.x0 - 0.2 && x < RIVER.x1 + 0.2 && !onBridge(z)) || hitsObstacle(x, z, 0.28);
+  const blocked = (x, z) => x < -62 || x > 126 || z < -48 || z > 38 || (x > RIVER.x0 - 0.2 && x < RIVER.x1 + 0.2 && !onBridge(z)) || hitsObstacle(x, z, 0.16);
   const hwPts = highway.pts;
   function groundY(x, z) {
     for (const lv of opts.levels) {
@@ -1227,11 +1235,11 @@ function makeHub(el, opts) {
     const D = DISTRICTS[lv.key]; if (!D) return;
     const look = Object.assign(randomLook(rng(500 + i)), { topColor: CLOTH.indexOf(lv.color.toUpperCase()) >= 0 ? CLOTH.indexOf(lv.color.toUpperCase()) : 3, glasses: true, backpack: false, cap: false });
     const c = makeCharacter(T, look, { detail: 'low' });
-    c.group.scale.setScalar(0.5); c.group.position.set(D.x + 1.5, 0.3, D.z + D.d / 2 + 0.65); c.group.rotation.y = 0;
-    scene.add(c.group); addShadow(c.group, 0.75, 0.75);
+    c.group.scale.setScalar(PSCALE); c.group.position.set(D.x + 1.5, 0.3, D.z + D.d / 2 + 0.65); c.group.rotation.y = 0;
+    scene.add(c.group); addShadow(c.group, 1.6, 1.6);
     const mark = new T.Sprite(new T.SpriteMaterial({ map: signTex('!', lv.color), toneMapped: false, transparent: true, depthWrite: false }));
-    mark.scale.set(0.9, 0.34, 1); mark.position.set(D.x + 1.5, 1.6, D.z + D.d / 2 + 0.65); scene.add(mark);
-    addObst(D.x + 1.5, D.z + D.d / 2 + 0.65, 0.3);
+    mark.scale.set(0.6, 0.23, 1); mark.position.set(D.x + 1.5, 1.05, D.z + D.d / 2 + 0.65); scene.add(mark);
+    addObst(D.x + 1.5, D.z + D.d / 2 + 0.65, 0.2);
     guides.push({ key: lv.key, ch: c, mark, x: D.x + 1.5, z: D.z + D.d / 2 + 0.65, color: lv.color, face: 0, faceT: 0 });
   });
 
@@ -1261,15 +1269,15 @@ function makeHub(el, opts) {
   st.explore = o => {
     if (ex) st.leaveExplore();
     const ch = makeCharacter(T, o.look);
-    ch.group.scale.setScalar(0.5); scene.add(ch.group); addShadow(ch.group, 0.8, 0.8);
-    const light = new T.PointLight(0xfff1dd, 1.4, 7, 1.6); scene.add(light);
-    const ring = new T.Mesh(new T.RingGeometry(0.3, 0.38, 32), basic(0x7EF2C3, { transparent: true, opacity: 0.8, side: T.DoubleSide })); ring.rotation.x = -Math.PI / 2; scene.add(ring);
+    ch.group.scale.setScalar(PSCALE); scene.add(ch.group); addShadow(ch.group, 1.7, 1.7);
+    const light = new T.PointLight(0xfff1dd, 1.2, 5, 1.6); scene.add(light);
+    const ring = new T.Mesh(new T.RingGeometry(0.17, 0.215, 32), basic(0x7EF2C3, { transparent: true, opacity: 0.8, side: T.DoubleSide })); ring.rotation.x = -Math.PI / 2; scene.add(ring);
     const p = o.pos && !blocked(o.pos[0], o.pos[1]) ? o.pos : [-12.5, 4.9];
-    ex = { opts: o, ch, light, ring, x: p[0], z: p[1], y: groundY(p[0], p[1]), face: o.pos && o.pos[2] != null ? o.pos[2] : Math.PI, speed: 0, joy: [0, 0], target: null, near: null, where: {}, saveT: 1.5, mapT: 1, R: 9, bigmap: false };
+    ex = { opts: o, ch, light, ring, x: p[0], z: p[1], y: groundY(p[0], p[1]), face: o.pos && o.pos[2] != null ? o.pos[2] : Math.PI, speed: 0, joy: [0, 0], target: null, near: null, where: {}, saveT: 1.5, mapT: 1, R: 5.5, bigmap: false };
     ch.group.position.set(ex.x, ex.y, ex.z);
     st.orb.auto = 0;
     window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
-    st.flyTo(new T.Vector3(ex.x, ex.y + 0.8, ex.z), ex.R, 1.12, () => {}, 0, 900);
+    st.flyTo(new T.Vector3(ex.x, ex.y + 0.45, ex.z), ex.R, 1.12, () => {}, 0, 900);
     ch.wave();
   };
   const savePos = () => { if (ex && ex.opts.onMove) ex.opts.onMove([+ex.x.toFixed(2), +ex.z.toFixed(2), +ex.face.toFixed(2)]); };
@@ -1284,7 +1292,7 @@ function makeHub(el, opts) {
   };
   st.setLook = l => { if (ex) ex.ch.setLook(l); };
   st.setJoystick = (x, y) => { if (ex) { ex.joy = [x, y]; if (x || y) ex.target = null; } };
-  st.zoom = dz => { if (ex) ex.R = Math.max(4.5, Math.min(24, ex.R + dz)); };
+  st.zoom = dz => { if (ex) ex.R = Math.max(2.2, Math.min(20, ex.R + dz * 0.6)); };
   st.showBigMap = on => { if (ex) ex.bigmap = on; };
   st.interact = () => {
     if (!ex || !ex.near || busy) return;
@@ -1314,7 +1322,8 @@ function makeHub(el, opts) {
     if (e.target && !ix && !iy) { mx = e.target[0] - e.x; mz = e.target[1] - e.z; if (Math.hypot(mx, mz) < 0.25) e.target = null; }
     const len = Math.hypot(mx, mz);
     const run = keys.shift || Math.hypot(e.joy[0], e.joy[1]) > 0.92;
-    const want = len > 0.05 ? (run ? 4.6 : 2.3) : 0;
+    // about a jog (3.5 m/s) and a sprint (7.7 m/s): quick enough to cross town, and the legs match the ground
+    const want = len > 0.05 ? (run ? 2.2 : 1) : 0;
     e.speed += (want - e.speed) * Math.min(1, dt * 10);
     if (len > 0.05) {
       mx /= len; mz /= len;
@@ -1328,9 +1337,20 @@ function makeHub(el, opts) {
     }
     e.y += (groundY(e.x, e.z) - e.y) * Math.min(1, dt * 12);
     e.ch.group.position.set(e.x, e.y, e.z); e.ch.group.rotation.y = e.face;
-    e.ch.animate(dt, e.speed / 2.3);
-    e.light.position.set(e.x, e.y + 2.2, e.z + 0.4); e.ring.position.set(e.x, e.y + 0.03, e.z);
-    if (!st.flight && !busy) { st.orb.target.lerp(tmpP.set(e.x, e.y + 0.75, e.z), Math.min(1, dt * 6)); st.orb.radius = e.R; }
+    e.ch.animate(dt, e.speed <= 1 ? e.speed * 1.6 : 1.6 + (e.speed - 1) / 3);
+    e.light.position.set(e.x, e.y + 1.3, e.z + 0.3); e.light.intensity = 1.2 * (0.15 + 0.85 * nightK); e.ring.position.set(e.x, e.y + 0.03, e.z);
+    if (!st.flight && !busy) {
+      st.orb.target.lerp(tmpP.set(e.x, e.y + 0.42, e.z), Math.min(1, dt * 6));
+      // keep the camera out of buildings: pull it in front of the first one between it and the player
+      const sp = Math.sin(st.orb.phi), dx = Math.sin(st.orb.theta), dz = Math.cos(st.orb.theta);
+      let free = e.R;
+      for (let d = 0.6; d < e.R; d += 0.25) {
+        const h = e.y + 0.42 + Math.cos(st.orb.phi) * d;
+        if (h < 3.5 && hitsObstacle(e.x + dx * sp * d, e.z + dz * sp * d, 0.15)) { free = Math.max(1.4, d - 0.35); break; }
+      }
+      e.camR = (e.camR || e.R) + (free - (e.camR || e.R)) * Math.min(1, dt * (free < (e.camR || e.R) ? 12 : 3));
+      st.orb.radius = e.camR; if (st.orb.R > e.camR) st.orb.R = e.camR;
+    }
     // what is close enough to interact with?
     let near = null, best = 1e9;
     blds.forEach(b => { const d = Math.hypot(b.x - e.x, b.z - e.z) - 1.3; if (d < 1.3 && d < best) { best = d; near = { type: 'lesson', id: b.id }; } });
@@ -1377,6 +1397,85 @@ function makeHub(el, opts) {
     }
   }
   st.drawBigMap = cv => drawMap(cv, 31, -4, 0, true);
+
+  /* ───── day and night ─────
+     The hour runs from 0 to 24: the sun rises at 6 and sets at 18, the moon takes over at night.
+     Sky, fog, lights and the ground follow it; at dusk windows, street lamps and neon come on.
+     Modes: 'auto' (a day passes in about 8 minutes, starting from the real local time), 'day', 'night'. */
+  const SKY_V = 'varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }';
+  const SKY_F = [
+    'uniform vec3 top; uniform vec3 horizon; uniform vec3 discDir; uniform vec3 discCol; uniform float discSize; uniform float stars; varying vec3 vDir;',
+    'void main(){',
+    '  vec3 d = normalize(vDir); float h = d.y;',
+    '  vec3 c = mix(horizon, top, pow(clamp(h, 0.0, 1.0), 0.5));',
+    '  c = mix(c, horizon * 0.55, clamp(-h * 5.0, 0.0, 1.0));',
+    '  float s = max(dot(d, discDir), 0.0);',
+    '  c += discCol * (smoothstep(1.0 - discSize, 1.0 - discSize * 0.6, s) * 3.0 + pow(s, 10.0) * 0.28);',
+    '  if (stars > 0.01 && h > 0.0) { vec3 q = floor(d * 220.0); float n = fract(sin(dot(q, vec3(12.9898, 78.233, 37.719))) * 43758.5453); c += vec3(step(0.9972, n)) * stars * (0.4 + 0.6 * h); }',
+    '  gl_FragColor = vec4(c, 1.0);',
+    '}'
+  ].join('\n');
+  const skyU = { top: { value: new T.Color() }, horizon: { value: new T.Color() }, discDir: { value: new T.Vector3(0, 1, 0) }, discCol: { value: new T.Color() }, discSize: { value: 0.0015 }, stars: { value: 0 } };
+  const sky = new T.Mesh(new T.SphereGeometry(360, 32, 16), new T.ShaderMaterial({ uniforms: skyU, vertexShader: SKY_V, fragmentShader: SKY_F, side: T.BackSide, depthWrite: false, fog: false }));
+  sky.renderOrder = -1; sky.frustumCulled = false; scene.add(sky);
+  const C3 = h => new T.Color(h), lerpC = (a, b, k) => a.clone().lerp(b, k);
+  const PAL = {
+    topN: C3(0x050913), topD: C3(0x3f7fd8), horN: C3(0x0d1222), horD: C3(0xbcd7f2), horDusk: C3(0xf39a62),
+    sunD: C3(0xfff1dc), sunDusk: C3(0xff9a55), hemiN: C3(0x46508a), hemiD: C3(0xb9d4ff), gndN: C3(0x07080c), gndD: C3(0x5f5644),
+    floorN: C3(0x0c1017), floorD: C3(0x5f7f4c), padN: C3(0x0f141d), padD: C3(0x8a9097), waterN: C3(0x06202e), waterD: C3(0x2b6f99)
+  };
+  const CENTER = new T.Vector3(31, 0, -4);
+  let glowK = 1, nightK = 1, hour = 21, mode = opts.time || 'auto', glowList = [], glowScan = 0;
+  if (mode === 'auto') { const now = new Date(); hour = now.getHours() + now.getMinutes() / 60; } else hour = mode === 'day' ? 13 : 22;
+  const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  // every material that glows (windows, neon, water, leaves …) is dimmed by day; scanned again now and then as models load
+  const scanGlow = () => {
+    const seen = new Set(glowList.map(g => g.m));
+    scene.traverse(o => { (Array.isArray(o.material) ? o.material : o.material ? [o.material] : []).forEach(m => { if (!seen.has(m) && m.emissiveIntensity > 0 && m.emissive && m.emissive.getHex() && !m.userData.selfGlow) { seen.add(m); glowList.push({ m, base: m.emissiveIntensity }); } }); });
+  };
+  function applyTime() {
+    const th = (hour - 6) / 12 * Math.PI, e = Math.sin(th);                 // sun height: 1 at noon, -1 at midnight
+    const day = smooth(-0.12, 0.28, e), dusk = (1 - smooth(0.05, 0.4, Math.abs(e))) * smooth(-0.25, 0.05, e);
+    nightK = 1 - day; glowK = 0.22 + 0.78 * smooth(-0.05, 0.3, -e + 0.25);
+    const sunDir = new T.Vector3(-Math.cos(th), e, 0.35).normalize();
+    sun.position.copy(CENTER).addScaledVector(sunDir, 80); sun.target.position.copy(CENTER);
+    sun.color.copy(lerpC(PAL.sunD, PAL.sunDusk, dusk)); sun.intensity = 1.0 * day;
+    const moonDir = sunDir.clone().negate(); moonDir.y = Math.max(0.35, moonDir.y);
+    moon.position.copy(CENTER).addScaledVector(moonDir, 80); moon.target.position.copy(CENTER); moon.intensity = 0.45 * nightK;
+    hemi.color.copy(lerpC(PAL.hemiN, PAL.hemiD, day)); hemi.groundColor.copy(lerpC(PAL.gndN, PAL.gndD, day)); hemi.intensity = 0.55 + 0.15 * day;
+    amb.intensity = 0.12 + 0.08 * day;
+    fillC.intensity = 0.25 * (0.15 + 0.85 * nightK); fillM.intensity = 0.22 * (0.15 + 0.85 * nightK);
+    const horizon = lerpC(lerpC(PAL.horN, PAL.horD, day), PAL.horDusk, dusk * 0.85);
+    skyU.top.value.copy(lerpC(PAL.topN, PAL.topD, day)); skyU.horizon.value.copy(horizon); skyU.stars.value = smooth(0.4, 1, nightK);
+    if (e > -0.1) { skyU.discDir.value.copy(sunDir); skyU.discCol.value.copy(sun.color).multiplyScalar(day); skyU.discSize.value = 0.0012; }
+    else { skyU.discDir.value.copy(moonDir); skyU.discCol.value.set(0xdfe8ff).multiplyScalar(0.55 * nightK); skyU.discSize.value = 0.0009; }
+    scene.background.copy(horizon); scene.fog.color.copy(horizon); scene.fog.near = 70 + 30 * day; scene.fog.far = 220 + 100 * day;
+    const fm = floor.material; fm.color.copy(lerpC(PAL.floorN, PAL.floorD, day)); fm.roughness = 0.4 + 0.55 * day; fm.metalness = 0.4 * nightK;
+    grid.material.opacity = 0.06 + 0.39 * nightK;
+    pads.forEach(m => m.color.copy(lerpC(PAL.padN, PAL.padD, day)));
+    plinths.forEach(p => p.m.color.copy(lerpC(p.night, p.day, day)));
+    water.material.color.copy(lerpC(PAL.waterN, PAL.waterD, day));
+    nightOnly.forEach(([o, key, base, min]) => { o[key] = base * ((min || 0) + (1 - (min || 0)) * nightK); });
+    bulbMats.forEach(m => m.color.setScalar(0.55 + 0.45 * glowK));
+    glowList.forEach(g => { g.m.emissiveIntensity = g.base * glowK; });
+    if (st.bloom) { st.bloom.strength = 0.25 + 0.55 * nightK; st.bloom.threshold = 0.55 + 0.35 * day; }
+  }
+  const baseTick = st.tick;
+  st.tick = clock => {
+    if (mode === 'auto') hour = (hour + clock.dt * 0.05 * speed) % 24;           // 24 h in 8 minutes
+    else hour += ((mode === 'day' ? 13 : 22) - hour) * Math.min(1, clock.dt * 1.5);
+    if ((glowScan -= clock.dt) <= 0) { glowScan = 2; scanGlow(); }
+    applyTime();
+    sky.position.copy(cam.position);
+    baseTick(clock);
+  };
+  /* 'auto' | 'day' | 'night' */
+  st.setTime = m => {
+    if (mode !== 'auto' && m === 'auto') { const now = new Date(); hour = now.getHours() + now.getMinutes() / 60; }
+    mode = m;
+  };
+  st.timeOfDay = () => hour;
+  scanGlow(); applyTime();
   const baseDispose = st.dispose;
   st.dispose = () => {
     if (ex) { savePos(); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); ex.ch.dispose(); ex = null; }
@@ -1812,13 +1911,13 @@ function makeCreator(el, look) {
   st.wave = () => ch.wave();
   st.view = v => {
     view = v;
-    const face = v === 'face', h = (ch.look.height || 1);
-    st.flyTo(new T.Vector3(0, face ? 1.5 * h : 0.95, 0), face ? 1.15 : 4.6, face ? 1.66 : 1.32, () => {}, 0, 600);
+    const face = v === 'face', h = (ch.look.height || 172) / 100;
+    st.flyTo(new T.Vector3(0, face ? 0.88 * h : 0.55 * h, 0), face ? 1.15 : 2.6 + 1.1 * h, face ? 1.66 : 1.32, () => {}, 0, 600);
   };
   st.spin = on => { spin = on ? 0.35 : 0; if (!on) ch.group.rotation.y = 0; };
   const base = st.dispose; st.dispose = () => { ch.dispose(); base(); env.dispose(); pmrem.dispose(); };
   return st;
 }
 
-window.UXScenes = { makeHub, makeFlow, makeExplain, makeBox, makeStack, makeCreator, characterOptions: { OPTIONS, SKIN, HAIR_COLORS, EYE_COLORS, CLOTH, DEFAULT_LOOK, randomLook } };
+window.UXScenes = { makeHub, makeFlow, makeExplain, makeBox, makeStack, makeCreator, characterOptions: { OPTIONS, BODY_RANGE, SKIN, HAIR_COLORS, EYE_COLORS, CLOTH, DEFAULT_LOOK, randomLook, normLook } };
 window.dispatchEvent(new Event('uxscenes:ready'));

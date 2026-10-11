@@ -161,7 +161,7 @@
   /* ───────── character creator ───────── */
   var CR = null;
   var CR_ROWS = [
-    ['body', [['body', 'seg', 'body'], ['skin', 'swatch', 'SKIN'], ['height', 'range'], ['build', 'seg', 'build']]],
+    ['body', [['body', 'seg', 'body'], ['skin', 'swatch', 'SKIN'], ['height', 'range', 'cm'], ['weight', 'range', 'kg']]],
     ['face', [['eyes', 'swatch', 'EYE_COLORS'], ['hair', 'seg', 'hair'], ['hairColor', 'swatch', 'HAIR_COLORS']]],
     ['outfit', [['top', 'seg', 'top'], ['topColor', 'swatch', 'CLOTH'], ['bottom', 'seg', 'bottom'], ['bottomColor', 'swatch', 'CLOTH'], ['shoes', 'seg', 'shoes'], ['shoesColor', 'swatch', 'CLOTH']]],
     ['extra', [['beard', 'toggle'], ['glasses', 'toggle'], ['cap', 'toggle'], ['backpack', 'toggle']]]
@@ -175,10 +175,10 @@
           if (kind === 'swatch') body = '<div class="cr-sw" role="group" aria-label="' + esc(t('cr.' + k)) + '">' + O[r[2]].map(function (c, i) {
             return '<button type="button" data-ck="' + k + '" data-cv="' + i + '" class="' + (val === i ? 'is-on' : '') + '" aria-pressed="' + (val === i) + '" style="--c:' + c + '" title="' + c + '"></button>';
           }).join('') + '</div>';
-          else if (kind === 'seg') body = '<div class="seg">' + O.OPTIONS[r[2]].map(function (o) {
+          else if (kind === 'seg') body = '<div class="seg">' + (k === 'hair' ? O.OPTIONS.hairFor[look.body] || O.OPTIONS.hair : O.OPTIONS[r[2]]).map(function (o) {
             return '<button type="button" data-ck="' + k + '" data-cv="' + o + '" class="' + (val === o ? 'is-on' : '') + '" aria-pressed="' + (val === o) + '">' + esc(t('opt.' + o)) + '</button>';
           }).join('') + '</div>';
-          else if (kind === 'range') body = '<input type="range" id="crHeight" min="0.9" max="1.1" step="0.01" value="' + (look.height || 1) + '" aria-label="' + esc(t('cr.height')) + '">';
+          else if (kind === 'range') body = '<div class="cr-range"><input type="range" data-crr="' + k + '" min="' + O.BODY_RANGE[k][0] + '" max="' + O.BODY_RANGE[k][1] + '" step="1" value="' + val + '" aria-label="' + esc(t('cr.' + k)) + '"><output id="crv-' + k + '">' + val + ' ' + r[2] + '</output></div>';
           else body = '<button type="button" class="cr-toggle' + (val ? ' is-on' : '') + '" data-ck="' + k + '" data-cv="toggle" aria-pressed="' + !!val + '"><i></i></button>';
           return '<div class="cr-row cr-' + kind + '"><span>' + esc(t(k === 'body' ? 'cr.bodyType' : 'cr.' + k)) + '</span>' + body + '</div>';
         }).join('') + '</div>';
@@ -201,7 +201,7 @@
     whenScenes(function () {
       if (S.view !== 'create') return;
       var O = UXScenes.characterOptions;
-      if (!CR) CR = { look: Object.assign({}, O.DEFAULT_LOOK, UXGame.avatar() || {}), spin: true };
+      if (!CR) CR = { look: O.normLook(UXGame.avatar() || {}), spin: true };
       document.getElementById('crPanel').innerHTML = creatorPanel();
       sc = UXScenes.makeCreator(document.getElementById('cr3d'), CR.look);
     });
@@ -210,6 +210,9 @@
     if (v === 'toggle') CR.look[k] = !CR.look[k];
     else CR.look[k] = /^\d+$/.test(v) ? +v : v;
     if (k === 'hair' && v === 'hijab') CR.look.cap = false;
+    // each body type has its own hairstyles; switching keeps the style if both have it
+    var hf = UXScenes.characterOptions.OPTIONS.hairFor;
+    if (k === 'body' && hf[v] && hf[v].indexOf(CR.look.hair) < 0) CR.look.hair = hf[v][0];
     if (sc && sc.setLook) sc.setLook(CR.look);
     var keep = document.getElementById('crPanel').scrollTop;
     document.getElementById('crPanel').innerHTML = creatorPanel();
@@ -398,6 +401,7 @@
         '<section class="world" data-focus="' + focus + '"><div class="world-canvas" id="hub3d"></div>' +
           '<div class="world-legend">' + chips + '</div>' +
           '<div class="world-switch" role="group" aria-label="' + esc(t('hub.focus.label')) + '">' + switcher + '</div>' +
+          '<button type="button" class="world-time" data-act="time" id="worldTime">' + timeLabel() + '</button>' +
           '<div class="world-hint">' + esc(t('hub.hint')) + '</div>' +
           '<div class="world-play"><button type="button" class="btn-play" data-act="explore">' + esc(t('game.explore')) + '</button>' +
             (UXGame.avatar() ? '<button type="button" class="btn-code" data-act="editchar">' + esc(t('game.edit')) + '</button>' : '') + '</div>' +
@@ -414,12 +418,23 @@
         levels: LEVELS.map(function (lv) { return Object.assign({ name: levelName(lv.key) }, lv); }),
         cities: PROVINCES.map(function (p) { return { key: p.key, color: p.hex, name: (t('prov.' + p.key + '.name') + ' · ' + t('prov.' + p.key + '.kind')).toUpperCase() }; }),
         onOpen: open,
+        time: timeMode(),
         doneText: t('hub.tip.done'),
         focus: focus
       });
       hub.refresh(S.done);
       if (UXGame.exploring() && UXGame.avatar()) startExplore();
     });
+  }
+  /* time of day in the 3D world: auto (a day passes in a few minutes), always day, or always night */
+  var TIME_MODES = ['auto', 'day', 'night'], TIME_ICON = { auto: '◐', day: '☀', night: '☾' };
+  function timeMode() { try { var m = localStorage.getItem('uxlab.time'); return TIME_MODES.indexOf(m) >= 0 ? m : 'auto'; } catch (e) { return 'auto'; } }
+  function timeLabel() { var m = timeMode(); return '<span aria-hidden="true">' + TIME_ICON[m] + '</span> ' + esc(t('time.' + m)); }
+  function cycleTime() {
+    var m = TIME_MODES[(TIME_MODES.indexOf(timeMode()) + 1) % TIME_MODES.length];
+    try { localStorage.setItem('uxlab.time', m); } catch (e) { /* private mode: just for this visit */ }
+    if (hub && hub.setTime) hub.setTime(m);
+    var b = document.getElementById('worldTime'); if (b) { b.innerHTML = timeLabel(); b.title = t('time.label'); }
   }
   function focusWorld(k) {
     setFocus(k);
@@ -614,6 +629,7 @@
     switch (el.getAttribute('data-act')) {
       case 'hub': e.preventDefault(); return goHub();
       case 'explore': return startExplore();
+      case 'time': return cycleTime();
       case 'editchar': location.hash = '#/create'; return;
       case 'code':
         S.showCode = !S.showCode;
@@ -632,7 +648,14 @@
 
   document.addEventListener('input', function (e) {
     var el = e.target;
-    if (el.id === 'crHeight' && CR) { CR.look.height = parseFloat(el.value); if (sc && sc.setLook) sc.setLook(CR.look); return; }
+    if (el.hasAttribute && el.hasAttribute('data-crr') && CR) {
+      var key = el.getAttribute('data-crr');
+      CR.look[key] = parseInt(el.value, 10);
+      document.getElementById('crv-' + key).textContent = el.value + (key === 'height' ? ' cm' : ' kg');
+      // rebuilding the body takes a moment, so wait until the slider rests
+      clearTimeout(CR.rangeT); CR.rangeT = setTimeout(function () { if (sc && sc.setLook) sc.setLook(CR.look); }, 90);
+      return;
+    }
     if (el.id === 'crName' && CR) { CR.look.name = el.value; return; }
     if (el.hasAttribute && el.hasAttribute('data-range')) {
       var i = +el.getAttribute('data-range'), c = cur().controls[i], v = parseFloat(el.value);

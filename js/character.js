@@ -9,7 +9,7 @@
    - long hair is skinned to both the head and the chest, so it never cuts through the shoulders. */
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { loadPeople, buildPerson } from './people.js';
+import { loadPeople, buildPerson, HAIR_FOR } from './people.js';
 
 export const SKIN = ['#FDE7D6', '#F6D2B8', '#EBB894', '#D79F72', '#B97E52', '#94603D', '#6E452B', '#4B2E1E'];
 export const HAIR_COLORS = ['#1B1512', '#3B2416', '#6A4024', '#9C5B2E', '#D9A55B', '#E8D7A8', '#9AA3AD', '#E85D9A', '#5B7CFF', '#7EF2C3'];
@@ -17,23 +17,27 @@ export const EYE_COLORS = ['#3B2416', '#6A4024', '#7A6A2A', '#3E7A4A', '#3A6EA8'
 export const CLOTH = ['#E6EDF3', '#1A2130', '#2C3E66', '#7EF2C3', '#B9A3FF', '#FFC877', '#7FD4FF', '#FF93B5', '#E04E4E', '#4E7A3A', '#8A5A3A', '#F2E3C6', '#3A3F47', '#E8742E'];
 export const OPTIONS = {
   body: ['male', 'female'],
-  hair: ['short', 'buzz', 'long', 'bun', 'hijab', 'bald'],
+  hair: HAIR_FOR.male.concat(HAIR_FOR.female.filter(h => HAIR_FOR.male.indexOf(h) < 0)),
+  hairFor: HAIR_FOR,
   top: ['tshirt', 'hoodie', 'shirt', 'batik', 'jacket', 'sweater'],
   bottom: ['jeans', 'chinos', 'shorts', 'skirt', 'joggers'],
-  shoes: ['sneakers', 'boots', 'sandals', 'loafers'],
-  build: ['slim', 'regular', 'broad']
+  shoes: ['sneakers', 'boots', 'sandals', 'loafers']
 };
+/* height in cm and weight in kg, within these ranges */
+export const BODY_RANGE = { height: [145, 205], weight: [40, 140] };
 export const DEFAULT_LOOK = {
-  name: '', body: 'male', skin: 2, hair: 'short', hairColor: 0, eyes: 0, height: 1, build: 'regular', beard: false,
+  name: '', body: 'male', skin: 2, hair: 'short', hairColor: 0, eyes: 0, height: 172, weight: 68, beard: false,
   top: 'hoodie', topColor: 3, bottom: 'jeans', bottomColor: 2, shoes: 'sneakers', shoesColor: 0,
   glasses: false, cap: false, backpack: true
 };
 export function randomLook(r = Math.random) {
   const pick = a => a[Math.floor(r() * a.length)];
-  const top = pick(OPTIONS.top), hair = pick(OPTIONS.hair), body = pick(OPTIONS.body);
+  const top = pick(OPTIONS.top), body = pick(OPTIONS.body), hair = pick(HAIR_FOR[body]);
+  // realistic spread: average height by body type, weight around a healthy BMI with some heavier people
+  const height = Math.round((body === 'female' ? 158 : 168) + r() * 16), bmi = 18.5 + r() * 8 + (r() < 0.2 ? r() * 9 : 0);
   return {
-    name: '', body, beard: body === 'male' && hair !== 'hijab' && r() < 0.3, skin: Math.floor(r() * SKIN.length), hair, hairColor: Math.floor(r() * (r() < 0.8 ? 6 : HAIR_COLORS.length)), eyes: Math.floor(r() * EYE_COLORS.length),
-    height: 0.94 + r() * 0.12, build: pick(OPTIONS.build), top, topColor: Math.floor(r() * CLOTH.length), bottom: pick(OPTIONS.bottom), bottomColor: Math.floor(r() * CLOTH.length),
+    name: '', body, beard: body === 'male' && r() < 0.3, skin: Math.floor(r() * SKIN.length), hair, hairColor: Math.floor(r() * (r() < 0.8 ? 6 : HAIR_COLORS.length)), eyes: Math.floor(r() * EYE_COLORS.length),
+    height, weight: Math.round(bmi * height * height / 1e4), top, topColor: Math.floor(r() * CLOTH.length), bottom: pick(OPTIONS.bottom), bottomColor: Math.floor(r() * CLOTH.length),
     shoes: pick(OPTIONS.shoes), shoesColor: Math.floor(r() * CLOTH.length), glasses: r() < 0.3, cap: hair !== 'hijab' && r() < 0.18, backpack: r() < 0.4
   };
 }
@@ -764,12 +768,23 @@ function makeProcedural(T, lookIn, opts = {}) {
 }
 
 /* older saved characters may use hair styles that no longer exist */
-const LEGACY_HAIR = { curly: 'short', ponytail: 'long' };
-const normLook = l => {
+export function normLook(l) {
   const o = Object.assign({}, DEFAULT_LOOK, l || {});
-  if (LEGACY_HAIR[o.hair]) o.hair = LEGACY_HAIR[o.hair];
   if (OPTIONS.body.indexOf(o.body) < 0) o.body = 'male';
+  if (l && !l.body && HAIR_FOR.female.indexOf(o.hair) >= 0 && HAIR_FOR.male.indexOf(o.hair) < 0) o.body = 'female';
+  if (OPTIONS.hair.indexOf(o.hair) < 0) o.hair = o.body === 'female' ? 'long' : 'short';
+  // older saves: height was a 0.9–1.1 factor and build slim / regular / broad
+  if (!(o.height > 3)) o.height = Math.round(172 * (o.height || 1));
+  if (l && l.weight == null && l.build) o.weight = Math.round({ slim: 19.5, regular: 22.5, broad: 26 }[l.build] * o.height * o.height / 1e4) || o.weight;
+  o.height = clamp(o.height, BODY_RANGE.height[0], BODY_RANGE.height[1]); o.weight = clamp(o.weight, BODY_RANGE.weight[0], BODY_RANGE.weight[1]);
+  delete o.build;
   return o;
+}
+/* the procedural stand-in only knows a few styles and a 0.9–1.1 height factor */
+const PROC_HAIR = { slick: 'short', undercut: 'short', quiff: 'short', curly: 'curly', afro: 'curly', mohawk: 'buzz', manbun: 'bun', bob: 'long', topknot: 'bun', wavy: 'long', braid: 'ponytail', pixie: 'short', curls: 'long' };
+const procLook = l => {
+  const bmi = l.weight / (l.height * l.height / 1e4);
+  return Object.assign({}, l, { height: l.height / 172, build: bmi < 20.5 ? 'slim' : bmi > 25 ? 'broad' : 'regular', hair: PROC_HAIR[l.hair] || l.hair });
 };
 const colorsOf = l => ({
   skin: SKIN[l.skin] || SKIN[2], hair: HAIR_COLORS[l.hairColor] || HAIR_COLORS[0], eyes: EYE_COLORS[l.eyes] || EYE_COLORS[0],
@@ -781,7 +796,7 @@ const colorsOf = l => ({
 export function makeCharacter(T, lookIn, opts = {}) {
   const group = new T.Group();
   let look = normLook(lookIn), proc = null, person = null, A = null, dead = false;
-  const showProc = () => { proc = makeProcedural(T, look, opts); group.add(proc.group); };
+  const showProc = () => { proc = makeProcedural(T, procLook(look), opts); group.add(proc.group); };
   const usePerson = () => {
     if (proc) { group.remove(proc.group); proc.dispose(); proc = null; }
     if (person) { group.remove(person.root); person.dispose(); }
@@ -792,7 +807,7 @@ export function makeCharacter(T, lookIn, opts = {}) {
   return {
     group, ready,
     get look() { return look; },
-    setLook(l) { look = normLook(l); if (A) usePerson(); else if (proc) proc.setLook(look); },
+    setLook(l) { look = normLook(l); if (A) usePerson(); else if (proc) proc.setLook(procLook(look)); },
     wave() { const c = person || proc; if (c) c.wave(); },
     animate(dt, speed) { const c = person || proc; if (c) c.animate(dt, speed); },
     dispose() { dead = true; if (proc) proc.dispose(); if (person) person.dispose(); }

@@ -87,5 +87,5 @@ Add the city to `PROVINCES` and its districts to `LEVELS` in `js/app.js`, list t
 
 - `assets/3d/` (cars, houses, shops, towers): [Kenney](https://kenney.nl) Car Kit, City Kit Suburban and City Kit Commercial, CC0. Loaded in the background with `GLTFLoader`; if they fail to load, the procedural town and cars are used instead.
 - `assets/3d/people/` (bodies, hairstyles, animations): [Quaternius](https://quaternius.com) Universal Base Characters and Universal Animation Library (standard, CC0), repacked as GLB with 512–1024 px textures and only the clips we use. `js/people.js` tints skin, hair and eyes, grows the clothes out of the body mesh (so they follow every animation) and adds hijab, skirt, glasses, cap and backpack. Until they load, or if they fail to, `js/character.js` shows the procedural character.
-- `assets/textures/` (asphalt, pavement): [Poly Haven](https://polyhaven.com) `asphalt_02` and `concrete_pavement_02`, CC0, resized to 512 px.
+- `assets/textures/` (asphalt, pavement, grass, fabrics for the clothes): [Poly Haven](https://polyhaven.com) `asphalt_02`, `concrete_pavement_02`, `aerial_grass_rock` and eight fabric sets (denim, cotton jersey, melange, knitted fleece, poplin, leather, white leather, suede), CC0, resized to 512 px; the fabrics are made greyscale so any colour can be picked. See `assets/textures/LICENSE.txt`.
 
