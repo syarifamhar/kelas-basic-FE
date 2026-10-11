@@ -6,6 +6,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { Reflector } from 'three/addons/objects/Reflector.js';
+import { makeCharacter, randomLook, DEFAULT_LOOK, OPTIONS, SKIN, HAIR_COLORS, EYE_COLORS, CLOTH } from './character.js';
 
 const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const BG = 0x0B0E14;
@@ -226,7 +227,9 @@ function makeHub(el, opts) {
     bloom: { strength: 0.8, radius: 0.45, threshold: 0.55 },
     onHover: n => hover(n),
     onClick: n => {
-      const b = pick(n); if (!b || busy) return;
+      const b = pick(n);
+      if (!b) { if (st.walkTo) st.walkTo(n); return; }
+      if (busy) return;
       busy = true; hover(null);
       const u = b.userData;
       st.flyTo(new T.Vector3(u.x, u.top * 0.55, u.z), 12 + u.top * 0.6, 1.08, () => opts.onOpen(u.id));
@@ -337,7 +340,7 @@ function makeHub(el, opts) {
         addGlow(scene, bulb.position.x, ly + 0.1, bulb.position.z, 2.6, odd ? MAGENTA : CYAN, 0.32);
       }
     }
-    return { curve, length: curve.getLength() };
+    return { curve, length: curve.getLength(), pts };
   }
   const highway = loopRoad(new T.CatmullRomCurve3(LOOP.map(p => new T.Vector3(p[0], p[1], p[2])), true, 'centripetal'), 2.7, 760, [[1, CYAN], [-1, MAGENTA]], 22);
   const rings = Object.keys(RINGS).map(k => {
@@ -603,7 +606,7 @@ function makeHub(el, opts) {
 
   /* ───── street life inside each district: sidewalks, lamps, string lights, benches, people,
      and themed decorations in the empty lots ───── */
-  const lampSpots = [], benchSpots = [], bulbSpots = [], studSpots = [], walkers = [];
+  const lampSpots = [], benchSpots = [], bulbSpots = [], studSpots = [], walkers = [], lotSpots = [];
   const APRON = 1.3;
   const LOT = {
     /* Principia: an obelisk in a small garden with benches and a hedge ring */
@@ -673,7 +676,7 @@ function makeHub(el, opts) {
     vue: r => [['cone', 0.5, 1.0, 0.5, 0x1f6b48], ['sphere', 0.45, 0.35, 0.45, 0x2f8a5f]][r < 0.55 ? 0 : 1]
   };
   function furnish(lv, D, top, free, used) {
-    free.forEach((sl, k) => (LOT[lv.key] || LOT.theory)(top, sl[0], sl[1], k));
+    free.forEach((sl, k) => { (LOT[lv.key] || LOT.theory)(top, sl[0], sl[1], k); lotSpots.push([D.x + sl[0], D.z + sl[1]]); });
     // ground pattern
     const gt = canvasTex(256, 256, (g, w, h) => { g.fillStyle = '#000'; g.fillRect(0, 0, w, h); (GROUND[lv.key] || GROUND.theory)(g, w, h); });
     gt.wrapS = gt.wrapT = T.RepeatWrapping; gt.repeat.set(D.w / 6, D.d / 6);
@@ -748,25 +751,25 @@ function makeHub(el, opts) {
       if (m) list.forEach((it, i) => m.setColorAt(i, lampCol.set(it[7])));
     });
     dummy.rotation.set(0, 0, 0); dummy.scale.setScalar(1);
-    // people: a body and a head each, moved every frame
-    const PEOPLE = [0x7FD4FF, 0xFFC877, 0xFF93B5, 0x7EF2C3, 0xB9A3FF, 0xE6EDF3, 0xFF8A4C];
-    walkers.bodies = new T.InstancedMesh(G.cyl, new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 }), walkers.length);
-    walkers.headsM = new T.InstancedMesh(G.sphere, new T.MeshStandardMaterial({ color: 0xe8c9a8, roughness: 0.6 }), walkers.length);
-    walkers.forEach((w, i) => walkers.bodies.setColorAt(i, lampCol.set(PEOPLE[i % PEOPLE.length])));
-    walkers.bodies.instanceMatrix.setUsage(T.DynamicDrawUsage); walkers.headsM.instanceMatrix.setUsage(T.DynamicDrawUsage);
-    scene.add(walkers.bodies); scene.add(walkers.headsM);
-  }
-  function moveWalkers(d, t) {
-    if (!walkers.bodies) return;
+    // people: real (low-detail) humans with random looks, spread evenly over the districts
+    const max = small ? 14 : 30, every = Math.max(1, Math.ceil(walkers.length / max));
     walkers.forEach((w, i) => {
+      if (i % every) return;
+      w.ch = makeCharacter(T, randomLook(rand), { detail: 'low' });
+      w.ch.group.scale.setScalar(0.5); scene.add(w.ch.group);
+    });
+    walkers.ready = true;
+  }
+  function moveWalkers(d) {
+    if (!walkers.ready) return;
+    walkers.forEach(w => {
+      if (!w.ch) return;
       w.pos += w.dir * w.speed * d * 1.4;
       if (w.pos > 1) { w.pos = 1; w.dir = -1; } else if (w.pos < 0) { w.pos = 0; w.dir = 1; }
-      const x = w.x0 + (w.x1 - w.x0) * w.pos, bob = Math.abs(Math.sin(t * 7 + i)) * 0.04;
-      dummy.rotation.set(0, 0, 0);
-      dummy.position.set(x, 0.3 + 0.17 + bob, w.z); dummy.scale.set(0.09, 0.34, 0.09); dummy.updateMatrix(); walkers.bodies.setMatrixAt(i, dummy.matrix);
-      dummy.position.set(x, 0.3 + 0.42 + bob, w.z); dummy.scale.setScalar(0.085); dummy.updateMatrix(); walkers.headsM.setMatrixAt(i, dummy.matrix);
+      w.ch.group.position.set(w.x0 + (w.x1 - w.x0) * w.pos, 0.3, w.z);
+      w.ch.group.rotation.y = w.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+      w.ch.animate(d, d > 0 ? 0.75 : 0);
     });
-    walkers.bodies.instanceMatrix.needsUpdate = true; walkers.headsM.instanceMatrix.needsUpdate = true;
   }
 
   /* build every district and its lesson buildings */
@@ -991,7 +994,10 @@ function makeHub(el, opts) {
     smoke.forEach(s => { const k = (t * 0.25 * speed + s.k) % 1; s.m.position.set(s.x + k * 0.4, s.base + k * 1.6, s.z); s.m.scale.setScalar(0.12 + k * 0.3); s.m.material.opacity = 0.3 * (1 - k); });
     blinkers.forEach(k => { const on = Math.sin(t * (k.soft ? 1.6 : 3) + k.phase); k.m.visible = k.soft ? true : on > -0.2; if (k.soft) k.m.scale.setScalar(0.05 + (on + 1) * 0.012); });
     waterTex.offset.y -= d * 0.08;
-    moveWalkers(d, t);
+    moveWalkers(d);
+    guides.forEach((g, i) => { g.ch.animate(dt, 0); g.mark.position.y = 1.6 + Math.sin(t * 3 + i) * 0.1; });
+    if (quest) { beacon.position.set(quest.x, quest.top + 2.6 + Math.sin(t * 4) * 0.25, quest.z); beacon.rotation.y += dt * 2; beaconRing.scale.setScalar(1 + Math.sin(t * 3) * 0.06); }
+    if (ex) exploreTick(dt, t);
     cars.forEach(c => {
       const u = c.userData;
       if (u.road) {
@@ -1018,6 +1024,210 @@ function makeHub(el, opts) {
     });
     if (hov) { const u = hov.userData, q = st.project(new T.Vector3(u.x, u.top + u.lift + 0.3, u.z)); tip.style.transform = 'translate(' + q.x + 'px,' + q.y + 'px) translate(-50%,-110%)'; }
   };
+  /* ───────── explore mode: walk your own character around the world ─────────
+     st.explore({ look, pos, minimap, bigmap, onNear, onLocation, onGuide, onMove }) · st.leaveExplore()
+     st.setLook(look) · st.setQuest(lessonId) · st.setJoystick(x, y) · st.interact() · st.zoom(delta) · st.showBigMap(on) */
+  const OBST = new Map(), CELL = 4;
+  const addObst = (x, z, r) => { const k = Math.floor(x / CELL) + ',' + Math.floor(z / CELL); (OBST.get(k) || OBST.set(k, []).get(k)).push([x, z, r]); };
+  const MONUMENT_R = { theory: 2.25, figma: 1.5, basics: 1.8, react: 0.9, vue: 1.9 };
+  blds.forEach(b => addObst(b.x, b.z, 1.3));
+  opts.levels.forEach(lv => { const D = DISTRICTS[lv.key]; if (D) addObst(D.x, D.z, MONUMENT_R[lv.key] || 1.5); });
+  lotSpots.forEach(p => addObst(p[0], p[1], 1.15));
+  const TOWN_R = { house: 1.0, house2: 1.1, ruko: 1.45, apt: 1.3, tower: 1.2 };
+  Object.keys(spots).forEach(k => spots[k].forEach(p => addObst(p[0], p[1], TOWN_R[k] || 1.1)));
+  treeSpots.forEach(p => addObst(p[0], p[1], 0.3));
+  const hitsObstacle = (x, z, r) => {
+    const cx = Math.floor(x / CELL), cz = Math.floor(z / CELL);
+    for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) {
+      const list = OBST.get((cx + i) + ',' + (cz + j)); if (!list) continue;
+      for (const o of list) if ((o[0] - x) * (o[0] - x) + (o[1] - z) * (o[1] - z) < (o[2] + r) * (o[2] + r)) return true;
+    }
+    return false;
+  };
+  const onBridge = z => Math.abs(z - 11) < 1.25 || Math.abs(z + 19) < 1.25;
+  const blocked = (x, z) => x < -62 || x > 126 || z < -48 || z > 38 || (x > RIVER.x0 - 0.2 && x < RIVER.x1 + 0.2 && !onBridge(z)) || hitsObstacle(x, z, 0.28);
+  const hwPts = highway.pts;
+  function groundY(x, z) {
+    for (const lv of opts.levels) {
+      const D = DISTRICTS[lv.key]; if (!D || Math.abs(x - D.x) > D.w / 2) continue;
+      const dz = Math.abs(z - D.z);
+      if (dz <= D.d / 2) return 0.6;
+      if (dz <= D.d / 2 + APRON) return 0.3;
+    }
+    if (x > 17 && x < 33 && onBridge(z)) { let best = 1e9, y = 0; for (const p of hwPts) { const d2 = (p.x - x) * (p.x - x) + (p.z - z) * (p.z - z); if (d2 < best) { best = d2; y = p.y; } } return y + 0.05; }
+    return 0.02;
+  }
+  function whereIs(x, z) {
+    let district = null, city = null;
+    opts.levels.forEach(lv => { const D = DISTRICTS[lv.key]; if (D && Math.abs(x - D.x) <= D.w / 2 && Math.abs(z - D.z) <= D.d / 2 + APRON) district = lv.key; });
+    ['uiux', 'frontend'].forEach(k => { const C = CITIES[k]; if (Math.abs(x - C.x) <= C.w / 2 + 3 && Math.abs(z - C.z) <= C.d / 2 + 3) city = k; });
+    if (district) city = (opts.levels.filter(l => l.key === district)[0] || {}).province || city;
+    return { city, district };
+  }
+
+  /* guides: one friendly NPC at the entrance of each district */
+  const guides = [];
+  opts.levels.forEach((lv, i) => {
+    const D = DISTRICTS[lv.key]; if (!D) return;
+    const look = Object.assign(randomLook(rng(500 + i)), { topColor: CLOTH.indexOf(lv.color.toUpperCase()) >= 0 ? CLOTH.indexOf(lv.color.toUpperCase()) : 3, glasses: true, backpack: false, cap: false });
+    const c = makeCharacter(T, look, { detail: small ? 'low' : 'full' });
+    c.group.scale.setScalar(0.5); c.group.position.set(D.x + 1.5, 0.3, D.z + D.d / 2 + 0.65); c.group.rotation.y = 0;
+    scene.add(c.group);
+    const mark = new T.Sprite(new T.SpriteMaterial({ map: signTex('!', lv.color), toneMapped: false, transparent: true, depthWrite: false }));
+    mark.scale.set(0.9, 0.34, 1); mark.position.set(D.x + 1.5, 1.6, D.z + D.d / 2 + 0.65); scene.add(mark);
+    addObst(D.x + 1.5, D.z + D.d / 2 + 0.65, 0.3);
+    guides.push({ key: lv.key, ch: c, mark, x: D.x + 1.5, z: D.z + D.d / 2 + 0.65, color: lv.color });
+  });
+
+  /* quest beacon: a bouncing arrow over the building of the current mission */
+  const beacon = new T.Group(); beacon.visible = false; scene.add(beacon);
+  const arrowM = new T.Mesh(new T.ConeGeometry(0.45, 0.9, 4), basic(0xFFC877)); arrowM.rotation.x = Math.PI; beacon.add(arrowM);
+  const beaconRing = new T.Mesh(new T.TorusGeometry(1.7, 0.05, 8, 48), basic(0xFFC877, { transparent: true, opacity: 0.8 })); beaconRing.rotation.x = Math.PI / 2; scene.add(beaconRing); beaconRing.visible = false;
+  let questId = null, quest = null;
+  st.setQuest = id => {
+    questId = id; quest = blds.filter(b => b.id === id)[0] || null;
+    beacon.visible = beaconRing.visible = !!quest;
+    if (quest) beaconRing.position.set(quest.x, 0.65, quest.z);
+  };
+
+  /* the player */
+  let ex = null;
+  const keys = {};
+  const typing = e => /input|textarea|select/i.test((e.target && e.target.tagName) || '');
+  const onKey = down => e => {
+    if (!ex || typing(e)) return;
+    const k = e.key.toLowerCase();
+    if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'shift'].indexOf(k) >= 0) { keys[k] = down; if (k.indexOf('arrow') === 0) e.preventDefault(); }
+    if (down && (k === 'e' || k === 'enter')) { e.preventDefault(); st.interact(); }
+    if (down && k === 'm' && ex.opts.onToggleMap) ex.opts.onToggleMap();
+  };
+  const kd = onKey(true), ku = onKey(false);
+  st.explore = o => {
+    if (ex) st.leaveExplore();
+    const ch = makeCharacter(T, o.look);
+    ch.group.scale.setScalar(0.5); scene.add(ch.group);
+    const light = new T.PointLight(0xfff1dd, 1.4, 7, 1.6); scene.add(light);
+    const ring = new T.Mesh(new T.RingGeometry(0.3, 0.38, 32), basic(0x7EF2C3, { transparent: true, opacity: 0.8, side: T.DoubleSide })); ring.rotation.x = -Math.PI / 2; scene.add(ring);
+    const p = o.pos && !blocked(o.pos[0], o.pos[1]) ? o.pos : [-12.5, 4.9];
+    ex = { opts: o, ch, light, ring, x: p[0], z: p[1], y: groundY(p[0], p[1]), face: o.pos && o.pos[2] != null ? o.pos[2] : Math.PI, speed: 0, joy: [0, 0], target: null, near: null, where: {}, saveT: 1.5, mapT: 1, R: 9, bigmap: false };
+    ch.group.position.set(ex.x, ex.y, ex.z);
+    st.orb.auto = 0;
+    window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
+    st.flyTo(new T.Vector3(ex.x, ex.y + 0.8, ex.z), ex.R, 1.12, () => {}, 0, 900);
+    ch.wave();
+  };
+  const savePos = () => { if (ex && ex.opts.onMove) ex.opts.onMove([+ex.x.toFixed(2), +ex.z.toFixed(2), +ex.face.toFixed(2)]); };
+  st.leaveExplore = () => {
+    if (!ex) return;
+    savePos();
+    window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku);
+    scene.remove(ex.ch.group); scene.remove(ex.light); scene.remove(ex.ring); ex.ch.dispose(); ex.ring.geometry.dispose(); ex.ring.material.dispose();
+    ex = null; Object.keys(keys).forEach(k => { keys[k] = false; });
+    st.orb.auto = REDUCED ? 0 : 0.0007;
+    st.focus(focusKey);
+  };
+  st.setLook = l => { if (ex) ex.ch.setLook(l); };
+  st.setJoystick = (x, y) => { if (ex) { ex.joy = [x, y]; if (x || y) ex.target = null; } };
+  st.zoom = dz => { if (ex) ex.R = Math.max(4.5, Math.min(24, ex.R + dz)); };
+  st.showBigMap = on => { if (ex) ex.bigmap = on; };
+  st.interact = () => {
+    if (!ex || !ex.near || busy) return;
+    const n = ex.near;
+    if (n.type === 'lesson') {
+      const b = blds.filter(x => x.id === n.id)[0]; busy = true;
+      st.flyTo(new T.Vector3(b.x, b.top * 0.55, b.z), 9 + b.top * 0.4, 1.05, () => opts.onOpen(b.id));
+    } else if (n.type === 'guide') {
+      const g = guides.filter(x => x.key === n.key)[0];
+      g.ch.wave(); g.ch.group.rotation.y = Math.atan2(ex.x - g.x, ex.z - g.z);
+      if (ex.opts.onGuide) ex.opts.onGuide(n.key);
+    }
+  };
+  el.addEventListener('wheel', e => { if (!ex) return; e.preventDefault(); st.zoom(e.deltaY * 0.01); }, { passive: false });
+
+  /* tap or click on the ground to walk there */
+  const groundRay = new T.Raycaster(), groundPlane = new T.Plane(new T.Vector3(0, 1, 0), -0.3), hitP = new T.Vector3();
+  st.walkTo = n => { if (!ex) return false; groundRay.setFromCamera(n, cam); if (groundRay.ray.intersectPlane(groundPlane, hitP)) { ex.target = [hitP.x, hitP.z]; return true; } return false; };
+
+  function exploreTick(dt, t) {
+    const e = ex;
+    // input → a direction relative to the camera
+    let ix = (keys.d || keys.arrowright ? 1 : 0) - (keys.a || keys.arrowleft ? 1 : 0) + e.joy[0];
+    let iy = (keys.w || keys.arrowup ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0) - e.joy[1];
+    const th = st.orb.theta, fx = -Math.sin(th), fz = -Math.cos(th), rx = -fz, rz = fx;
+    let mx = fx * iy + rx * ix, mz = fz * iy + rz * ix;
+    if (e.target && !ix && !iy) { mx = e.target[0] - e.x; mz = e.target[1] - e.z; if (Math.hypot(mx, mz) < 0.25) e.target = null; }
+    const len = Math.hypot(mx, mz);
+    const run = keys.shift || Math.hypot(e.joy[0], e.joy[1]) > 0.92;
+    const want = len > 0.05 ? (run ? 5.4 : 3.1) : 0;
+    e.speed += (want - e.speed) * Math.min(1, dt * 10);
+    if (len > 0.05) {
+      mx /= len; mz /= len;
+      const step = e.speed * dt, nx = e.x + mx * step, nz = e.z + mz * step;
+      if (!blocked(nx, nz)) { e.x = nx; e.z = nz; }
+      else if (!blocked(nx, e.z)) e.x = nx;
+      else if (!blocked(e.x, nz)) e.z = nz;
+      else e.target = null;
+      const face = Math.atan2(mx, mz); let df = face - e.face; while (df > Math.PI) df -= Math.PI * 2; while (df < -Math.PI) df += Math.PI * 2;
+      e.face += df * Math.min(1, dt * 12);
+    }
+    e.y += (groundY(e.x, e.z) - e.y) * Math.min(1, dt * 12);
+    e.ch.group.position.set(e.x, e.y, e.z); e.ch.group.rotation.y = e.face;
+    e.ch.animate(dt, e.speed / 3.1);
+    e.light.position.set(e.x, e.y + 2.2, e.z + 0.4); e.ring.position.set(e.x, e.y + 0.03, e.z);
+    if (!st.flight && !busy) { st.orb.target.lerp(tmpP.set(e.x, e.y + 0.75, e.z), Math.min(1, dt * 6)); st.orb.radius = e.R; }
+    // what is close enough to interact with?
+    let near = null, best = 1e9;
+    blds.forEach(b => { const d = Math.hypot(b.x - e.x, b.z - e.z) - 1.3; if (d < 1.3 && d < best) { best = d; near = { type: 'lesson', id: b.id }; } });
+    guides.forEach(g => { const d = Math.hypot(g.x - e.x, g.z - e.z); if (d < 1.6 && d - 0.3 < best) { best = d - 0.3; near = { type: 'guide', key: g.key }; } });
+    const nk = near ? near.type + near.id + near.key : '', ok = e.near ? e.near.type + e.near.id + e.near.key : '';
+    if (nk !== ok) { e.near = near; if (e.opts.onNear) e.opts.onNear(near); }
+    const w = whereIs(e.x, e.z);
+    if (w.city !== e.where.city || w.district !== e.where.district) { e.where = w; if (e.opts.onLocation) e.opts.onLocation(w.city, w.district); }
+    e.saveT += dt; if (e.saveT > 1.5 && e.opts.onMove) { e.saveT = 0; e.opts.onMove([+e.x.toFixed(2), +e.z.toFixed(2), +e.face.toFixed(2)]); }
+    e.mapT += dt; if (e.mapT > 0.08) { e.mapT = 0; if (e.opts.minimap) drawMap(e.opts.minimap, e.x, e.z, 3.2, false); if (e.bigmap && e.opts.bigmap) drawMap(e.opts.bigmap, 31, -4, 0, true); }
+  }
+
+  /* the map: north-up, roads, river, districts, lesson buildings, guides, the mission and you */
+  const roadLines = [highway.pts.filter((_, i) => i % 6 === 0)].concat(rings.map(r => r.pts.filter((_, i) => i % 6 === 0)));
+  function drawMap(cv, cx, cz, scale, big) {
+    const g = cv.getContext('2d'), W = cv.width, H = cv.height;
+    if (big) scale = Math.min(W / 150, H / 70);
+    const X = x => W / 2 + (x - cx) * scale, Y = z => H / 2 + (z - cz) * scale, dpr = W / (cv.clientWidth || W);
+    g.clearRect(0, 0, W, H); g.fillStyle = '#0b0e14'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#0f3047'; g.fillRect(X(RIVER.x0), 0, (RIVER.x1 - RIVER.x0) * scale, H);
+    ['uiux', 'frontend'].forEach(k => { const C = CITIES[k]; g.fillStyle = '#121a26'; g.fillRect(X(C.x - C.w / 2), Y(C.z - C.d / 2), C.w * scale, C.d * scale); });
+    g.strokeStyle = '#36435c'; g.lineCap = 'round'; g.lineJoin = 'round';
+    roadLines.forEach((pts, i) => { g.lineWidth = Math.max(1.5 * dpr, (i ? 1.6 : 2.6) * scale); g.beginPath(); pts.forEach((p, k) => k ? g.lineTo(X(p.x), Y(p.z)) : g.moveTo(X(p.x), Y(p.z))); g.closePath(); g.stroke(); });
+    g.lineWidth = Math.max(1.2 * dpr, 2 * scale); STREETS.forEach(x => { g.beginPath(); g.moveTo(X(x), Y(-19)); g.lineTo(X(x), Y(11)); g.stroke(); });
+    opts.levels.forEach(lv => {
+      const D = DISTRICTS[lv.key]; if (!D) return;
+      g.fillStyle = lv.color + '33'; g.strokeStyle = lv.color; g.lineWidth = 1.5 * dpr;
+      g.fillRect(X(D.x - D.w / 2), Y(D.z - D.d / 2), D.w * scale, D.d * scale); g.strokeRect(X(D.x - D.w / 2), Y(D.z - D.d / 2), D.w * scale, D.d * scale);
+      if (big) { g.fillStyle = lv.color; g.font = '600 ' + Math.round(11 * dpr) + 'px "JetBrains Mono", monospace'; g.textAlign = 'center'; g.fillText(lv.name.toUpperCase(), X(D.x), Y(D.z + D.d / 2) + 16 * dpr); }
+    });
+    if (big) opts.cities.forEach(c => { const C = CITIES[c.key]; g.fillStyle = '#E6EDF3'; g.font = '700 ' + Math.round(13 * dpr) + 'px "Space Grotesk", sans-serif'; g.textAlign = 'center'; g.fillText(c.name, X(C.x), Y(C.z - C.d / 2) - 8 * dpr); });
+    blds.forEach(b => { g.beginPath(); g.arc(X(b.x), Y(b.z), Math.max(2.2 * dpr, 0.9 * scale), 0, Math.PI * 2); if (b.done) { g.fillStyle = b.color; g.fill(); } else { g.strokeStyle = b.color; g.lineWidth = 1.4 * dpr; g.stroke(); } });
+    guides.forEach(gd => { g.fillStyle = '#FFC877'; g.beginPath(); g.arc(X(gd.x), Y(gd.z), 3.2 * dpr, 0, Math.PI * 2); g.fill(); g.fillStyle = '#0b0e14'; g.font = '700 ' + Math.round(8 * dpr) + 'px sans-serif'; g.textAlign = 'center'; g.fillText('!', X(gd.x), Y(gd.z) + 3 * dpr); });
+    if (quest) { const pulse = 4 + Math.sin(performance.now() / 200) * 1.5; g.strokeStyle = '#FFC877'; g.lineWidth = 2 * dpr; g.beginPath(); g.arc(X(quest.x), Y(quest.z), (pulse + 3) * dpr, 0, Math.PI * 2); g.stroke(); }
+    if (ex) {
+      const px = X(ex.x), py = Y(ex.z);
+      if (quest && !big) { // an arrow on the edge pointing to the mission when it is off the minimap
+        const qx = X(quest.x), qy = Y(quest.z);
+        if (qx < 0 || qy < 0 || qx > W || qy > H) { const a = Math.atan2(qy - py, qx - px), r = Math.min(W, H) / 2 - 10 * dpr; g.fillStyle = '#FFC877'; g.save(); g.translate(W / 2 + Math.cos(a) * r, H / 2 + Math.sin(a) * r); g.rotate(a); g.beginPath(); g.moveTo(7 * dpr, 0); g.lineTo(-5 * dpr, -5 * dpr); g.lineTo(-5 * dpr, 5 * dpr); g.fill(); g.restore(); }
+      }
+      g.save(); g.translate(px, py); g.rotate(-ex.face + Math.PI);
+      g.fillStyle = '#7EF2C3'; g.strokeStyle = '#0b0e14'; g.lineWidth = 1.5 * dpr;
+      g.beginPath(); g.moveTo(0, -8 * dpr); g.lineTo(6 * dpr, 6 * dpr); g.lineTo(0, 3 * dpr); g.lineTo(-6 * dpr, 6 * dpr); g.closePath(); g.fill(); g.stroke(); g.restore();
+    }
+  }
+  st.drawBigMap = cv => drawMap(cv, 31, -4, 0, true);
+  const baseDispose = st.dispose;
+  st.dispose = () => {
+    if (ex) { savePos(); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); ex.ch.dispose(); ex = null; }
+    walkers.forEach(w => w.ch && w.ch.dispose()); guides.forEach(g => g.ch.dispose());
+    baseDispose();
+  };
+
   st.refresh = done => blds.forEach(b => {
     b.done = done.indexOf(b.id) >= 0;
     b.facades.forEach(f => { const want = b.done ? f.doneMap : f.normalMap; if (f.m.emissiveMap !== want) { f.m.emissiveMap = want; f.m.needsUpdate = true; } });
@@ -1419,5 +1629,31 @@ function makeStack(el) {
 
 
 
-window.UXScenes = { makeHub, makeFlow, makeExplain, makeBox, makeStack };
+
+/* ───────── character creator: a turntable with studio lights ───────── */
+function makeCreator(el, look) {
+  const st = makeStage(el, { radius: 4.6, phi: 1.32, theta: 0.0, auto: 0, fov: 30, ty: 0.95, noLights: true });
+  const { scene } = st;
+  scene.add(new T.HemisphereLight(0xbfd4ff, 0x1a1420, 0.75));
+  const key = new T.DirectionalLight(0xffffff, 1.1); key.position.set(2, 4, 3); scene.add(key);
+  const rim = new T.DirectionalLight(0xB9A3FF, 0.7); rim.position.set(-3, 2, -3); scene.add(rim);
+  const fill = new T.DirectionalLight(0x7EF2C3, 0.35); fill.position.set(-3, 1, 2); scene.add(fill);
+  const ped = new T.Mesh(new T.CylinderGeometry(0.75, 0.82, 0.12, 48), new T.MeshStandardMaterial({ color: 0x1A2130, roughness: 0.4, metalness: 0.4 })); ped.position.y = -0.06; scene.add(ped);
+  const ring = new T.Mesh(new T.TorusGeometry(0.78, 0.012, 8, 64), new T.MeshBasicMaterial({ color: 0x7EF2C3, toneMapped: false })); ring.rotation.x = Math.PI / 2; ring.position.y = 0.0; scene.add(ring);
+  const ch = makeCharacter(T, look); ch.group.scale.setScalar(1); scene.add(ch.group);
+  let spin = 0.35, view = 'full';
+  st.tick = ({ dt }) => { ch.animate(dt, 0); if (!st.flight) ch.group.rotation.y += spin * dt * 0.3; };
+  st.setLook = l => ch.setLook(l);
+  st.wave = () => ch.wave();
+  st.view = v => {
+    view = v;
+    const face = v === 'face', h = (ch.look.height || 1);
+    st.flyTo(new T.Vector3(0, face ? 1.66 * h : 0.95, 0), face ? 1.1 : 4.6, face ? 1.5 : 1.32, () => {}, 0, 600);
+  };
+  st.spin = on => { spin = on ? 0.35 : 0; if (!on) ch.group.rotation.y = 0; };
+  const base = st.dispose; st.dispose = () => { ch.dispose(); base(); };
+  return st;
+}
+
+window.UXScenes = { makeHub, makeFlow, makeExplain, makeBox, makeStack, makeCreator, characterOptions: { OPTIONS, SKIN, HAIR_COLORS, EYE_COLORS, CLOTH, DEFAULT_LOOK, randomLook } };
 window.dispatchEvent(new Event('uxscenes:ready'));
