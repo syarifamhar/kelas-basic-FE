@@ -3,133 +3,133 @@ Object.assign(window.UX_LESSONS_ID = window.UX_LESSONS_ID || {}, {
 /* ───────────── KOTA REACT ───────────── */
 'react-components': {
 title:'Komponen & JSX', metaphor:'Kepingan LEGO',
-legend:['Komponen','State','Props mengalir ke bawah','Event naik ke atas'],
-parable:`Tidak ada yang membangun istana LEGO dari satu kepingan raksasa. Kamu menyambungkan kepingan-kepingan kecil: kepingan jendela, kepingan pintu, kepingan menara. Buat satu kepingan, lalu pakai seratus kali. Aplikasi React dibangun dengan cara yang sama. Potongan kecil bernama komponen disambung menjadi satu halaman utuh.`,
-theory:[`Komponen adalah fungsi JavaScript yang mengembalikan UI. Namanya diawali huruf kapital: function ProductCard() { … }.`,`JSX memungkinkan kamu menulis tag mirip HTML di dalam JavaScript. {Kurung kurawal} memasukkan nilai JavaScript ke dalam markup.`,`Pakai komponen seperti tag: <ProductCard />. Tulis sekali, pakai sebanyak yang kamu mau.`,`Komponen bisa bersarang di dalam komponen lain dan membentuk pohon, dengan App di puncaknya. Pohon itulah yang ditampilkan tampilan 3D.`],
-controls:[{label:'Jumlah kartu'},{label:'Warna kepingan',options:['Biru React','Mint','Amber']},{label:'Gaya kartu',options:['Garis tepi','Berisi']}],
-bad:'Satu App raksasa dengan markup hasil copy-paste. Salah ketik satu, harus diperbaiki di semua tempat.',
-good:'Satu komponen kecil, dipakai ulang dengan data berbeda.',
-figma:[`Mulai proyek: npm create vite@latest my-app -- --template react, lalu npm install dan npm run dev.`,`Pindahkan ProductCard ke file sendiri, src/ProductCard.jsx, export, lalu import di App.jsx.`,`Pasang React Developer Tools di browser. Tab Components-nya menampilkan pohon yang sama dengan tampilan 3D.`],
+legend:['Komponen','State','Props turun ke bawah','Event naik ke atas'],
+parable:`Nggak ada yang bikin istana LEGO dari satu kepingan raksasa. Kamu nyambungin kepingan-kepingan kecil: ada kepingan jendela, pintu, menara. Bikin satu kepingan, terus pakai sampai seratus kali. Aplikasi React juga dibangun kayak gitu. Potongan-potongan kecil yang namanya komponen disambung jadi satu halaman utuh.`,
+theory:[`Komponen itu function JavaScript yang balikin UI. Namanya wajib diawali huruf kapital: function ProductCard() { … }.`,`Pakai JSX, kamu bisa nulis tag mirip HTML langsung di dalam JavaScript. {Kurung kurawal} dipakai buat nyelipin nilai JavaScript ke markup.`,`Pakai komponen kayak tag biasa: <ProductCard />. Tulis sekali, pakai sebanyak yang kamu mau.`,`Komponen bisa ditaruh di dalam komponen lain sampai jadi pohon, dengan App di paling atas. Pohon itulah yang kamu lihat di tampilan 3D.`],
+controls:[{label:'Jumlah kartu'},{label:'Warna keping',options:['Biru React','Mint','Amber']},{label:'Gaya kartu',options:['Garis tepi','Isi penuh']}],
+bad:'Satu App raksasa yang isinya markup hasil copy-paste. Salah ketik sekali, kamu harus benerin di semua tempat.',
+good:'Satu komponen kecil, dipakai ulang pakai data yang beda-beda.',
+figma:[`Mulai proyek: npm create vite@latest my-app -- --template react, terus jalanin npm install dan npm run dev.`,`Pindahin ProductCard ke file sendiri, src/ProductCard.jsx, export, terus import di App.jsx.`,`Pasang React Developer Tools di browser. Tab Components-nya nampilin pohon yang sama persis kayak tampilan 3D.`],
 quiz:[
- {q:`Nama mana yang benar untuk komponen React?`,options:[`productCard`,`ProductCard`,`product-card`],why:`komponen harus diawali huruf kapital. Tag berhuruf kecil dianggap elemen HTML biasa.`},
- {q:`Apa fungsi {kurung kurawal} di dalam JSX?`,options:[`Memasukkan nilai JavaScript ke dalam markup`,`Membuat class CSS`,`Menjadikan kode komentar`],why:`kurung kurawal membuatmu kembali ke JavaScript, jadi {name} menampilkan nilai name.`}
+ {q:`Nama mana yang bener buat komponen React?`,options:[`productCard`,`ProductCard`,`product-card`],why:`komponen wajib diawali huruf kapital. Tag huruf kecil bakal dianggap elemen HTML biasa.`},
+ {q:`{Kurung kurawal} di JSX itu buat apa sih?`,options:[`Nyelipin nilai JavaScript ke markup`,`Bikin class CSS`,`Ngubah kode jadi komentar`],why:`kurung kurawal bikin kamu "balik" ke JavaScript, jadi {name} bakal nampilin nilai name.`}
 ]},
 'react-props': {
-title:'Props', metaphor:'Memesan kopi',
-legend:['Komponen','State','Props mengalir ke bawah','Event naik ke atas'],
-parable:`Di kedai kopi, semua barista memakai resep latte yang sama. Yang berbeda adalah kertas pesananmu: ukuran besar, gula sedikit, susu oat. Resepnya adalah komponen, kertas pesanannya adalah props. Resep sama, gelasnya berbeda-beda. Dan barista tidak pernah mengubah tulisan di kertas pesananmu.`,
-theory:[`Props adalah input sebuah komponen. Kamu mengirimnya seperti atribut HTML: <Coffee size="L" sugar={1} />.`,`Komponen menerimanya sebagai satu objek: function Coffee({ size, sugar }) { … }.`,`Props mengalir satu arah, dari induk ke anak. Anak membacanya, tapi tidak pernah mengubahnya.`,`Apa saja bisa jadi props: teks, angka, array, fungsi, bahkan elemen lain (children).`],
+title:'Props', metaphor:'Pesan kopi',
+legend:['Komponen','State','Props turun ke bawah','Event naik ke atas'],
+parable:`Di kedai kopi, semua barista pakai resep latte yang sama. Yang beda cuma kertas pesananmu: ukuran besar, gula dikit, susu oat. Resepnya itu komponen, kertas pesanannya itu props. Resepnya sama, gelasnya beda-beda. Dan barista nggak pernah nyoret-nyoret tulisan di kertas pesananmu.`,
+theory:[`Props itu input buat komponen. Kirimnya kayak atribut HTML: <Coffee size="L" sugar={1} />.`,`Komponen nerima semua props sebagai satu object: function Coffee({ size, sugar }) { … }.`,`Props ngalir satu arah aja, dari parent ke child. Child cuma boleh baca, nggak boleh ngubah.`,`Apa aja bisa jadi props: teks, angka, array, function, bahkan elemen lain (children).`],
 controls:[{label:'Ukuran'},{label:'Gula'},{label:'Susu',options:['Biasa','Oat','Tanpa susu']}],
-bad:'Anak mengubah props-nya sendiri. React mengabaikannya, dan induknya tidak pernah tahu.',
-good:'Induk memegang nilainya dan mengirim props baru saat nilainya berubah.',
-figma:[`Di VS Code, arahkan kursor ke komponen untuk melihat props apa saja yang dibutuhkan.`,`Beri nilai default langsung di parameter: function Coffee({ size = 'M' }).`,`Gunakan props children untuk membungkus konten: <Card><h2>Hai</h2></Card>, lalu tampilkan {children} di dalam Card.`],
+bad:'Child ngubah props-nya sendiri. React cuek aja, dan parent-nya nggak pernah tahu.',
+good:'Parent yang pegang nilainya, terus kirim props baru tiap kali nilainya berubah.',
+figma:[`Di VS Code, arahin kursor ke komponen buat lihat props apa aja yang dibutuhin.`,`Kasih nilai default langsung di parameter: function Coffee({ size = 'M' }).`,`Pakai props children buat ngebungkus konten: <Card><h2>Hai</h2></Card>, terus tampilin {children} di dalam Card.`],
 quiz:[
- {q:`Komponen anak ingin nilai yang berbeda untuk props yang ia terima. Apa yang seharusnya terjadi?`,options:[`Ubah langsung: props.size = 'L'`,`Minta induk, yang memegang nilainya, untuk mengirim props baru`,`Muat ulang halaman`],why:`props itu hanya-baca. Induk yang memegang datanya dan mengirim nilai baru ke bawah.`},
- {q:`Bagaimana cara mengirim angka 2 sebagai props?`,options:[`sugar="2"`,`sugar={2}`,`sugar=2`],why:`kurung kurawal mengirim angka sungguhan. Tanda kutip mengirim teks "2".`}
+ {q:`Child pengin nilai props yang dia terima jadi beda. Harusnya gimana?`,options:[`Ubah langsung aja: props.size = 'L'`,`Minta parent (yang pegang nilainya) buat kirim props baru`,`Reload halamannya`],why:`props itu read-only. Parent yang pegang data, terus dia yang kirim nilai baru ke bawah.`},
+ {q:`Gimana cara ngirim angka 2 sebagai props?`,options:[`sugar="2"`,`sugar={2}`,`sugar=2`],why:`kurung kurawal ngirim angka beneran. Kalau pakai tanda kutip, yang kekirim teks "2".`}
 ]},
 'react-state': {
-title:'State dengan useState', metaphor:'Papan skor stadion',
-legend:['Komponen','State','Props mengalir ke bawah','Event naik ke atas'],
-parable:`Saat terjadi gol, tidak ada yang memanjat untuk mengecat ulang papan skor stadion. Operator cukup mengubah satu angka, dan papannya menggambar ulang sendiri. State di React adalah angka itu. Kamu mengubahnya lewat setter, dan React menggambar ulang setiap bagian layar yang memakainya.`,
-theory:[`useState memberimu sebuah nilai dan setter-nya: const [score, setScore] = useState(0).`,`Memanggil setter membuat komponen di-render ulang dengan nilai baru. Mengubah variabel biasa tidak memperbarui layar.`,`State milik komponen yang mendeklarasikannya. Kirim ke bawah sebagai props kalau anak-anaknya butuh.`,`Jangan ubah state di tempat. Beri setter nilai baru: setScore(score + 1), atau setScore(s => s + 1).`],
+title:'State pakai useState', metaphor:'Papan skor stadion',
+legend:['Komponen','State','Props turun ke bawah','Event naik ke atas'],
+parable:`Pas ada gol, nggak ada yang manjat buat ngecat ulang papan skor stadion. Operatornya cukup ganti satu angka, dan papannya langsung update sendiri. State di React ya angka itu. Kamu ganti lewat setter, dan React gambar ulang semua bagian layar yang pakai nilai itu.`,
+theory:[`useState ngasih kamu sebuah nilai plus setter-nya: const [score, setScore] = useState(0).`,`Begitu setter dipanggil, komponen langsung re-render pakai nilai baru. Kalau cuma ngubah variabel biasa, layarnya nggak bakal update.`,`State itu milik komponen yang bikin dia. Kalau child butuh, kirim aja ke bawah sebagai props.`,`Jangan ubah state langsung di tempat. Kasih setter nilai baru: setScore(score + 1), atau setScore(s => s + 1).`],
 controls:[{label:'Poin per gol'},{label:'Simpan skor di',options:['useState','variabel biasa']}],
-bad:'Variabel biasa atau array yang diubah langsung. Datanya berubah, layarnya tidak.',
-good:'useState dan nilai baru setiap kali. React me-render ulang bagian yang memakainya.',
-figma:[`Di React Developer Tools, pilih sebuah komponen untuk melihat state-nya secara langsung, bahkan mengubahnya.`,`Simpan state serendah mungkin di pohon: hanya di komponen yang membutuhkannya.`,`Kalau dua komponen bersaudara butuh state yang sama, pindahkan ke induknya lalu kirim ke bawah sebagai props ("lifting state up").`],
+bad:'Pakai variabel biasa atau array yang diubah langsung. Datanya berubah, tapi layarnya diem aja.',
+good:'Pakai useState dan kasih nilai baru tiap kali. React re-render bagian yang pakai nilai itu.',
+figma:[`Di React Developer Tools, klik salah satu komponen buat lihat state-nya secara live, bahkan bisa kamu ubah juga.`,`Taruh state serendah mungkin di pohon: cukup di komponen yang beneran butuh.`,`Kalau dua komponen yang sejajar butuh state yang sama, pindahin ke parent-nya terus kirim ke bawah sebagai props ("lifting state up").`],
 quiz:[
- {q:`Kamu menulis score = score + 1 pada variabel biasa. Apa yang terjadi di layar?`,options:[`Ikut berubah`,`Tidak ada: React hanya me-render ulang saat state berubah lewat setter`,`Halaman dimuat ulang`],why:`React tidak mengawasi variabel biasa. Setter-lah yang memicu render ulang.`},
- {q:`Apa cara paling aman menambah 1 berdasarkan skor sebelumnya?`,options:[`setScore(s => s + 1)`,`score++`,`setScore(score++)`],why:`fungsi updater selalu mendapat nilai terbaru, bahkan saat ada beberapa update berturut-turut.`}
+ {q:`Kamu nulis score = score + 1 di variabel biasa. Di layar kejadian apa?`,options:[`Ikut berubah`,`Nggak ada: React cuma re-render kalau state diubah lewat setter`,`Halamannya reload`],why:`React nggak ngawasin variabel biasa. Setter-lah yang bikin re-render jalan.`},
+ {q:`Cara paling aman buat nambah 1 dari skor sebelumnya yang mana?`,options:[`setScore(s => s + 1)`,`score++`,`setScore(score++)`],why:`function updater selalu dapet nilai paling baru, bahkan kalau ada beberapa update beruntun.`}
 ]},
 'react-effects': {
-title:'Efek samping dengan useEffect', metaphor:'Lampu sensor gerak',
-legend:['Komponen','Efek','Efek berjalan','Cleanup'],
-parable:`Lampu sensor gerak bekerja sendiri. Ada orang masuk, lampu menyala. Orangnya pergi, lampu mati. Tidak ada yang menekan saklar. useEffect adalah sensor itu: kamu memberi tahu React apa yang diawasi, apa yang dilakukan saat berubah, dan bagaimana membereskannya setelah itu.`,
-theory:[`Render seharusnya hanya menggambarkan UI. Pekerjaan yang menyentuh dunia luar (timer, mengambil data, judul halaman) masuk ke useEffect.`,`Array dependensi menentukan kapan efek berjalan: [] sekali setelah render pertama, [room] setiap kali room berubah, tanpa array setelah setiap render.`,`Kembalikan fungsi cleanup untuk membatalkan efek: hentikan timer, tutup koneksi.`,`Kalau efek memakai sebuah nilai, masukkan ke dependensi. Kalau tidak, efek terus membaca nilai lama.`],
-controls:[{label:'Dependensi',options:['[room]','[]','tanpa array']},{label:'Ruangan',options:['Dapur','Taman','Garasi']}],
-bad:'Interval tanpa cleanup. Setiap render ulang memulai timer baru yang tidak pernah berhenti.',
-good:'Jalankan sekali, dan bereskan saat komponennya pergi.',
-figma:[`Ambil data di dalam efek: useEffect(() => { fetch(url).then(r => r.json()).then(setData) }, [url]).`,`Nyalakan aturan eslint-plugin-react-hooks. Ia memberi peringatan saat ada dependensi yang terlupa.`,`Saat development, React sengaja menjalankan efek dua kali (Strict Mode). Kalau itu merusak sesuatu, berarti cleanup-mu belum ada.`],
+title:'Side effect pakai useEffect', metaphor:'Lampu sensor gerak',
+legend:['Komponen','Effect','Effect jalan','Cleanup'],
+parable:`Lampu sensor gerak kerja sendiri. Ada orang masuk, lampunya nyala. Orangnya pergi, lampunya mati. Nggak ada yang pencet saklar. useEffect itu sensornya: kamu kasih tahu React apa yang diawasi, apa yang dikerjain pas ada perubahan, dan gimana beres-beresnya setelah itu.`,
+theory:[`Render harusnya cuma ngegambarin UI. Kerjaan yang nyentuh dunia luar (timer, fetch data, judul halaman) masuknya ke useEffect.`,`Dependency array nentuin kapan effect jalan: [] cuma sekali setelah render pertama, [room] tiap kali room berubah, tanpa array berarti setelah setiap render.`,`Balikin function cleanup buat ngebatalin effect: stop timer, tutup koneksi.`,`Kalau effect pakai sebuah nilai, masukin ke dependency array. Kalau nggak, effect bakal terus baca nilai lama.`],
+controls:[{label:'Dependency',options:['[room]','[]','tanpa array']},{label:'Ruangan',options:['Dapur','Taman','Garasi']}],
+bad:'Interval tanpa cleanup. Tiap re-render, timer baru nyala dan nggak pernah berhenti.',
+good:'Jalan sekali aja, terus beres-beres pas komponennya unmount.',
+figma:[`Fetch data di dalam effect: useEffect(() => { fetch(url).then(r => r.json()).then(setData) }, [url]).`,`Nyalain aturan eslint-plugin-react-hooks. Dia bakal ngingetin kalau ada dependency yang kelupaan.`,`Pas development, React sengaja jalanin effect dua kali (Strict Mode). Kalau itu bikin sesuatu rusak, berarti cleanup-mu belum ada.`],
 quiz:[
- {q:`useEffect(fn, []) berjalan…`,options:[`setelah setiap render`,`sekali, setelah render pertama`,`tidak pernah`],why:`array dependensi kosong berarti tidak ada yang bisa mengubahnya, jadi efek hanya berjalan setelah komponen dipasang.`},
- {q:`Efekmu memulai sebuah timer. Di mana kamu menghentikannya?`,options:[`Di fungsi cleanup yang dikembalikan oleh efek`,`Di dalam JSX`,`Tidak bisa`],why:`React memanggil cleanup sebelum efek berjalan lagi dan saat komponen dilepas.`}
+ {q:`useEffect(fn, []) jalannya…`,options:[`setelah setiap render`,`sekali, setelah render pertama`,`nggak pernah`],why:`dependency array kosong artinya nggak ada yang bisa berubah, jadi effect cuma jalan sekali setelah komponen di-mount.`},
+ {q:`Effect-mu nyalain timer. Matiinnya di mana?`,options:[`Di function cleanup yang di-return sama effect`,`Di dalam JSX`,`Nggak bisa`],why:`React manggil cleanup sebelum effect jalan lagi dan pas komponen di-unmount.`}
 ]},
 'react-lists': {
 title:'List & key', metaphor:'Papan nama di kelas',
-legend:['Komponen (satu per key)','State','Pindah bersama key-nya','Di-render ulang di tempat'],
-parable:`Guru mengenali murid dari papan namanya, bukan dari kursi yang mereka duduki. Kalau murid bertukar kursi dan guru hanya ingat "anak di kursi 2", PR akan dikembalikan ke orang yang salah. Key di React adalah papan nama. Dengan key yang stabil, React tahu item mana yang berpindah, dan setiap item tetap menyimpan state-nya sendiri.`,
-theory:[`Tampilkan list dengan map: students.map(s => <Row key={s.id} … />).`,`Key harus unik di antara saudaranya dan tidak boleh berubah dari waktu ke waktu. Id dari datamu paling cocok.`,`Memakai index array sebagai key akan rusak saat item diacak, disisipkan, atau dihapus: state menempel pada posisi, bukan pada item.`,`Key hanya untuk React. Key tidak dikirim ke komponenmu sebagai props.`],
+legend:['Komponen (satu per key)','State','Pindah bareng key-nya','Re-render di tempat'],
+parable:`Guru ngenalin murid dari papan namanya, bukan dari kursi yang mereka dudukin. Kalau murid tukeran kursi dan guru cuma inget "anak di kursi 2", PR-nya bisa balik ke orang yang salah. Key di React itu papan namanya. Dengan key yang stabil, React tahu item mana yang pindah, dan tiap item tetap nyimpen state-nya sendiri.`,
+theory:[`Tampilin list pakai map: students.map(s => <Row key={s.id} … />).`,`Key harus unik di antara item sejajarnya dan nggak boleh berubah-ubah. Id dari data kamu paling pas.`,`Pakai index array sebagai key bakal kacau pas item diacak, disisipin, atau dihapus: state nempel ke posisi, bukan ke item-nya.`,`Key itu khusus buat React. Key nggak ikut dikirim ke komponenmu sebagai props.`],
 controls:[{label:'Key'}],
-bad:'Index sebagai key: setelah diacak, state tetap di kursinya, bukan ikut muridnya.',
+bad:'Index sebagai key: habis diacak, state-nya tetap di kursi, bukan ikut muridnya.',
 good:'Id stabil dari data: papan nama ikut ke mana pun muridnya pindah.',
-figma:[`Buka console browser: React memberi peringatan "Each child in a list should have a unique key prop" kalau key-nya tidak ada.`,`Kalau datamu tidak punya id, tambahkan saat item dibuat (crypto.randomUUID()), bukan saat render.`,`Coba: acak dengan key={index}, lalu ganti ke key={student.id} dan acak lagi.`],
+figma:[`Buka console browser: React bakal ngasih warning "Each child in a list should have a unique key prop" kalau key-nya nggak ada.`,`Kalau data kamu nggak punya id, tambahin pas item dibuat (crypto.randomUUID()), jangan pas render.`,`Coba deh: acak pakai key={index}, terus ganti ke key={student.id} dan acak lagi.`],
 quiz:[
- {q:`Key mana yang paling baik untuk list produk dari API?`,options:[`Index array`,`product.id`,`Math.random()`],why:`id itu unik dan tetap sama di setiap render. Key acak berubah setiap render, sehingga React membangun ulang semua baris.`},
- {q:`Kamu mengacak list yang memakai key index, dan teks yang diketik tertinggal di baris yang salah. Kenapa?`,options:[`React mencocokkan baris berdasarkan posisi, jadi state tetap di posisinya`,`Bug CSS`,`Input-nya rusak`],why:`dengan key index, "baris 0" tetap baris 0 setelah diacak, jadi state-nya diam di tempat sementara namanya berpindah.`}
+ {q:`Key mana yang paling oke buat list produk dari API?`,options:[`Index array`,`product.id`,`Math.random()`],why:`id itu unik dan tetap sama di tiap render. Key acak berubah tiap render, jadi React harus bangun ulang semua baris.`},
+ {q:`Kamu ngacak list yang pakai key index, terus teks yang udah diketik nyasar ke baris yang salah. Kenapa?`,options:[`React nyocokin baris dari posisinya, jadi state diem di posisi`,`Bug CSS`,`Input-nya rusak`],why:`pakai key index, "baris 0" tetap baris 0 habis diacak, jadi state-nya diem di tempat sementara namanya pindah.`}
 ]},
 /* ───────────── KOTA VUE ───────────── */
 'vue-template': {
 title:'Template & interpolasi', metaphor:'Undangan isian',
-legend:['Komponen / template','Data reaktif','Data mengalir ke bawah','Event naik ke atas'],
-parable:`Undangan pernikahan dicetak sekali dengan bagian kosong: "Kepada ____, kamu diundang pada ____." Isi nama tamunya, dan kartu siap dikirim. Template Vue adalah kartu cetakan itu. {{ Bagian kosong }} diisi dari datamu, dan saat datanya berubah, kartunya ikut diperbarui sendiri.`,
-theory:[`Aplikasi Vue dipasang pada sebuah elemen: createApp({ … }).mount('#app').`,`{{ Kurung kurawal ganda }} menampilkan nilai dari datamu ke dalam HTML.`,`Directive adalah atribut yang diawali v-. Singkatannya: :href="…" mengikat atribut, @click="…" mendengarkan event.`,`Template tetap berupa HTML yang mudah dibaca. Saat data berubah, Vue hanya memperbarui bagian halaman yang berubah.`],
+legend:['Komponen / template','Data reaktif','Data turun ke bawah','Event naik ke atas'],
+parable:`Undangan nikahan dicetak sekali dengan bagian kosong: "Kepada ____, kamu diundang pada ____." Tinggal isi nama tamunya, kartunya siap dikirim. Template Vue ya kartu cetakan itu. {{ Bagian kosong }} diisi dari data kamu, dan pas datanya berubah, kartunya ikut update sendiri.`,
+theory:[`Aplikasi Vue di-mount ke sebuah elemen: createApp({ … }).mount('#app').`,`{{ Kurung kurawal ganda }} nampilin nilai dari data kamu ke dalam HTML.`,`Directive itu atribut yang diawali v-. Ada singkatannya juga: :href="…" buat binding atribut, @click="…" buat dengerin event.`,`Template tetap HTML yang gampang dibaca. Pas data berubah, Vue cuma update bagian halaman yang berubah aja.`],
 controls:[{label:'Tamu'},{label:'Tanggal'},{label:'Warna kartu',options:['Hijau Vue','Lilac','Pink']}],
-bad:'Membangun HTML dengan menyambung string. Sulit dibaca, dan mudah rusak atau tidak aman.',
-good:'Template dengan bagian kosong. Vue mengisinya dan menjaganya tetap terbaru.',
-figma:[`Mulai proyek: npm create vue@latest, lalu npm install dan npm run dev.`,`Buka src/App.vue. Blok <template> adalah HTML yang kamu tulis di sini, dan <script setup> menyimpan datanya.`,`Pasang Vue Devtools di browser untuk melihat dan mengubah data saat aplikasi berjalan.`],
+bad:'Bikin HTML dengan nyambung-nyambung string. Susah dibaca, gampang rusak, dan rawan nggak aman.',
+good:'Template dengan bagian kosong. Vue yang ngisi dan jagain biar selalu update.',
+figma:[`Mulai proyek: npm create vue@latest, terus jalanin npm install dan npm run dev.`,`Buka src/App.vue. Blok <template> itu HTML yang kamu tulis, dan <script setup> tempat nyimpen data.`,`Pasang Vue Devtools di browser buat lihat dan ngubah data pas aplikasi lagi jalan.`],
 quiz:[
- {q:`Apa fungsi {{ guest }} di template Vue?`,options:[`Menampilkan nilai guest dan menjaganya tetap terbaru`,`Membuat variabel`,`Menambahkan komentar`],why:`interpolasi menampilkan nilai saat ini, dan Vue me-render ulang setiap kali guest berubah.`},
- {q:`Apa arti :href="mapLink"?`,options:[`Teks "mapLink" menjadi link-nya`,`Atribut href diisi nilai mapLink dari datamu`,`Menonaktifkan link`],why:`titik dua adalah singkatan v-bind: nilai atributnya berupa ekspresi JavaScript.`}
+ {q:`{{ guest }} di template Vue itu buat apa?`,options:[`Nampilin nilai guest dan jagain biar selalu update`,`Bikin variabel`,`Nambahin komentar`],why:`interpolasi nampilin nilai saat ini, dan Vue re-render tiap kali guest berubah.`},
+ {q:`:href="mapLink" artinya apa?`,options:[`Teks "mapLink" jadi link-nya`,`Atribut href diisi nilai mapLink dari data kamu`,`Ngematiin link`],why:`titik dua itu singkatan v-bind: nilai atributnya dibaca sebagai ekspresi JavaScript.`}
 ]},
 'vue-reactivity': {
-title:'Reaktivitas: ref & computed', metaphor:'Sel spreadsheet',
-legend:['ref (sel yang kamu isi)','computed (rumus)','Template','Perubahan menyebar'],
-parable:`Di spreadsheet, kamu mengetik harga baru di satu sel dan total di bawahnya langsung berubah. Tidak ada yang menghitung ulang dengan tangan. Sel total berisi rumus yang ingat sel mana saja yang dibacanya. Reaktivitas Vue bekerja dengan cara yang sama: ref() adalah sel, computed() adalah rumus.`,
-theory:[`ref(0) membuat nilai reaktif. Di JavaScript kamu membaca dan mengubahnya lewat .value. Di template, Vue membukanya untukmu.`,`computed(() => …) adalah rumus. Ia ingat ref mana yang dibacanya dan hanya menghitung ulang saat salah satunya berubah.`,`Jangan simpan sesuatu yang bisa dihitung. Simpan price dan qty, lalu hitung total-nya.`,`watch() menjalankan kode saat sebuah nilai berubah, untuk efek samping seperti menyimpan atau mencatat log.`],
+title:'Reactivity: ref & computed', metaphor:'Sel spreadsheet',
+legend:['ref (sel yang kamu isi)','computed (rumus)','Template','Perubahan nyebar'],
+parable:`Di spreadsheet, kamu ketik harga baru di satu sel dan total di bawahnya langsung ikut berubah. Nggak ada yang ngitung ulang manual. Sel total isinya rumus yang inget sel mana aja yang dia baca. Reactivity di Vue kerjanya sama persis: ref() itu selnya, computed() itu rumusnya.`,
+theory:[`ref(0) bikin nilai yang reaktif. Di JavaScript, kamu baca dan ubah lewat .value. Di template, Vue udah otomatis buka bungkusnya buat kamu.`,`computed(() => …) itu rumus. Dia inget ref mana aja yang dibaca, dan cuma ngitung ulang kalau salah satunya berubah.`,`Jangan simpen sesuatu yang bisa dihitung. Simpen price dan qty aja, terus hitung total-nya.`,`watch() jalanin kode tiap kali sebuah nilai berubah, cocok buat side effect kayak nyimpen data atau nulis log.`],
 controls:[{label:'B1 · harga'},{label:'B3 · pajak %'}],
-bad:'Menyimpan total secara terpisah. Lupa memperbaruinya sekali saja, hasilnya salah.',
-good:'Rumus computed. Tidak mungkin ketinggalan.',
-figma:[`Di file .vue, tulis kode yang sama di dalam <script setup>. Semua yang kamu deklarasikan bisa dipakai di template.`,`Gunakan reactive({ … }) kalau kamu ingin seluruh objek reaktif, misalnya sebuah form.`,`Di Vue Devtools, nilai computed ditampilkan terpisah, jadi kamu bisa melihat hasil setiap rumus.`],
+bad:'Nyimpen total secara terpisah. Sekali aja lupa update, hasilnya salah.',
+good:'Pakai rumus computed. Dijamin nggak bakal ketinggalan.',
+figma:[`Di file .vue, tulis kode yang sama di dalam <script setup>. Semua yang kamu deklarasiin langsung bisa dipakai di template.`,`Pakai reactive({ … }) kalau kamu pengin satu object utuh jadi reaktif, misalnya buat form.`,`Di Vue Devtools, nilai computed ditampilin terpisah, jadi kamu bisa cek hasil tiap rumus.`],
 quiz:[
- {q:`Di JavaScript, bagaimana cara mengubah ref bernama count?`,options:[`count = 5`,`count.value = 5`,`setCount(5)`],why:`ref itu seperti kotak. Kamu membaca dan mengubah isinya lewat .value.`},
- {q:`Kapan nilai computed dihitung ulang?`,options:[`Setiap detik`,`Hanya saat salah satu nilai reaktif yang dibacanya berubah`,`Tidak pernah`],why:`computed melacak dependensinya dan menyimpan hasilnya sampai salah satunya berubah.`}
+ {q:`Di JavaScript, gimana cara ngubah ref yang namanya count?`,options:[`count = 5`,`count.value = 5`,`setCount(5)`],why:`ref itu kayak kotak. Kamu baca dan ubah isinya lewat .value.`},
+ {q:`Kapan nilai computed dihitung ulang?`,options:[`Tiap detik`,`Cuma pas salah satu nilai reaktif yang dia baca berubah`,`Nggak pernah`],why:`computed ngelacak dependency-nya dan nyimpen hasilnya sampai salah satunya berubah.`}
 ]},
 'vue-directives': {
 title:'v-if, v-show & v-for', metaphor:'Lampu panggung',
-legend:['Ada di DOM','Disembunyikan v-show (masih ada)','Data','Dibuat'],
-parable:`Ada dua cara menyembunyikan aktor di teater. Matikan lampu sorotnya, dan ia tetap berdiri di panggung dalam gelap, siap muncul seketika. Atau suruh ia ke belakang panggung, dan ia harus berjalan jauh untuk kembali. v-show mematikan lampu (display:none). v-if mengirim elemen ke belakang panggung, menghapusnya dari halaman.`,
-theory:[`v-if menambahkan atau menghapus elemen dari DOM. Pakai untuk hal yang jarang berubah.`,`v-show mempertahankan elemen dan hanya mengganti display:none. Pakai untuk hal yang sering dinyalakan-dimatikan.`,`v-for mengulang elemen untuk setiap item: <li v-for="item in items" :key="item.id">.`,`Selalu beri item v-for sebuah :key yang stabil, sama seperti di React.`],
-controls:[{label:'Aktor (v-for)'},{label:'Sembunyikan dengan'}],
-bad:'v-if dan v-for di elemen yang sama. Membingungkan mana yang berjalan duluan.',
-good:'Saring di list computed, lalu ulangi dengan key.',
-figma:[`Gunakan v-else dan v-else-if tepat setelah v-if untuk menampilkan salah satu dari beberapa pilihan.`,`Bungkus beberapa elemen dengan <template v-if="…"> untuk menampilkan atau menyembunyikannya bersama tanpa div tambahan.`,`Buka panel Elements di DevTools lalu nyalakan-matikan lampu: elemen v-show tetap ada, elemen v-if menghilang.`],
+legend:['Ada di DOM','Diumpetin v-show (masih ada)','Data','Dibuat'],
+parable:`Ada dua cara buat ngumpetin aktor di teater. Matiin lampu sorotnya, dan dia tetap berdiri di panggung dalam gelap, siap muncul kapan aja. Atau suruh dia ke belakang panggung, dan dia harus jalan jauh buat balik lagi. v-show itu matiin lampu (display:none). v-if itu ngirim elemen ke belakang panggung, alias ngehapus dari halaman.`,
+theory:[`v-if nambahin atau ngehapus elemen dari DOM. Pakai buat hal yang jarang berubah.`,`v-show tetap nyimpen elemennya dan cuma ganti display:none. Pakai buat hal yang sering dinyala-matiin.`,`v-for ngulang elemen buat tiap item: <li v-for="item in items" :key="item.id">.`,`Selalu kasih item v-for sebuah :key yang stabil, sama kayak di React.`],
+controls:[{label:'Aktor (v-for)'},{label:'Umpetin pakai'}],
+bad:'v-if dan v-for di elemen yang sama. Bikin bingung mana yang jalan duluan.',
+good:'Saring dulu pakai list computed, baru di-loop pakai key.',
+figma:[`Pakai v-else dan v-else-if tepat setelah v-if buat nampilin salah satu dari beberapa pilihan.`,`Bungkus beberapa elemen pakai <template v-if="…"> biar bisa ditampilin atau diumpetin barengan tanpa div tambahan.`,`Buka panel Elements di DevTools terus nyala-matiin lampunya: elemen v-show tetap ada, elemen v-if hilang.`],
 quiz:[
- {q:`Sebuah dropdown dibuka dan ditutup berkali-kali dalam semenit. Mana yang paling cocok?`,options:[`v-show`,`v-if`,`Tidak keduanya`],why:`v-show hanya mengganti display, lebih ringan daripada membuat dan menghapus elemen berulang-ulang.`},
- {q:`Apa yang dibutuhkan v-for di setiap item?`,options:[`Sebuah class`,`:key yang unik`,`Atribut id`],why:`key membuat Vue bisa melacak setiap item saat list berubah, sama seperti key di React.`}
+ {q:`Ada dropdown yang dibuka-tutup berkali-kali dalam semenit. Paling cocok pakai apa?`,options:[`v-show`,`v-if`,`Dua-duanya nggak`],why:`v-show cuma ganti display, jauh lebih ringan daripada bikin dan ngehapus elemen terus-terusan.`},
+ {q:`v-for butuh apa di tiap item?`,options:[`Sebuah class`,`:key yang unik`,`Atribut id`],why:`key bikin Vue bisa ngelacak tiap item pas list berubah, sama kayak key di React.`}
 ]},
 'vue-model': {
 title:'v-model & form', metaphor:'Walkie-talkie',
 legend:['Data (ref)','Elemen input','Data → input','Input → data'],
-parable:`Walkie-talkie bekerja dua arah. Kamu bicara, seberang mendengar. Mereka bicara, kamu mendengar. v-model menghubungkan input dan datamu dengan cara yang sama: ketik di kotak, datanya berubah; ubah datanya, kotaknya ikut berubah.`,
-theory:[`v-model pada input menjaga input dan sebuah ref tetap sama, dua arah.`,`Ini singkatan dari :value ditambah @input: nilai masuk ke input, event keluar kembali.`,`Bisa dipakai di input teks, checkbox, radio, dan select. Modifier seperti v-model.trim dan v-model.number merapikan nilainya.`,`Gunakan @submit.prevent pada form supaya halaman tidak dimuat ulang saat dikirim.`],
-controls:[{label:'Isi data dari kode',options:['Kosong','Contoh']}],
-bad:'Membaca dan menulis input secara manual. Gampang lupa salah satu arahnya.',
-good:'v-model menjaga kedua sisi tetap sama.',
-figma:[`Kelompokkan field form dalam satu reactive({ name: '', role: '' }) lalu hubungkan masing-masing dengan v-model="form.name".`,`Gunakan v-model.number pada input angka supaya kamu mendapat angka, bukan teks.`,`Untuk validasi, buat error dengan computed (const nameError = computed(() => …)) dan tampilkan di bawah setiap field.`],
+parable:`Walkie-talkie itu kerjanya dua arah. Kamu ngomong, temanmu denger. Dia ngomong, kamu denger. v-model nyambungin input sama data kamu dengan cara yang sama: ketik di kotak, datanya berubah; ubah datanya, kotaknya ikut berubah.`,
+theory:[`v-model di input bikin input dan sebuah ref selalu sama, dua arah.`,`Ini sebenernya singkatan dari :value plus @input: nilai masuk ke input, event keluar balik lagi.`,`Bisa dipakai di input teks, checkbox, radio, dan select. Modifier kayak v-model.trim dan v-model.number bantu ngerapiin nilainya.`,`Pakai @submit.prevent di form biar halamannya nggak reload pas dikirim.`],
+controls:[{label:'Isi dari kode',options:['Kosong','Contoh']}],
+bad:'Baca dan tulis input secara manual. Gampang banget lupa salah satu arahnya.',
+good:'v-model jagain kedua sisi biar tetap sama.',
+figma:[`Kumpulin field form dalam satu reactive({ name: '', role: '' }) terus sambungin masing-masing pakai v-model="form.name".`,`Pakai v-model.number di input angka biar yang kamu dapet angka, bukan teks.`,`Buat validasi, bikin error pakai computed (const nameError = computed(() => …)) terus tampilin di bawah tiap field.`],
 quiz:[
- {q:`Apa fungsi v-model?`,options:[`Menjaga input dan ref tetap sama, dua arah`,`Hanya membaca input sekali`,`Memberi gaya pada input`],why:`ia memasukkan nilai ke input dan mendengarkan perubahan yang keluar darinya.`},
- {q:`Kenapa menambahkan .prevent pada @submit di sebuah form?`,options:[`Supaya browser tidak memuat ulang halaman`,`Supaya form lebih cepat`,`Untuk menyembunyikan tombol`],why:`.prevent memanggil event.preventDefault(), jadi kamu bisa menangani pengiriman di JavaScript.`}
+ {q:`v-model itu fungsinya apa?`,options:[`Bikin input dan ref selalu sama, dua arah`,`Cuma baca input sekali`,`Ngasih style ke input`],why:`dia masukin nilai ke input dan sekaligus dengerin perubahan yang keluar dari situ.`},
+ {q:`Kenapa @submit di form perlu ditambahin .prevent?`,options:[`Biar browser nggak reload halaman`,`Biar form-nya lebih cepet`,`Buat ngumpetin tombol`],why:`.prevent manggil event.preventDefault(), jadi kamu bisa ngurus pengirimannya sendiri di JavaScript.`}
 ]},
 'vue-components': {
 title:'Komponen, props & emit', metaphor:'Pelayan dan dapur',
 legend:['Komponen','Data','Props turun ke bawah','Emit naik ke atas'],
-parable:`Di restoran, pelayan membawa pesananmu ke dapur di atas secarik kertas. Saat masakan siap, dapur membunyikan bel. Dapur tidak pernah keluar ke mejamu untuk mengubah pesananmu. Komponen Vue berkomunikasi dengan cara yang sama: props turun seperti kertas pesanan, event naik seperti bunyi bel.`,
-theory:[`Komponen adalah objek berisi template dan setup(). Daftarkan di components: { … } lalu pakai sebagai tag.`,`Props membawa data turun dari induk ke anak. Deklarasikan: props: { tableNo: Number }.`,`emit('served') mengirim event ke atas. Induk mendengarkan dengan @served="…".`,`Props turun, event naik: setiap bagian tetap sederhana, dan kamu selalu tahu siapa mengubah apa.`],
-controls:[{label:'Meja'},{label:'Kecepatan dapur (props)',options:['Cepat','Lambat']}],
-bad:'Anak meraih ke atas dan mengubah data induk secara langsung. Tidak ada yang tahu siapa yang mengubahnya.',
-good:'Props turun, event naik. Induk yang memutuskan apa yang diubah.',
-figma:[`Di file .vue, gunakan defineProps({ tableNo: Number }) dan const emit = defineEmits(['served']) di dalam <script setup>.`,`Beri nama event sebagai aksi yang sudah terjadi (served, saved, closed) supaya kode induk terbaca seperti cerita.`,`Vue Devtools punya tab Timeline yang mencatat setiap event yang di-emit saat terjadi.`],
+parable:`Di restoran, pelayan bawa pesananmu ke dapur lewat secarik kertas. Pas masakannya siap, dapur bunyiin bel. Dapur nggak pernah keluar ke mejamu buat ngubah pesananmu. Komponen Vue ngobrolnya juga kayak gitu: props turun kayak kertas pesanan, event naik kayak bunyi bel.`,
+theory:[`Komponen itu object yang isinya template dan setup(). Daftarin di components: { … } terus pakai sebagai tag.`,`Props bawa data turun dari parent ke child. Deklarasiin kayak gini: props: { tableNo: Number }.`,`emit('served') ngirim event ke atas. Parent dengerin pakai @served="…".`,`Props turun, event naik: tiap bagian tetap simpel, dan kamu selalu tahu siapa ngubah apa.`],
+controls:[{label:'Meja'},{label:'Speed dapur (props)',options:['Cepat','Lambat']}],
+bad:'Child nyelonong ke atas dan ngubah data parent langsung. Nggak ada yang tahu siapa pelakunya.',
+good:'Props turun, event naik. Parent yang mutusin apa yang diubah.',
+figma:[`Di file .vue, pakai defineProps({ tableNo: Number }) dan const emit = defineEmits(['served']) di dalam <script setup>.`,`Kasih nama event pakai kata kerja yang udah kejadian (served, saved, closed) biar kode parent kebaca kayak cerita.`,`Vue Devtools punya tab Timeline yang nyatet tiap event yang di-emit pas kejadian.`],
 quiz:[
- {q:`Komponen anak perlu memberi tahu induknya bahwa masakan sudah siap. Apa yang sebaiknya dipakai?`,options:[`emit('served')`,`Ubah data induk secara langsung`,`Variabel global`],why:`event naik ke atas. Induk mendengarkan dengan @served dan memutuskan apa yang dilakukan.`},
- {q:`Bagaimana data dikirim dari induk ke komponen anak?`,options:[`Lewat props`,`Lewat emit`,`Lewat CSS`],why:`props membawa data ke bawah. Emit membawa pesan ke atas.`}
+ {q:`Child perlu ngasih tahu parent kalau masakannya udah siap. Sebaiknya pakai apa?`,options:[`emit('served')`,`Ubah data parent langsung`,`Variabel global`],why:`event itu naik ke atas. Parent dengerin pakai @served dan mutusin mau ngapain.`},
+ {q:`Gimana cara ngirim data dari parent ke child?`,options:[`Lewat props`,`Lewat emit`,`Lewat CSS`],why:`props bawa data ke bawah. Emit bawa pesan ke atas.`}
 ]}
 });

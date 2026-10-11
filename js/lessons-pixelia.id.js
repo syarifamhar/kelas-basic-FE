@@ -1,87 +1,87 @@
 /* Indonesian (ID) translations for the new Pixelia lessons. Same shape as lessons.id.js. */
 Object.assign(window.UX_LESSONS_ID = window.UX_LESSONS_ID || {}, {
 'ux-process': {
-title:'Proses UX', metaphor:'Berobat ke dokter',
-parable:`Dokter yang baik tidak langsung memberi obat begitu kamu masuk. Ia mendengarkan dan bertanya dulu, lalu menyebutkan masalahnya, menimbang beberapa pengobatan, mencoba satu, dan mengecek apakah kamu membaik. Desain bekerja dengan cara yang sama: pahami orangnya dulu, rumuskan masalahnya, jelajahi ide, buat sesuatu yang kecil, lalu uji.`,
-theory:[`Empati: pelajari orang-orang yang kamu rancang untuknya. Amati, dengarkan, dan bertanya sebelum menggambar apa pun.`,`Definisi: ubah temuanmu menjadi satu pernyataan masalah yang jelas: siapa kesulitan apa, dan kenapa.`,`Ide dan prototipe: sketsa banyak ide, lalu buat versi cepat dan murah dari yang terbaik.`,`Uji: tunjukkan prototipe ke pengguna sungguhan. Temuanmu akan mengirimmu kembali ke langkah sebelumnya, dan siklusnya berulang.`],
-controls:[{label:'Tahap',options:['1 Empati','2 Definisi','3 Ide','4 Prototipe','5 Uji']}],
-bad:'Langsung lompat ke piksel: aplikasi cantik yang menyelesaikan masalah yang salah.',
-good:'Pahami dulu, buat kecil, uji, lalu kembali dan perbaiki.',
-figma:[`Buat papan FigJam dengan lima kolom, satu per tahap, dan simpan semua catatan dan sketsa di sana.`,`Tempel pernyataan masalahmu sebagai sticky note besar di atas, supaya setiap ide bisa dicek terhadapnya.`,`Tautkan prototipe Figma di kolom Uji dan tulis temuannya tepat di sebelahnya.`],
+title:'Proses UX', metaphor:'Periksa ke dokter',
+parable:`Dokter yang bagus nggak langsung kasih obat begitu kamu duduk. Dia dengerin dan nanya-nanya dulu, baru nyebut masalahnya, nimbang beberapa pilihan pengobatan, coba satu, terus ngecek kamu udah membaik atau belum. Desain juga gitu: pahami orangnya dulu, rumuskan masalahnya, cari ide, bikin sesuatu yang kecil, lalu tes.`,
+theory:[`Empati: kenali dulu orang-orang yang kamu desain buat. Amati, dengerin, dan tanya-tanya sebelum gambar apa pun.`,`Define: rangkum temuanmu jadi satu pernyataan masalah yang jelas: siapa yang kesulitan, kesulitan apa, dan kenapa.`,`Ide dan prototype: sketsa ide sebanyak-banyaknya, lalu bikin versi cepat dan murah dari ide terbaik.`,`Tes: tunjukin prototype-nya ke user beneran. Temuanmu bakal bawa kamu balik ke langkah sebelumnya, dan siklusnya muter lagi.`],
+controls:[{label:'Tahap',options:['1 Empati','2 Define','3 Ide','4 Prototype','5 Tes']}],
+bad:'Langsung loncat ke piksel: aplikasinya cantik, tapi nyelesaiin masalah yang salah.',
+good:'Pahami dulu, bikin kecil, tes, lalu balik lagi dan perbaiki.',
+figma:[`Bikin board FigJam dengan lima kolom, satu kolom per tahap, dan taruh semua catatan dan sketsa di situ.`,`Tempel pernyataan masalahmu sebagai sticky note gede di paling atas, biar tiap ide bisa dicek nyambung atau nggak.`,`Taruh link prototype Figma di kolom Tes dan tulis temuannya persis di sebelahnya.`],
 quiz:[
- {q:`Apa yang sebaiknya kamu lakukan sebelum membuat sketsa solusi?`,options:[`Memilih warna`,`Memahami pengguna dan masalahnya`,`Menulis kode`],why:`empati dan definisi dulu, kalau tidak kamu bisa menyelesaikan masalah yang salah.`},
- {q:`Pengujian menunjukkan pengguna tidak menemukan nomor ambil pesanan. Lalu apa?`,options:[`Rilis saja`,`Kembali, perbaiki desainnya, lalu uji lagi`,`Hapus aplikasinya`],why:`prosesnya berupa siklus: hasil uji mengirimmu kembali ke langkah sebelumnya.`}
+ {q:`Apa yang sebaiknya kamu lakuin sebelum sketsa solusi?`,options:[`Pilih warna`,`Pahami user dan masalahnya`,`Nulis code`],why:`empati dan define dulu, kalau nggak kamu bisa nyelesaiin masalah yang salah.`},
+ {q:`Pas dites, user nggak nemu nomor ambil pesanan. Terus gimana?`,options:[`Rilis aja`,`Balik lagi, perbaiki desainnya, terus tes ulang`,`Hapus aplikasinya`],why:`prosesnya itu siklus: hasil tes bawa kamu balik ke langkah sebelumnya.`}
 ]},
 'ux-personas': {
-title:'Pengguna, Riset & Persona', metaphor:'Memasak untuk tamu',
-parable:`Sebelum memasak untuk tamu, tuan rumah yang baik bertanya: ada yang vegetarian? Alergi kacang? Tidak suka pedas? Memasak hanya yang kamu suka adalah cara tercepat berakhir dengan piring penuh yang tidak disentuh. Dalam desain, riset adalah pertanyaan-pertanyaan itu, dan persona adalah daftar tamu yang kamu letakkan di depanmu saat memasak.`,
-theory:[`Kamu bukan penggunamu. Seleramu sendiri hanyalah tebakan sampai dibuktikan oleh orang sungguhan.`,`Metode riset: wawancara menjawab kenapa, survei menjawab berapa banyak, analytics menunjukkan apa yang sebenarnya dilakukan orang.`,`Persona adalah profil singkat pengguna yang khas, dibuat dari hasil riset: tujuan, frustrasi, dan konteks.`,`Gunakan persona untuk mengambil keputusan: "Apakah Bu Ratna, 68 tahun dan berkacamata baca, bisa menemukan tombol ini?"`],
-controls:[{label:'Persona',options:['Sari, mahasiswa','Andi, pekerja kantor','Ratna, pensiunan']},{label:'Rancang untuk',options:['Persona-nya','Dirimu sendiri']}],
-bad:'"Aku sukanya begini" itu satu pendapat, bukan riset.',
-good:'Persona yang dibuat dari wawancara, diletakkan di samping desain.',
-figma:[`Buat komponen kartu persona di Figma: foto, nama, kutipan, tujuan, frustrasi, konteks.`,`Letakkan kartu persona di halaman yang sama dengan layarmu supaya selalu terlihat saat mendesain.`,`Buat papan FigJam berisi kutipan wawancara sebagai sticky note, lalu kelompokkan menjadi tema (affinity mapping).`],
+title:'User, Research & Persona', metaphor:'Masak buat tamu',
+parable:`Sebelum masak buat tamu, tuan rumah yang baik pasti nanya: ada yang vegetarian? Alergi kacang? Nggak kuat pedas? Kalau kamu cuma masak yang kamu suka, siap-siap aja piringnya masih penuh dan nggak disentuh. Di desain, research itu ya pertanyaan-pertanyaan tadi, dan persona itu daftar tamu yang kamu tempel di depanmu selama masak.`,
+theory:[`Kamu bukan user-mu. Selera kamu sendiri cuma tebakan sampai dibuktiin sama orang beneran.`,`Metode research: wawancara jawab kenapa, survei jawab berapa banyak, analytics nunjukin apa yang beneran dilakuin orang.`,`Persona itu profil singkat user yang khas, dibikin dari hasil research: goal, pain point, dan konteksnya.`,`Pakai persona buat ambil keputusan: "Bu Ratna, 68 tahun dan pakai kacamata baca, bisa nemu button ini nggak?"`],
+controls:[{label:'Persona',options:['Sari, mahasiswa','Andi, orang kantoran','Ratna, pensiunan']},{label:'Desain buat',options:['Persona-nya','Diri sendiri']}],
+bad:'"Aku sukanya gini" itu cuma satu pendapat, bukan research.',
+good:'Persona dari hasil wawancara, ditaruh di sebelah desain.',
+figma:[`Bikin component kartu persona di Figma: foto, nama, kutipan, goal, pain point, konteks.`,`Taruh kartu persona di page yang sama dengan layarmu, biar selalu kelihatan pas kamu desain.`,`Bikin board FigJam isinya kutipan wawancara sebagai sticky note, terus kelompokin jadi tema (affinity mapping).`],
 quiz:[
- {q:`Metode mana yang menjawab KENAPA orang berperilaku tertentu?`,options:[`Analytics`,`Wawancara`,`A/B test`],why:`wawancara membuat orang bisa menjelaskan alasannya. Analytics menunjukkan apa yang terjadi, bukan kenapa.`},
- {q:`Dari mana persona seharusnya berasal?`,options:[`Imajinasimu`,`Riset sungguhan tentang pengguna sungguhan`,`Foto stok`],why:`persona merangkum temuan riset. Persona karangan hanya mengulang asumsimu sendiri.`}
+ {q:`Metode mana yang jawab KENAPA orang berperilaku kayak gitu?`,options:[`Analytics`,`Wawancara`,`A/B test`],why:`lewat wawancara, orang bisa jelasin alasannya. Analytics cuma nunjukin apa yang terjadi, bukan kenapa.`},
+ {q:`Persona seharusnya berasal dari mana?`,options:[`Imajinasimu`,`Research beneran tentang user beneran`,`Foto stok`],why:`persona itu rangkuman insight dari research. Persona karangan cuma ngulang asumsimu sendiri.`}
 ]},
 'ux-flows': {
 title:'User Flow & Funnel', metaphor:'Jalan pintas di taman',
-parable:`Taman sering punya jalan setapak rapi yang memutari rumput, dan jalan pintas becek yang memotong lurus di atas rumput. Orang berjalan di tempat yang paling mudah. Garis becek itu, disebut "desire path", menunjukkan rute yang sebenarnya diinginkan orang. User flow memetakan setiap langkah orang untuk mencapai tujuan, supaya kamu bisa mengaspal jalan pintasnya alih-alih melawannya.`,
-theory:[`User flow adalah urutan layar dan keputusan yang dilalui seseorang untuk menyelesaikan satu tugas.`,`Setiap langkah tambahan membuat sebagian orang pergi. Langkah yang lebih sedikit dan jelas berarti lebih banyak orang sampai tujuan.`,`Petakan happy path dulu, lalu cabang-cabangnya: error, pengguna belum login, keranjang kosong.`,`Arsitektur informasi adalah cara konten dikelompokkan dan diberi label, supaya orang bisa menebak di mana sesuatu berada.`],
-controls:[{label:'Alur checkout',options:['Wajib daftar akun','Checkout sebagai tamu']},{label:'Orang yang pergi per langkah (%)'}],
-bad:'Setiap layar tambahan adalah pintu tempat orang pergi.',
-good:'Aspal jalan pintasnya: izinkan orang checkout sebagai tamu.',
-figma:[`Gambar alurnya di FigJam dengan bentuk: persegi untuk layar, belah ketupat untuk keputusan, panah untuk aksi.`,`Beri nama setiap frame sesuai langkahnya ("02 Alamat") supaya alur dan layarnya cocok.`,`Gunakan tampilan Prototype di Figma untuk mencoba alurnya sendiri dan hitung jumlah ketukannya.`],
+parable:`Taman biasanya punya jalan setapak rapi yang muter ngelilingin rumput, terus ada juga jalan pintas becek yang motong lurus lewat rumput. Orang jalan lewat yang paling gampang. Jejak becek itu, namanya "desire path", nunjukin rute yang sebenarnya orang mau. User flow memetakan tiap langkah orang buat sampai ke goal-nya, biar kamu bisa ngaspal jalan pintas itu, bukan malah ngelawannya.`,
+theory:[`User flow itu urutan layar dan keputusan yang dilewatin seseorang buat nyelesaiin satu tugas.`,`Tiap langkah tambahan bikin sebagian orang kabur. Langkahnya makin sedikit dan jelas, makin banyak orang yang sampai tujuan.`,`Petakan happy path dulu, baru cabang-cabangnya: error, user belum login, keranjang kosong.`,`Arsitektur informasi itu soal gimana konten dikelompokin dan dikasih label, biar orang bisa nebak sesuatu ada di mana.`],
+controls:[{label:'Alur checkout',options:['Wajib daftar','Checkout tamu']},{label:'Yang kabur per langkah (%)'}],
+bad:'Tiap layar tambahan itu pintu buat orang kabur.',
+good:'Aspal jalan pintasnya: biarin orang checkout sebagai tamu.',
+figma:[`Gambar alurnya di FigJam pakai bentuk: kotak buat layar, belah ketupat buat keputusan, panah buat aksi.`,`Kasih nama tiap frame sesuai langkahnya ("02 Alamat") biar alur dan layarnya nyambung.`,`Pakai mode Prototype di Figma buat nyobain alurnya sendiri dan hitung udah berapa kali tap.`],
 quiz:[
- {q:`Setiap langkah kehilangan 15% orang. Apa efek menghapus dua langkah?`,options:[`Tidak ada`,`Lebih banyak orang sampai tujuan`,`Lebih sedikit orang sampai tujuan`],why:`semakin sedikit tempat untuk pergi, semakin banyak yang selesai.`},
- {q:`Apa itu "happy path"?`,options:[`Rute ketika semuanya berjalan lancar`,`Jalur dengan warna yang bagus`,`Layar-layar error`],why:`petakan rute idealnya dulu, lalu rancang cabang-cabang saat terjadi masalah.`}
+ {q:`Tiap langkah kehilangan 15% orang. Kalau dua langkah dihapus, efeknya apa?`,options:[`Nggak ada`,`Lebih banyak yang sampai tujuan`,`Lebih sedikit yang sampai tujuan`],why:`makin sedikit kesempatan buat kabur, makin banyak yang selesai.`},
+ {q:`"Happy path" itu apa sih?`,options:[`Rute pas semuanya lancar`,`Jalur yang warnanya bagus`,`Layar-layar error`],why:`petakan rute idealnya dulu, baru desain cabang-cabang pas ada yang salah.`}
 ]},
 'ux-heuristics': {
-title:'Heuristik Usability & Pengujian', metaphor:'Inspektur bangunan',
-parable:`Sebelum orang menempati gedung baru, inspektur berkeliling dengan daftar periksa: apakah pintu darurat diberi tanda, apakah tangga punya pegangan, apakah saklar lampu mudah ditemukan? Ia tidak perlu cetak biru arsitek untuk menemukan masalah. Heuristik usability adalah daftar periksa itu untuk antarmuka, dan uji usability adalah mengamati penghuni sungguhan mencoba tinggal di sana.`,
-theory:[`10 heuristik Jakob Nielsen adalah aturan praktis, misalnya: tampilkan status sistem, pakai bahasa pengguna, izinkan undo, cegah error.`,`Review heuristik itu cepat dan murah: telusuri layar-layarnya dan catat setiap aturan yang dilanggar.`,`Uji usability berarti mengamati sekitar 5 pengguna sungguhan mencoba tugas sungguhan. Diam dan catat.`,`Urutkan masalah berdasarkan seberapa sering dan seberapa parah, lalu perbaiki yang terburuk dulu.`],
-controls:[{label:'Perbaikan diterapkan'}],
-bad:'Rilis tanpa ada yang memeriksa: masalah ditemukan pengguna dengan cara yang menyakitkan.',
-good:'Satu putaran daftar periksa ditambah 5 pengguna sungguhan menemukan sebagian besar masalah.',
-figma:[`Duplikat layarmu ke halaman "Review" dan tambahkan sticky note merah untuk setiap heuristik yang dilanggar.`,`Lakukan uji dengan link prototipe Figma di ponsel. Minta pengguna berpikir keras sambil kamu mencatat.`,`Kumpulkan temuan di FigJam, beri tingkat keparahan (1 sampai 3), lalu perbaiki yang bernilai 3 dulu.`],
+title:'Heuristic & Usability Testing', metaphor:'Inspektur bangunan',
+parable:`Sebelum gedung baru ditempatin, inspektur keliling bawa checklist: pintu darurat udah ada tandanya belum, tangga ada pegangannya nggak, saklar lampu gampang ditemuin nggak? Dia nggak butuh cetak biru arsitek buat nemuin masalah. Usability heuristic itu checklist yang sama buat tampilan aplikasi, dan usability testing itu ngamatin penghuni beneran nyobain tinggal di sana.`,
+theory:[`10 heuristic dari Jakob Nielsen itu aturan praktis, contohnya: tunjukin status sistem, pakai bahasa user, sediain undo, cegah error.`,`Review heuristic itu cepat dan murah: telusuri layar satu per satu dan catat tiap aturan yang dilanggar.`,`Usability testing artinya ngamatin sekitar 5 user beneran nyobain tugas beneran. Kamu diem aja dan catat.`,`Urutin masalahnya dari seberapa sering dan seberapa parah, terus beresin yang paling parah dulu.`],
+controls:[{label:'Perbaikan dipasang'}],
+bad:'Rilis tanpa dicek siapa-siapa: user yang nemu masalahnya, dan rasanya nggak enak.',
+good:'Sekali jalan pakai checklist plus 5 user beneran udah nemuin sebagian besar masalah.',
+figma:[`Duplikat layarmu ke page "Review" dan tempel sticky note merah buat tiap heuristic yang dilanggar.`,`Tes pakai link prototype Figma di HP. Minta user ngomongin isi pikirannya sambil kamu nyatet.`,`Kumpulin temuan di FigJam, kasih level keparahan (1 sampai 3), terus beresin yang nilainya 3 duluan.`],
 quiz:[
- {q:`Pengguna tidak sengaja menghapus file dan tidak bisa mengembalikannya. Heuristik mana yang dilanggar?`,options:[`Kontrol dan kebebasan pengguna (undo)`,`Desain estetis`,`Dokumentasi bantuan`],why:`orang butuh pintu darurat: undo atau batal.`},
- {q:`Berapa pengguna yang biasanya dibutuhkan uji usability cepat untuk menemukan sebagian besar masalah besar?`,options:[`1`,`Sekitar 5`,`500`],why:`sekitar 5 pengguna sudah memperlihatkan sebagian besar masalah utama. Uji, perbaiki, lalu uji lagi.`}
+ {q:`User nggak sengaja hapus file dan nggak bisa balikin lagi. Heuristic mana yang dilanggar?`,options:[`Kontrol & kebebasan user (undo)`,`Desain estetis`,`Dokumentasi bantuan`],why:`orang butuh pintu darurat: undo atau batal.`},
+ {q:`Biasanya butuh berapa user buat usability testing cepat supaya sebagian besar masalah besar ketemu?`,options:[`1`,`Sekitar 5`,`500`],why:`sekitar 5 user udah cukup buat nunjukin sebagian besar masalah utama. Tes, perbaiki, terus tes lagi.`}
 ]},
 'figma-basics': {
 title:'Frame, Layer & Bentuk', metaphor:'Tumpukan lembar kaca',
-parable:`Animator zaman dulu menggambar di atas lembaran plastik bening: latar di satu lembar, tokoh di lembar lain, balon kata di paling atas. Tumpuk semuanya dan kamu melihat satu gambar; angkat satu lembar dan kamu hanya mengubah bagian itu. File Figma bekerja dengan cara yang sama. Setiap frame berisi tumpukan layer, dan urutan tumpukannya menentukan apa yang ada di depan.`,
-theory:[`Frame adalah wadah, seperti layar atau artboard. Mulai desain dengan menggambar frame (tekan F) berukuran ponsel atau desktop.`,`Semua yang ada di dalamnya adalah layer: bentuk, teks, gambar, dan frame lain. Di panel Layers, makin atas di daftar berarti makin di depan.`,`Kelompokkan layer (Ctrl/Cmd+G) untuk memindahkannya bersama, dan susun frame bersarang untuk membuat bagian dengan tata letaknya sendiri.`,`Beri nama layermu. "Frame 482" tidak memberi tahu apa pun; "Card / Product" memberi tahu semua orang.`],
-controls:[{label:'Pisahkan layer'},{label:'Layer terpilih',options:['Frame','Kartu','Gambar','Judul','Tombol']}],
-bad:'Bentuk-bentuk lepas di kanvas dengan nama bawaan. Mustahil mencari apa pun.',
-good:'Semuanya berada di frame bernama, tersusun sesuai maknanya.',
-figma:[`Tekan F lalu pilih preset seperti iPhone 15 atau Desktop di panel kanan untuk membuat frame.`,`Klik dua kali nama layer di panel Layers untuk menggantinya. Pakai garis miring untuk mengelompokkan nama: "Card / Product".`,`Tekan Ctrl/Cmd + ] atau [ untuk memindahkan layer terpilih naik atau turun di tumpukan.`],
+parable:`Animator zaman dulu gambar di atas lembaran plastik bening: background di satu lembar, tokoh di lembar lain, balon kata paling atas. Tumpuk semuanya, jadilah satu gambar; angkat satu lembar, kamu cuma ngubah bagian itu aja. File Figma juga gitu. Tiap frame isinya tumpukan layer, dan urutan tumpukannya yang nentuin apa yang ada di depan.`,
+theory:[`Frame itu wadah, kayak layar atau artboard. Mulai desain dengan gambar frame (tekan F) seukuran HP atau desktop.`,`Semua yang ada di dalamnya itu layer: bentuk, teks, gambar, sampai frame lain. Di panel Layers, makin atas di daftar artinya makin di depan.`,`Group layer (Ctrl/Cmd+G) biar bisa dipindah bareng, dan susun frame di dalam frame buat bikin bagian dengan layout-nya sendiri.`,`Kasih nama layer-mu. "Frame 482" nggak ngasih info apa-apa; "Card / Product" langsung jelas buat semua orang.`],
+controls:[{label:'Pisahin layer'},{label:'Layer dipilih',options:['Frame','Kartu','Gambar','Judul','Button']}],
+bad:'Bentuk-bentuk lepas di kanvas dengan nama bawaan. Mau nyari apa pun susah banget.',
+good:'Semuanya ada di frame yang dikasih nama, disusun sesuai fungsinya.',
+figma:[`Tekan F, terus pilih preset kayak iPhone 15 atau Desktop di panel kanan buat bikin frame.`,`Double-click nama layer di panel Layers buat ganti namanya. Pakai garis miring buat ngelompokin nama: "Card / Product".`,`Tekan Ctrl/Cmd + ] atau [ buat mindahin layer yang dipilih naik atau turun di tumpukan.`],
 quiz:[
- {q:`Di panel Layers, layer yang lebih atas di daftar berada…`,options:[`di belakang layer lain`,`di depan layer lain`,`tersembunyi`],why:`daftarnya adalah tumpukan: paling atas di daftar digambar paling depan.`},
- {q:`Wadah terbaik untuk desain sebuah layar adalah…`,options:[`Group`,`Frame`,`Rectangle`],why:`frame bisa diatur ukurannya sesuai perangkat, memotong konten, dan punya tata letaknya sendiri. Group tidak bisa.`}
+ {q:`Di panel Layers, layer yang posisinya lebih atas di daftar itu ada…`,options:[`di belakang layer lain`,`di depan layer lain`,`tersembunyi`],why:`daftarnya itu tumpukan: yang paling atas di daftar digambar paling depan.`},
+ {q:`Wadah paling pas buat desain satu layar itu…`,options:[`Group`,`Frame`,`Rectangle`],why:`frame bisa diatur ukurannya sesuai device, motong content yang keluar, dan punya layout sendiri. Group nggak bisa.`}
 ]},
 'figma-prototype': {
 title:'Prototyping & Smart Animate', metaphor:'Buku flipbook',
-parable:`Balik halaman flipbook dengan cepat dan gambarnya jadi hidup, karena setiap halaman hanya sedikit berbeda dari sebelumnya. Prototipe Figma bekerja dengan cara yang sama. Kamu menghubungkan layar dengan panah, dan Smart Animate mencari layer bernama sama di kedua layar lalu menggesernya dengan mulus dari satu halaman ke halaman berikutnya.`,
-theory:[`Di tab Prototype, tarik koneksi dari sebuah layer ke frame lain. Itulah interaksi.`,`Setiap interaksi punya pemicu (On click, While hovering, After delay) dan aksi (Navigate to, Open overlay, Back).`,`Animasi menentukan tampilan perpindahannya: Instant, Dissolve, Move in, atau Smart Animate.`,`Smart Animate mencocokkan layer bernama sama di antara frame dan menganimasikan perbedaan posisi, ukuran, warna, dan opacity-nya.`],
-controls:[{label:'Pemicu',options:['Saat diklik','Setelah jeda']},{label:'Animasi'},{label:'Durasi'}],
-bad:'Frame dengan nama layer berbeda: Smart Animate hanya bisa memudarkannya.',
-good:'Nama yang sama di kedua layar: Smart Animate menggerakkannya dengan mulus.',
-figma:[`Pindah ke tab Prototype (Shift+E), pilih sebuah layer, lalu tarik pegangan birunya ke frame lain.`,`Di panel interaksi, atur pemicunya, atur Animation ke Smart Animate, dan coba Ease out 300ms.`,`Tekan tombol Play (kanan atas) untuk mencobanya, atau buka prototipenya di ponsel lewat aplikasi Figma.`],
+parable:`Kalau kamu balik halaman flipbook cepat-cepat, gambarnya jadi kayak hidup, karena tiap halaman cuma beda dikit dari sebelumnya. Prototype di Figma juga gitu. Kamu nyambungin layar pakai panah, terus Smart Animate nyari layer yang namanya sama di kedua layar dan ngegeser layer itu dengan mulus dari satu halaman ke halaman berikutnya.`,
+theory:[`Di tab Prototype, tarik sambungan dari satu layer ke frame lain. Nah, itu namanya interaction.`,`Tiap interaction punya pemicu (On click, While hovering, After delay) dan aksi (Navigate to, Open overlay, Back).`,`Animasi nentuin transition-nya kelihatan kayak gimana: Instant, Dissolve, Move in, atau Smart Animate.`,`Smart Animate nyocokin layer yang namanya sama antar frame, lalu nganimasiin beda posisi, ukuran, warna, dan opacity-nya.`],
+controls:[{label:'Pemicu',options:['Pas di-click','Setelah jeda']},{label:'Animasi'},{label:'Durasi'}],
+bad:'Nama layer di tiap frame beda-beda: Smart Animate cuma bisa bikin efek fade.',
+good:'Namanya sama di kedua layar: Smart Animate gerakinnya mulus.',
+figma:[`Pindah ke tab Prototype (Shift+E), pilih satu layer, terus tarik titik birunya ke frame lain.`,`Di panel interaction, atur pemicunya, set Animation ke Smart Animate, dan coba Ease out 300ms.`,`Tekan tombol Play (kanan atas) buat nyoba, atau buka prototype-nya di HP lewat aplikasi Figma.`],
 quiz:[
- {q:`Smart Animate menentukan layer mana yang dianimasikan berdasarkan…`,options:[`warnanya`,`nama layer yang sama di kedua frame`,`pilihan acak`],why:`layer dengan nama (dan hierarki) yang sama di kedua frame dianimasikan dari satu keadaan ke keadaan lain.`},
- {q:`Pemicu mana yang berjalan tanpa pengguna melakukan apa pun?`,options:[`On click`,`While hovering`,`After delay`],why:`After delay berjalan sendiri, berguna untuk splash screen dan status loading.`}
+ {q:`Smart Animate nentuin layer mana yang dianimasiin berdasarkan…`,options:[`warnanya`,`nama layer yang sama di kedua frame`,`pilihan acak`],why:`layer dengan nama (dan hierarki) yang sama di kedua frame bakal dianimasiin dari satu state ke state berikutnya.`},
+ {q:`Pemicu mana yang jalan sendiri tanpa user ngapa-ngapain?`,options:[`On click`,`While hovering`,`After delay`],why:`After delay jalan sendiri, cocok buat splash screen dan state loading.`}
 ]},
 'figma-handoff': {
 title:'Dev Mode & Handoff', metaphor:'Cetak biru arsitek',
-parable:`Tukang bangunan tidak menebak ukuran jendela dari lukisan rumah yang cantik. Mereka bekerja dari cetak biru yang mencantumkan setiap ukuran. Dev Mode mengubah desain Figma-mu menjadi cetak biru itu: developer mengklik layer mana pun dan membaca ukuran, jarak, warna, dan font-nya, bahkan menyalin kode yang sudah jadi.`,
-theory:[`Dev Mode (Shift+D) adalah tampilan untuk developer. Klik sebuah layer untuk melihat ukuran, gaya, dan CSS-nya.`,`Tahan Alt/Option lalu arahkan kursor ke layer lain untuk mengukur jarak di antara keduanya.`,`Gunakan variable dan style dengan nama yang baik, supaya developer melihat "color/action" alih-alih kode hex acak.`,`Tandai frame sebagai "Ready for dev" dan tambahkan anotasi untuk perilaku yang tidak bisa ditunjukkan gambar, seperti loading atau error.`],
-controls:[{label:'Periksa',options:['Jarak','Warna','Tipografi']},{label:'Anotasi',options:['Mati','Nyala']}],
-bad:'Mengirim screenshot. Developer harus menebak setiap angka.',
-good:'Link Dev Mode dengan variable bernama dan anotasi.',
-figma:[`Nyalakan Dev Mode dengan Shift+D, pilih sebuah layer, dan baca panel Inspect di sebelah kanan.`,`Klik kanan sebuah frame lalu pilih "Mark as ready for dev" supaya developer tahu desainnya sudah final.`,`Tambahkan anotasi dengan alat Annotate di Dev Mode untuk keadaan seperti loading, kosong, dan error.`],
+parable:`Tukang bangunan nggak nebak-nebak ukuran jendela dari lukisan rumah yang cantik. Mereka kerja pakai cetak biru yang nyantumin semua ukuran. Dev Mode ngubah desain Figma-mu jadi cetak biru kayak gitu: developer tinggal click layer mana aja buat baca ukuran, jarak, warna, dan font-nya, bahkan bisa langsung copy code-nya.`,
+theory:[`Dev Mode (Shift+D) itu tampilan khusus developer. Click satu layer buat lihat ukuran, style, dan CSS-nya.`,`Tahan Alt/Option terus arahin kursor ke layer lain buat ngukur jarak di antara keduanya.`,`Pakai variable dan style dengan nama yang jelas, biar developer lihat "color/action", bukan kode hex random.`,`Tandain frame sebagai "Ready for dev" dan tambahin anotasi buat perilaku yang nggak kelihatan dari gambar, kayak loading atau error.`],
+controls:[{label:'Inspect',options:['Jarak','Warna','Tipografi']},{label:'Anotasi',options:['Off','On']}],
+bad:'Kirim screenshot doang. Developer jadi harus nebak tiap angka.',
+good:'Link Dev Mode lengkap dengan variable bernama dan anotasi.',
+figma:[`Nyalain Dev Mode pakai Shift+D, pilih satu layer, terus baca panel Inspect di sebelah kanan.`,`Klik kanan sebuah frame, pilih "Mark as ready for dev", biar developer tahu desainnya udah final.`,`Tambahin anotasi pakai tool Annotate di Dev Mode buat state kayak loading, kosong, dan error.`],
 quiz:[
- {q:`Developer butuh jarak pasti antara dua layer. Apa yang sebaiknya dilakukan di Dev Mode?`,options:[`Menebak dari gambar`,`Pilih satu layer lalu tahan Alt/Option sambil mengarahkan kursor ke layer lain`,`Ambil screenshot`],why:`Alt/Option menampilkan jarak terukur antara layer terpilih dan layer yang ditunjuk.`},
- {q:`Kenapa warna diberi nama sebagai variable seperti color/action?`,options:[`Supaya terlihat keren`,`Developer bisa memakai token yang sama di kode, dan perubahan tetap sinkron`,`Figma mewajibkannya`],why:`nama yang sama berarti desain dan kode membicarakan hal yang sama.`}
+ {q:`Developer butuh jarak pasti antara dua layer. Di Dev Mode, harus ngapain?`,options:[`Nebak dari gambar`,`Pilih satu layer, terus tahan Alt/Option sambil arahin kursor ke layer lain`,`Ambil screenshot`],why:`Alt/Option nampilin jarak terukur antara layer yang dipilih dan layer yang ditunjuk.`},
+ {q:`Kenapa warna dikasih nama sebagai variable kayak color/action?`,options:[`Biar kelihatan keren`,`Developer bisa pakai token yang sama di code, jadi perubahannya tetap sinkron`,`Diwajibin Figma`],why:`nama yang sama artinya desain dan code ngomongin hal yang sama.`}
 ]}
 });

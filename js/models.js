@@ -31,7 +31,7 @@ const at = (g, x, y, z, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1) => {
   const m = new T.Matrix4().compose(new T.Vector3(x, y, z), new T.Quaternion().setFromEuler(new T.Euler(rx, ry, rz)), new T.Vector3(sx, sy, sz));
   g.applyMatrix4(m); return g;
 };
-const lathe = (prof, seg = 16) => new T.LatheGeometry(new T.SplineCurve(prof.map(p => new T.Vector2(Math.max(0.0001, p[0]), p[1]))).getPoints(24), seg);
+const lathe = (prof, seg = 12, pts = 10) => new T.LatheGeometry(new T.SplineCurve(prof.map(p => new T.Vector2(Math.max(0.0001, p[0]), p[1]))).getPoints(pts), seg);
 /* an icosphere pushed in and out by a little noise: a soft, organic blob */
 function blob(r, detail, amp, seed) {
   let g = new T.IcosahedronGeometry(1, detail);
@@ -52,27 +52,27 @@ function blob(r, detail, amp, seed) {
 /* side profile helper: an extruded (z, y) outline, rounded by the bevel, centred on x */
 function sideBody(points, width, bevel, arches) {
   const s = new T.Shape();
-  const top = new T.SplineCurve(points.map(p => new T.Vector2(p[0], p[1]))).getPoints(points.length * 6);
+  const top = new T.SplineCurve(points.map(p => new T.Vector2(p[0], p[1]))).getPoints(points.length * 3);
   if (arches) {
     // bottom edge from the front back to the rear, rising over each wheel
     const { yb, wr, ra, zs } = arches, pts = top.slice();
     pts.push(new T.Vector2(top[top.length - 1].x, yb));
     zs.slice().sort((a, b) => b - a).forEach(z => {
       const a0 = Math.asin(Math.max(-1, Math.min(1, (yb - wr) / ra)));
-      for (let k = 0; k <= 14; k++) { const a = a0 + (k / 14) * (Math.PI - 2 * a0); pts.push(new T.Vector2(z + Math.cos(a) * ra, wr + Math.sin(a) * ra)); }
+      for (let k = 0; k <= 7; k++) { const a = a0 + (k / 7) * (Math.PI - 2 * a0); pts.push(new T.Vector2(z + Math.cos(a) * ra, wr + Math.sin(a) * ra)); }
     });
     pts.push(new T.Vector2(top[0].x, yb));
     s.setFromPoints(pts);
   } else s.setFromPoints(top);
-  const g = new T.ExtrudeGeometry(s, { depth: width - bevel * 2, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel * 0.8, bevelSegments: 3, curveSegments: 8 });
+  const g = new T.ExtrudeGeometry(s, { depth: width - bevel * 2, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel * 0.8, bevelSegments: 2, curveSegments: 4 });
   g.translate(0, 0, -(width - bevel * 2) / 2);
   g.rotateY(-Math.PI / 2); // shape x → world z (front), extrusion → world x
   return g;
 }
 function wheel(r, w) {
-  const tire = lathe([[r * 0.62, -w / 2], [r * 0.92, -w / 2], [r, -w * 0.32], [r, w * 0.32], [r * 0.92, w / 2], [r * 0.62, w / 2]], 18);
+  const tire = lathe([[r * 0.62, -w / 2], [r * 0.92, -w / 2], [r, -w * 0.32], [r, w * 0.32], [r * 0.92, w / 2], [r * 0.62, w / 2]], 10, 6);
   tire.rotateZ(Math.PI / 2);
-  const rim = new T.CylinderGeometry(r * 0.62, r * 0.62, w * 0.9, 14); rim.rotateZ(Math.PI / 2);
+  const rim = new T.CylinderGeometry(r * 0.62, r * 0.62, w * 0.9, 10); rim.rotateZ(Math.PI / 2);
   const hub = new T.CylinderGeometry(r * 0.2, r * 0.24, w * 1.02, 10); hub.rotateZ(Math.PI / 2);
   return { tire, rim, hub };
 }
@@ -104,7 +104,7 @@ export function carGeometry(kind = 'sedan') {
   parts.push([at(new RoundedBoxGeometry(W + 0.01, 0.07, 0.08, 2, 0.025), 0, 0.12, rear + 0.01), 2]);
   parts.push([at(new RoundedBoxGeometry(W * 0.36, 0.04, 0.02, 2, 0.01), 0, kind === 'suv' ? 0.24 : 0.17, front - 0.004), 2]);
   [-1, 1].forEach(s => {
-    [-wz, wz].forEach(z => { const arch = new T.TorusGeometry(wr + 0.02, 0.018, 6, 16, Math.PI); arch.rotateY(Math.PI / 2); parts.push([at(arch, s * (W / 2 + 0.005), wr + 0.01, z), 2]); });
+    [-wz, wz].forEach(z => { const arch = new T.TorusGeometry(wr + 0.02, 0.018, 4, 8, Math.PI); arch.rotateY(Math.PI / 2); parts.push([at(arch, s * (W / 2 + 0.005), wr + 0.01, z), 2]); });
     if (kind !== 'bus') parts.push([at(new RoundedBoxGeometry(0.05, 0.035, 0.05, 2, 0.012), s * (W / 2 + 0.02), K.belt + 0.02, K.cab[3][0] - 0.05), 0]);
     parts.push([at(new RoundedBoxGeometry(0.11, 0.045, 0.04, 2, 0.016), s * (W / 2 - 0.12), kind === 'suv' ? 0.28 : 0.215, front - 0.012), 4]);
     parts.push([at(new RoundedBoxGeometry(0.12, 0.035, 0.02, 2, 0.008), s * (W / 2 - 0.1), kind === 'suv' ? 0.3 : 0.24, rear - 0.002), 5]);
@@ -176,7 +176,7 @@ export function treeGeometry(kind = 'round', seed = 1) {
     // stacked soft cones
     for (let k = 0; k < 4; k++) {
       const r = 0.62 - k * 0.13, y = 0.45 + k * 0.38;
-      const cone = lathe([[0.001, 0], [r * 0.95, 0.05], [r, 0.12], [r * 0.55, 0.32], [0.001, 0.58]], 14);
+      const cone = lathe([[0.001, 0], [r * 0.95, 0.05], [r, 0.12], [r * 0.55, 0.32], [0.001, 0.58]], 9, 7);
       const p = cone.attributes.position;
       for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i), a = Math.atan2(x, z), n = 1 + 0.08 * Math.sin(a * 7 + seed + k); p.setX(i, x * n); p.setZ(i, z * n); }
       cone.computeVertexNormals();
@@ -185,7 +185,7 @@ export function treeGeometry(kind = 'round', seed = 1) {
   } else {
     // a rounded crown of a few soft blobs, and two branches
     const blobs = [[0, 1.2, 0, 0.55], [0.32, 1.02, 0.12, 0.38], [-0.3, 1.05, -0.08, 0.4], [0.05, 1.05, -0.3, 0.37], [-0.08, 0.98, 0.32, 0.36], [0.05, 1.5, 0.02, 0.36]];
-    blobs.forEach((b, k) => parts.push([at(blob(b[3], 2, 0.12, seed + k * 1.3), b[0], b[1], b[2]), 1]));
+    blobs.forEach((b, k) => parts.push([at(blob(b[3], 1, 0.12, seed + k * 1.3), b[0], b[1], b[2]), 1]));
     [[0.5, 0.3], [-0.6, -0.7]].forEach(([rz, ry]) => { const br = new T.CylinderGeometry(0.018, 0.035, 0.42, 6); br.translate(0, 0.21, 0); parts.push([at(br, 0, 0.62, 0, 0, ry, rz), 0]); });
   }
   return merge(parts, TREE_SLOTS);
@@ -195,12 +195,12 @@ export function treeGeometry(kind = 'round', seed = 1) {
 /* bench: slots 0 wood, 1 metal */
 export function benchGeometry() {
   const parts = [];
-  for (let k = 0; k < 3; k++) parts.push([at(new RoundedBoxGeometry(0.9, 0.035, 0.085, 2, 0.012), 0, 0.22, 0.1 - k * 0.1), 0]);
-  for (let k = 0; k < 2; k++) parts.push([at(new RoundedBoxGeometry(0.9, 0.08, 0.03, 2, 0.012), 0, 0.33 + k * 0.1, -0.15 - k * 0.012, -0.18), 0]);
+  for (let k = 0; k < 3; k++) parts.push([at(new T.BoxGeometry(0.9, 0.035, 0.085), 0, 0.22, 0.1 - k * 0.1), 0]);
+  for (let k = 0; k < 2; k++) parts.push([at(new T.BoxGeometry(0.9, 0.08, 0.03), 0, 0.33 + k * 0.1, -0.15 - k * 0.012, -0.18), 0]);
   [-0.38, 0.38].forEach(x => {
     const s = new T.Shape();
     s.moveTo(0.12, 0); s.lineTo(0.1, 0.2); s.lineTo(-0.13, 0.2); s.lineTo(-0.17, 0.5); s.lineTo(-0.2, 0.5); s.lineTo(-0.16, 0.18); s.lineTo(-0.13, 0); s.lineTo(-0.1, 0); s.lineTo(-0.08, 0.17); s.lineTo(0.08, 0.17); s.lineTo(0.09, 0); s.closePath();
-    const g = new T.ExtrudeGeometry(s, { depth: 0.03, bevelEnabled: true, bevelThickness: 0.006, bevelSize: 0.006, bevelSegments: 1 });
+    const g = new T.ExtrudeGeometry(s, { depth: 0.03, bevelEnabled: false });
     g.translate(0, 0, -0.015); g.rotateY(-Math.PI / 2);
     parts.push([at(g, x, 0, 0), 1]);
   });
@@ -209,12 +209,12 @@ export function benchGeometry() {
 /* lamp post with a curved arm (metal only; the bulb is drawn separately so it can be coloured) */
 export function lampPostGeometry(h = 1.75, arm = 0.42) {
   const parts = [];
-  parts.push([lathe([[0.075, 0], [0.07, 0.06], [0.045, 0.1], [0.038, 0.5], [0.03, h], [0.001, h + 0.01]], 10), 0]);
+  parts.push([lathe([[0.075, 0], [0.07, 0.06], [0.045, 0.1], [0.038, 0.5], [0.03, h], [0.001, h + 0.01]], 7, 7), 0]);
   const curve = new T.CatmullRomCurve3([new T.Vector3(0, h - 0.12, 0), new T.Vector3(0.02, h + 0.06, 0), new T.Vector3(arm * 0.5, h + 0.12, 0), new T.Vector3(arm, h + 0.04, 0)]);
-  parts.push([new T.TubeGeometry(curve, 16, 0.018, 6, false), 0]);
-  const shade = lathe([[0.001, 0.07], [0.05, 0.065], [0.1, 0.0], [0.09, -0.015]], 14);
+  parts.push([new T.TubeGeometry(curve, 8, 0.018, 4, false), 0]);
+  const shade = lathe([[0.001, 0.07], [0.05, 0.065], [0.1, 0.0], [0.09, -0.015]], 10, 5);
   parts.push([at(shade, arm, h - 0.03, 0), 0]);
-  parts.push([at(new T.TorusGeometry(0.05, 0.01, 6, 14), 0, 0.12, 0, Math.PI / 2), 0]);
+  parts.push([at(new T.TorusGeometry(0.05, 0.01, 3, 8), 0, 0.12, 0, Math.PI / 2), 0]);
   return merge(parts, 1);
 }
 
@@ -230,7 +230,7 @@ export function propGeometry(kind) {
       const g = lathe([[0.001, 0], [0.35, 0.03], [0.5, 0.18], [0.42, 0.55], [0.2, 0.85], [0.001, 1]], 16);
       g.scale(2, 1, 2); g.translate(0, -0.5, 0); return g;
     }
-    default: return blob(1, 3, 0.07, 2.3); // a bush
+    default: return blob(1, 2, 0.07, 2.3); // a bush
   }
 }
 
@@ -258,7 +258,8 @@ function walls(parts, w, h, d, y0 = 0) {
   parts.push([wallPlane(d, h, w / 2, y0 + h / 2, 0, Math.PI / 2), 0]);
   parts.push([wallPlane(d, h, -w / 2, y0 + h / 2, 0, -Math.PI / 2), 0]);
 }
-const slab = (w, h, d, x, y, z, r = 0.02) => at(new RoundedBoxGeometry(w, h, d, 2, Math.min(r, h / 2.1, w / 2.1, d / 2.1)), x, y, z);
+// town details are plain boxes: there are hundreds of buildings, so every triangle counts
+const slab = (w, h, d, x, y, z) => at(new T.BoxGeometry(w, h, d), x, y, z);
 function parapet(parts, w, d, y, t = 0.08, hgt = 0.16) {
   parts.push([slab(w + 0.06, hgt, t, 0, y + hgt / 2, d / 2 - t / 2 + 0.03), 2]);
   parts.push([slab(w + 0.06, hgt, t, 0, y + hgt / 2, -d / 2 + t / 2 - 0.03), 2]);
