@@ -18,7 +18,7 @@ Every lesson starts from an everyday story, **explains the idea with a 3D model 
 ## Structure
 
 ```
-index.html            Learning Lab (hub + lesson view, hash routing: #/ and #/lesson/{id})
+index.html            Learning Lab (hub + lesson view, hash routing: #/, #/lesson/{id}, #/create)
 design-system.html    Night Shift design system page
 css/tokens.css        design tokens (CSS custom properties)
 css/app.css           shared styles
@@ -30,7 +30,9 @@ js/lessons-foundry.js      new HTML / CSS / JS lessons
 js/syllabus.js             which district each lesson belongs to, and the order (edit this to reorganize)
 js/*.id.js                 Indonesian translations
 js/explainers.js           the 3D explainer for each lesson (declarative: controls → 3D objects)
-js/scenes.js          three.js scenes, ES module (neon city world map, box model, z-index stack)
+js/character.js       procedural human characters (player, guides, pedestrians)
+js/game.js            XP, levels, badges, toasts, saved character
+js/scenes.js          three.js scenes, ES module (neon city world map, explore mode, creator, box model, z-index stack)
 js/app.js             routing, rendering, playground engine, quiz, progress
 assets/img/           sha-labs logo + favicon
 ```
@@ -55,6 +57,15 @@ Everything is generated in code (no model files). The two cities sit on either s
 - Lit windows, neon number signs, bloom glow, fog, floating particles in the logo colors, street lamps, a mirrored floor (desktop only), cars, drones with a spotlight.
 - Completed lessons light up with brighter windows and a light pillar. Clicking a building flies the camera in before opening the lesson.
 - `prefers-reduced-motion` turns off auto-rotation, traffic and the camera flight.
+
+## Explore mode and gamification
+
+- **Character creator** (`#/create`): skin tone, height, build, eye color, 8 hair styles (including hijab) and hair color, top (t-shirt, hoodie, shirt, batik, jacket, sweater), bottom, shoes, each with its own color, plus glasses, cap and backpack. Turntable preview with face and full-body views.
+- **Explore**: press *Jelajahi kota / Explore the city* on the world map. Walk with WASD / arrow keys (Shift to run), the on-screen joystick, or tap the ground. Walk up to a building and press **E** to enter its lesson.
+- **Guides**: each district has a guide (Prof. Rupa, Vera Vektor, Pak Tukang, Rea, Vio) who introduces the district and points to the next lesson; the quest beacon marks it on the street and the map.
+- **Map**: a rotating minimap in the corner and a full map on **M**, showing roads, districts, buildings (finished ones filled), guides, the quest and where you are.
+- **XP**: lesson +100, correct quiz answer +10, first visit to a district +25, talking to a guide +15. 250 XP per level, with titles and 8 badges.
+- Saved in `localStorage`: `uxlab.avatar`, `uxlab.game`, `uxlab.pos`, `uxlab.exploring`, `uxlab.quest`.
 
 ## Frontend playgrounds
 

@@ -109,7 +109,9 @@
   function cur() { return S.view === 'lesson' ? LESSONS.filter(function (l) { return l.id === S.lessonId; })[0] : null; }
   function isDone(id) { return S.done.indexOf(id) >= 0; }
   function saveDone(done) {
+    var added = done.filter(function (id) { return S.done.indexOf(id) < 0; });
     S.done = done;
+    added.forEach(function (id) { UXGame.lessonDone(id, done); });
     try { localStorage.setItem(DONE_KEY, JSON.stringify(done)); } catch (e) {}
     renderProgress();
     if (hub) hub.refresh(done);
@@ -131,6 +133,7 @@
   }
 
   function disposeScenes() {
+    if (EX.on) { EX.on = false; document.body.classList.remove('is-exploring'); }
     if (hub) { hub.dispose(); hub = null; }
     if (sc) { sc.dispose(); sc = null; }
   }
@@ -143,6 +146,9 @@
     if (l) {
       Object.assign(S, lessonState(l), { view: 'lesson', lessonId: l.id, quiz: {} });
       renderLesson();
+    } else if (/^#\/create/.test(location.hash)) {
+      S.view = 'create'; S.lessonId = null; CR = null;
+      renderCreator();
     } else {
       S.view = 'hub'; S.lessonId = null;
       renderHub();
@@ -151,6 +157,198 @@
   }
   function open(id) { location.hash = '#/lesson/' + id; }
   function goHub() { location.hash = '#/'; }
+
+  /* ───────── character creator ───────── */
+  var CR = null;
+  var CR_ROWS = [
+    ['body', [['skin', 'swatch', 'SKIN'], ['height', 'range'], ['build', 'seg', 'build']]],
+    ['face', [['eyes', 'swatch', 'EYE_COLORS'], ['hair', 'seg', 'hair'], ['hairColor', 'swatch', 'HAIR_COLORS']]],
+    ['outfit', [['top', 'seg', 'top'], ['topColor', 'swatch', 'CLOTH'], ['bottom', 'seg', 'bottom'], ['bottomColor', 'swatch', 'CLOTH'], ['shoes', 'seg', 'shoes'], ['shoesColor', 'swatch', 'CLOTH']]],
+    ['extra', [['glasses', 'toggle'], ['cap', 'toggle'], ['backpack', 'toggle']]]
+  ];
+  function creatorPanel() {
+    var O = UXScenes.characterOptions, look = CR.look;
+    return '<label class="cr-name"><span>' + esc(t('cr.name')) + '</span><input id="crName" maxlength="18" autocomplete="off" placeholder="' + esc(t('cr.namePh')) + '" value="' + esc(look.name || '') + '"></label>' +
+      CR_ROWS.map(function (g) {
+        return '<div class="cr-group"><span class="label muted">' + esc(t('cr.' + g[0])) + '</span>' + g[1].map(function (r) {
+          var k = r[0], kind = r[1], val = look[k], body = '';
+          if (kind === 'swatch') body = '<div class="cr-sw" role="group" aria-label="' + esc(t('cr.' + k)) + '">' + O[r[2]].map(function (c, i) {
+            return '<button type="button" data-ck="' + k + '" data-cv="' + i + '" class="' + (val === i ? 'is-on' : '') + '" aria-pressed="' + (val === i) + '" style="--c:' + c + '" title="' + c + '"></button>';
+          }).join('') + '</div>';
+          else if (kind === 'seg') body = '<div class="seg">' + O.OPTIONS[r[2]].map(function (o) {
+            return '<button type="button" data-ck="' + k + '" data-cv="' + o + '" class="' + (val === o ? 'is-on' : '') + '" aria-pressed="' + (val === o) + '">' + esc(t('opt.' + o)) + '</button>';
+          }).join('') + '</div>';
+          else if (kind === 'range') body = '<input type="range" id="crHeight" min="0.9" max="1.1" step="0.01" value="' + (look.height || 1) + '" aria-label="' + esc(t('cr.height')) + '">';
+          else body = '<button type="button" class="cr-toggle' + (val ? ' is-on' : '') + '" data-ck="' + k + '" data-cv="toggle" aria-pressed="' + !!val + '"><i></i></button>';
+          return '<div class="cr-row cr-' + kind + '"><span>' + esc(t('cr.' + k)) + '</span>' + body + '</div>';
+        }).join('') + '</div>';
+      }).join('');
+  }
+  function renderCreator() {
+    disposeScenes();
+    app.innerHTML = '<main class="main creator" data-screen-label="Character creator">' +
+      '<section class="hero"><span class="kicker">' + esc(t('cr.kicker')) + '</span><h1>' + esc(t('cr.title')) + '</h1><p>' + esc(t('cr.lede')) + '</p></section>' +
+      '<section class="cr-grid">' +
+        '<div class="cr-stage"><div id="cr3d"></div><div class="cr-tools">' +
+          '<button type="button" class="btn-code" data-cr="random">' + esc(t('cr.random')) + '</button>' +
+          '<button type="button" class="btn-code" data-cr="face">' + esc(t('cr.viewFace')) + '</button>' +
+          '<button type="button" class="btn-code" data-cr="full">' + esc(t('cr.viewFull')) + '</button>' +
+          '<button type="button" class="btn-code" data-cr="spin">' + esc(t('cr.spin')) + '</button></div></div>' +
+        '<div class="cr-panel" id="crPanel"></div>' +
+      '</section>' +
+      '<div class="cr-actions"><button type="button" class="btn-step" data-cr="cancel">' + esc(t('cr.cancel')) + '</button><button type="button" class="btn-done is-done" data-cr="save">' + esc(t('cr.save')) + '</button></div>' +
+    '</main>';
+    whenScenes(function () {
+      if (S.view !== 'create') return;
+      var O = UXScenes.characterOptions;
+      if (!CR) CR = { look: Object.assign({}, O.DEFAULT_LOOK, UXGame.avatar() || {}), spin: true };
+      document.getElementById('crPanel').innerHTML = creatorPanel();
+      sc = UXScenes.makeCreator(document.getElementById('cr3d'), CR.look);
+    });
+  }
+  function creatorSet(k, v) {
+    if (v === 'toggle') CR.look[k] = !CR.look[k];
+    else CR.look[k] = /^\d+$/.test(v) ? +v : v;
+    if (k === 'hair' && v === 'hijab') CR.look.cap = false;
+    if (sc && sc.setLook) sc.setLook(CR.look);
+    var keep = document.getElementById('crPanel').scrollTop;
+    document.getElementById('crPanel').innerHTML = creatorPanel();
+    document.getElementById('crPanel').scrollTop = keep;
+  }
+
+  /* ───────── explore mode HUD ───────── */
+  var EX = { on: false, near: null, where: {} };
+  function hudHTML() {
+    return '<div class="hud" id="hud" hidden>' +
+      '<div class="hud-player"><button type="button" class="hud-ava" data-hud="badges" id="hudAva"></button><div class="hud-who"><b id="hudName"></b><small id="hudLevel"></small><div class="xpbar"><i id="hudXp"></i></div></div></div>' +
+      '<button type="button" class="hud-quest" data-hud="quest" id="hudQuest"></button>' +
+      '<div class="hud-loc" id="hudLoc"></div>' +
+      '<canvas class="hud-mini" id="hudMini" aria-label="' + esc(t('game.map')) + '"></canvas>' +
+      '<button type="button" class="hud-prompt" data-hud="interact" id="hudPrompt" hidden></button>' +
+      '<div class="hud-joy" id="hudJoy" aria-hidden="true"><i></i></div>' +
+      '<div class="hud-btns"><button type="button" data-hud="interact" aria-label="E">E</button><button type="button" data-hud="map" aria-label="' + esc(t('game.map')) + '">M</button><button type="button" data-hud="edit" aria-label="' + esc(t('game.edit')) + '">✎</button><button type="button" data-hud="exit" aria-label="' + esc(t('game.exit')) + '">✕</button></div>' +
+      '<p class="hud-help"><span class="k">' + esc(t('game.help')) + '</span><span class="tc">' + esc(t('game.helpTouch')) + '</span></p>' +
+      '<div class="hud-dialog" id="hudDialog" hidden></div>' +
+      '<div class="hud-big" id="hudBig" hidden><canvas id="hudBigCanvas"></canvas><button type="button" class="btn-code" data-hud="map">' + esc(t('game.close')) + '</button></div>' +
+    '</div>';
+  }
+  function questLesson() {
+    var q = UXGame.quest(), l = q && LESSONS.filter(function (x) { return x.id === q; })[0];
+    if (l && !isDone(l.id)) return l;
+    return LESSONS.filter(function (x) { return !isDone(x.id); })[0] || null;
+  }
+  function renderHud() {
+    if (!EX.on) return;
+    var look = UXGame.avatar() || {}, O = UXScenes.characterOptions, lv = UXGame.level();
+    var ava = document.getElementById('hudAva');
+    ava.textContent = (look.name || '?').trim().charAt(0).toUpperCase() || '?';
+    ava.style.background = O.CLOTH[look.topColor] || '#7EF2C3';
+    ava.title = t('game.badges') + ' · ' + UXGame.state.badges.length + '/' + UXGame.BADGES.length;
+    document.getElementById('hudName').textContent = look.name || t('cr.namePh');
+    document.getElementById('hudLevel').textContent = t('game.level', { n: lv }) + ' · ' + UXGame.title(lv) + ' · ' + t('game.xp', { n: UXGame.state.xp });
+    document.getElementById('hudXp').style.width = Math.round(UXGame.progress() * 100) + '%';
+    var q = questLesson(), qb = document.getElementById('hudQuest');
+    qb.innerHTML = '<span>' + esc(t('game.quest')) + '</span>' + (q ? esc(pad(q.n) + ' · ' + loc(q).title) : esc(t('game.questDone')));
+    if (hub && hub.setQuest) hub.setQuest(q ? q.id : null);
+  }
+  function setLoc(city, district) {
+    EX.where = { city: city, district: district };
+    var el = document.getElementById('hudLoc'); if (!el) return;
+    el.textContent = district ? t('prov.' + city + '.name') + ' · ' + levelName(district) : city ? t('prov.' + city + '.name') + ' · ' + t('prov.' + city + '.kind') : t('game.where.out');
+    var lv = district && levelOf(district); el.style.color = lv ? lv.color : '';
+    if (district) { UXGame.visit(district, S.done); renderHud(); }
+  }
+  function setNear(n) {
+    EX.near = n;
+    var p = document.getElementById('hudPrompt'); if (!p) return;
+    if (!n) { p.hidden = true; return; }
+    if (n.type === 'lesson') { var l = LESSONS.filter(function (x) { return x.id === n.id; })[0]; p.textContent = t('game.enter', { n: pad(l.n), t: loc(l).title }) + (isDone(l.id) ? ' ✓' : ''); }
+    else p.textContent = t('game.talk', { n: t('guide.' + n.key + '.name') });
+    p.hidden = false;
+  }
+  function showDialog(html) { var d = document.getElementById('hudDialog'); d.innerHTML = html; d.hidden = false; var b = d.querySelector('button'); if (b) b.focus(); }
+  function closeDialog() { var d = document.getElementById('hudDialog'); if (d && !d.hidden) { d.hidden = true; return true; } return false; }
+  function guideDialog(key) {
+    UXGame.talk(key, S.done); renderHud();
+    var lv = levelOf(key), next = LESSONS.filter(function (l) { return l.level === key && !isDone(l.id); })[0];
+    showDialog('<div class="dlg" style="--lv:' + lv.color + '"><span class="label" style="color:var(--lv)">' + esc(levelName(key)) + '</span><h3>' + esc(t('guide.' + key + '.name')) + '</h3>' +
+      '<p>' + esc(t('guide.' + key + '.line')) + '</p>' +
+      '<p class="muted">' + esc(next ? t('game.guide.next', { n: pad(next.n), t: loc(next).title }) : t('game.guide.done')) + '</p>' +
+      '<div class="dlg-btns">' + (next ? '<button type="button" class="btn-done is-done" data-hud="go:' + next.id + '">' + esc(t('game.guide.go')) + '</button><button type="button" class="btn-step" data-hud="open:' + next.id + '">' + esc(t('game.guide.open')) + '</button>' : '') +
+      '<button type="button" class="btn-step" data-hud="close">' + esc(t('game.close')) + '</button></div></div>');
+  }
+  function badgesDialog() {
+    var have = UXGame.state.badges;
+    showDialog('<div class="dlg"><span class="label" style="color:var(--amber)">' + esc(t('game.badges')) + ' · ' + have.length + '/' + UXGame.BADGES.length + '</span>' +
+      '<ul class="badges">' + UXGame.BADGES.map(function (b) {
+        var on = have.indexOf(b.id) >= 0;
+        return '<li class="' + (on ? 'on' : '') + '" style="--bc:' + (b.color || '#FFC877') + '"><i>' + b.glyph + '</i><b>' + esc(t('badge.' + b.id)) + '</b><small>' + esc(t('badge.' + b.id + 'D')) + '</small></li>';
+      }).join('') + '</ul><div class="dlg-btns"><button type="button" class="btn-step" data-hud="close">' + esc(t('game.close')) + '</button></div></div>');
+  }
+  function startExplore() {
+    var look = UXGame.avatar();
+    if (!look) { UXGame.setExploring(true); location.hash = '#/create'; return; }
+    if (!hub || !hub.explore) return;
+    EX.on = true; UXGame.setExploring(true);
+    var w = app.querySelector('.world'); w.classList.add('exploring'); document.body.classList.add('is-exploring');
+    document.getElementById('hud').hidden = false;
+    var mini = document.getElementById('hudMini'), dpr = Math.min(2, window.devicePixelRatio || 1);
+    mini.width = mini.clientWidth * dpr; mini.height = mini.clientHeight * dpr;
+    hub.explore({
+      look: look, pos: UXGame.pos(), minimap: mini, bigmap: document.getElementById('hudBigCanvas'),
+      onNear: setNear, onLocation: setLoc, onGuide: guideDialog, onMove: UXGame.setPos,
+      onToggleMap: toggleBigMap
+    });
+    renderHud();
+  }
+  function stopExplore() {
+    EX.on = false; UXGame.setExploring(false);
+    var w = app.querySelector('.world'); if (w) w.classList.remove('exploring');
+    document.body.classList.remove('is-exploring');
+    var h = document.getElementById('hud'); if (h) h.hidden = true;
+    if (hub && hub.leaveExplore) hub.leaveExplore();
+  }
+  function toggleBigMap() {
+    var b = document.getElementById('hudBig'); if (!b) return;
+    b.hidden = !b.hidden;
+    if (!b.hidden) { var c = document.getElementById('hudBigCanvas'), dpr = Math.min(2, window.devicePixelRatio || 1); c.width = c.clientWidth * dpr; c.height = c.clientHeight * dpr; }
+    if (hub) hub.showBigMap(!b.hidden);
+  }
+  function hudAction(a) {
+    if (a === 'interact') { if (hub) hub.interact(); return; }
+    if (a === 'map') return toggleBigMap();
+    if (a === 'exit') return stopExplore();
+    if (a === 'edit') { location.hash = '#/create'; return; }
+    if (a === 'badges') return badgesDialog();
+    if (a === 'close') return closeDialog();
+    if (a === 'quest') { var q = questLesson(); if (q) { UXGame.setQuest(q.id); renderHud(); UXGame.toast(t('game.questSet')); } return; }
+    var m = a.match(/^(go|open):(.+)$/);
+    if (m && m[1] === 'go') { UXGame.setQuest(m[2]); closeDialog(); renderHud(); UXGame.toast(t('game.questSet')); }
+    if (m && m[1] === 'open') { closeDialog(); open(m[2]); }
+  }
+  /* on-screen joystick (touch and mouse) */
+  var joy = null;
+  document.addEventListener('pointerdown', function (e) {
+    var j = e.target.closest && e.target.closest('#hudJoy'); if (!j) return;
+    e.preventDefault(); joy = { el: j, id: e.pointerId, r: j.getBoundingClientRect() }; j.setPointerCapture(e.pointerId); moveJoy(e);
+  });
+  function moveJoy(e) {
+    if (!joy || e.pointerId !== joy.id) return;
+    var r = joy.r, cx = r.left + r.width / 2, cy = r.top + r.height / 2, rad = r.width / 2;
+    var dx = (e.clientX - cx) / rad, dy = (e.clientY - cy) / rad, len = Math.hypot(dx, dy);
+    if (len > 1) { dx /= len; dy /= len; }
+    joy.el.firstChild.style.transform = 'translate(' + dx * rad * 0.6 + 'px,' + dy * rad * 0.6 + 'px)';
+    if (hub) hub.setJoystick(dx, dy);
+  }
+  document.addEventListener('pointermove', moveJoy);
+  document.addEventListener('pointerup', function (e) {
+    if (!joy || e.pointerId !== joy.id) return;
+    joy.el.firstChild.style.transform = ''; joy = null; if (hub) hub.setJoystick(0, 0);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (EX.on) { if (!closeDialog()) { var b = document.getElementById('hudBig'); if (b && !b.hidden) toggleBigMap(); else stopExplore(); } }
+  });
 
   /* ───────── hub ───────── */
   function stat(k) {
@@ -201,6 +399,9 @@
           '<div class="world-legend">' + chips + '</div>' +
           '<div class="world-switch" role="group" aria-label="' + esc(t('hub.focus.label')) + '">' + switcher + '</div>' +
           '<div class="world-hint">' + esc(t('hub.hint')) + '</div>' +
+          '<div class="world-play"><button type="button" class="btn-play" data-act="explore">' + esc(t('game.explore')) + '</button>' +
+            (UXGame.avatar() ? '<button type="button" class="btn-code" data-act="editchar">' + esc(t('game.edit')) + '</button>' : '') + '</div>' +
+          hudHTML() +
         '</section>' +
         provinces +
       '</main>';
@@ -217,6 +418,7 @@
         focus: focus
       });
       hub.refresh(S.done);
+      if (UXGame.exploring() && UXGame.avatar()) startExplore();
     });
   }
   function focusWorld(k) {
@@ -376,9 +578,20 @@
 
   /* ───────── events ───────── */
   document.addEventListener('click', function (e) {
-    var el = e.target.closest('[data-open],[data-act],[data-sel],[data-q],[data-tab],button[data-focus]');
+    var el = e.target.closest('[data-open],[data-act],[data-sel],[data-q],[data-tab],button[data-focus],[data-hud],[data-ck],[data-cr]');
     if (!el || !app.contains(el)) return;
     var l = cur();
+    if (el.hasAttribute('data-hud')) return hudAction(el.getAttribute('data-hud'));
+    if (el.hasAttribute('data-ck')) return creatorSet(el.getAttribute('data-ck'), el.getAttribute('data-cv'));
+    if (el.hasAttribute('data-cr')) {
+      var a = el.getAttribute('data-cr');
+      if (a === 'random') { var nm = CR.look.name; CR.look = Object.assign(UXScenes.characterOptions.randomLook(), { name: nm }); sc.setLook(CR.look); sc.wave(); document.getElementById('crPanel').innerHTML = creatorPanel(); }
+      if (a === 'face' || a === 'full') sc.view(a);
+      if (a === 'spin') { CR.spin = !CR.spin; sc.spin(CR.spin); }
+      if (a === 'cancel') goHub();
+      if (a === 'save') { CR.look.name = (document.getElementById('crName').value || '').trim() || t('cr.namePh'); UXGame.setAvatar(CR.look); UXGame.setExploring(true); goHub(); }
+      return;
+    }
     if (el.hasAttribute('data-open')) return open(el.getAttribute('data-open'));
     if (el.hasAttribute('data-focus')) return focusWorld(el.getAttribute('data-focus'));
     if (el.hasAttribute('data-sel')) {
@@ -391,6 +604,7 @@
     if (el.hasAttribute('data-q')) {
       var qi = +el.getAttribute('data-q');
       S.quiz[qi] = +el.getAttribute('data-o');
+      if (S.quiz[qi] === l.quiz[qi].answer) UXGame.quizRight(l.id, qi);
       renderQuiz();
       var all = l.quiz.every(function (q, k) { return S.quiz[k] === q.answer; });
       if (all && !isDone(l.id)) saveDone(S.done.concat([l.id]));
@@ -399,6 +613,8 @@
     if (el.hasAttribute('data-tab')) { S.tab = el.getAttribute('data-tab'); renderEditor(); return; }
     switch (el.getAttribute('data-act')) {
       case 'hub': e.preventDefault(); return goHub();
+      case 'explore': return startExplore();
+      case 'editchar': location.hash = '#/create'; return;
       case 'code':
         S.showCode = !S.showCode;
         document.getElementById('editor').hidden = !S.showCode;
@@ -416,6 +632,8 @@
 
   document.addEventListener('input', function (e) {
     var el = e.target;
+    if (el.id === 'crHeight' && CR) { CR.look.height = parseFloat(el.value); if (sc && sc.setLook) sc.setLook(CR.look); return; }
+    if (el.id === 'crName' && CR) { CR.look.name = el.value; return; }
     if (el.hasAttribute && el.hasAttribute('data-range')) {
       var i = +el.getAttribute('data-range'), c = cur().controls[i], v = parseFloat(el.value);
       S.ctrl[i] = v;
@@ -455,7 +673,8 @@
     if (S.view === 'lesson') {
       // keep controls, code and quiz answers; just redraw in the new language
       renderLesson();
-    } else renderHub();
+    } else if (S.view === 'create') { var keep = CR; renderCreator(); CR = keep; }
+    else renderHub();
   });
 
   /* the React/Vue playgrounds post ux.render / ux.flow / ux.tree messages for the 3D view */
