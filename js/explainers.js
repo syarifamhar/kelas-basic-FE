@@ -40,7 +40,7 @@
     legend: [[MINT, 'Current stage', 'Tahap sekarang'], [SKY, 'Next step', 'Langkah berikutnya'], [PINK, 'Iterate: go back and improve', 'Iterasi: kembali dan perbaiki']],
     build: function (v, x) {
       var cur = clamp(Math.round(num(v, '--stage', 0)), 0, 4), it = [], R = 4.4;
-      var names = [['Empathize', 'Empati'], ['Define', 'Definisi'], ['Ideate', 'Ide'], ['Prototype', 'Prototipe'], ['Test', 'Uji']];
+      var names = [['Empathize', 'Empathize'], ['Define', 'Define'], ['Ideate', 'Ideate'], ['Prototype', 'Prototype'], ['Test', 'Test']];
       var cols = [MINT, SKY, LILAC, AMBER, PINK], pos = [];
       for (var i = 0; i < 5; i++) {
         var a = -Math.PI / 2 - 0.4 + i * (Math.PI * 2 / 5), px = Math.cos(a) * R, pz = Math.sin(a) * R, on = i === cur, h = on ? 1.1 : 0.35;
@@ -60,8 +60,8 @@
       var p = clamp(Math.round(num(v, '--p', 0)), 0, 2), self = str(v, '--fit', 'persona') === 'self', it = [];
       var P = [
         { n: 'Sari, 20', c: SKY, g: [['cheap meals', 'makan hemat'], ['order between classes', 'pesan di sela kuliah']], f: [['tight budget', 'uang pas-pasan'], ['slow queues', 'antre lama']] },
-        { n: 'Andi, 34', c: LILAC, g: [['lunch in 5 min', 'makan siang 5 menit'], ['reorder favorites', 'pesan ulang favorit']], f: [['too many steps', 'langkah terlalu banyak'], ['meetings run late', 'rapat molor']] },
-        { n: 'Ratna, 68', c: AMBER, g: [['order for grandkids', 'pesan untuk cucu'], ['read the menu easily', 'menu mudah dibaca']], f: [['small text', 'teks kecil'], ['confusing icons', 'ikon membingungkan']] }
+        { n: 'Andi, 34', c: LILAC, g: [['lunch in 5 min', 'makan siang 5 menit'], ['reorder favorites', 'pesan ulang favorit']], f: [['too many steps', 'kebanyakan langkah'], ['meetings run late', 'rapat molor']] },
+        { n: 'Ratna, 68', c: AMBER, g: [['order for grandkids', 'pesan untuk cucu'], ['read the menu easily', 'menu mudah dibaca']], f: [['small text', 'teks kecil'], ['confusing icons', 'ikon bikin bingung']] }
       ];
       P.forEach(function (q, i) {
         var on = i === p, px = (i - p) * 3.6, pz = on ? 0.8 : -1.2, ph = on ? 0.8 : 0.3;
@@ -74,7 +74,7 @@
       if (self) {
         person(it, 'me', -2.6, 0, 4.0, GREY, 1, x.tr('you', 'kamu'), INK);
         it.push({ id: 'link', shape: 'line', pts: [[-2.6, 1.4, 4.0], [cx, 1.4, 0.8]], c: RED });
-        it.push({ id: 'note', shape: 'text', text: x.tr('you ≠ your user', 'kamu ≠ penggunamu'), c: RED, size: 0.5, p: [cx / 2, 2.6, 2.6] });
+        it.push({ id: 'note', shape: 'text', text: x.tr('you ≠ your user', 'kamu ≠ user kamu'), c: RED, size: 0.5, p: [cx / 2, 2.6, 2.6] });
       } else {
         it.push({ id: 'ui', shape: 'box', p: [cx, 0.9, 4.2], s: [2.4, 1.6, 0.15], c: sel.c, e: 0.5, edges: true, label: x.tr('design that fits', 'desain yang pas'), lc: sel.c });
         it.push({ id: 'link', shape: 'line', pts: [[cx, 1.4, 1.2], [cx, 1.2, 4.1]], c: MINT });
@@ -86,7 +86,7 @@
     legend: [[SKY, 'Users still in the flow', 'Pengguna yang masih bertahan'], [PINK, 'Detour step (sign-up, verify)', 'Langkah memutar (daftar, verifikasi)'], [AMBER, 'Reached the goal', 'Sampai tujuan']],
     build: function (v, x) {
       var long = str(v, '--flow', 'long') === 'long', drop = num(v, '--drop', 15) / 100, it = [];
-      var steps = long ? [['Cart', 'Keranjang'], ['Sign up', 'Daftar', 1], ['Verify email', 'Verifikasi', 1], ['Address', 'Alamat'], ['Payment', 'Bayar'], ['Review', 'Tinjau'], ['Done', 'Selesai']]
+      var steps = long ? [['Cart', 'Keranjang'], ['Sign up', 'Daftar', 1], ['Verify email', 'Verifikasi', 1], ['Address', 'Alamat'], ['Payment', 'Bayar'], ['Review', 'Review'], ['Done', 'Selesai']]
         : [['Cart', 'Keranjang'], ['Address', 'Alamat'], ['Payment', 'Bayar'], ['Done', 'Selesai']];
       var n = steps.length, gap = 2.3, users = 1000;
       steps.forEach(function (s, i) {
@@ -97,7 +97,7 @@
         users = u;
       });
       it.push({ id: 'trophy', shape: 'oct', p: [((n - 1) / 2) * gap, 0.2 + (0.3 + users / 1000 * 5) + 1, 0], s: [0.8, 0.8, 0.8], c: AMBER, e: 1, glow: true });
-      it.push({ id: 'cap', shape: 'text', text: x.tr(users + ' of 1000 finish', users + ' dari 1000 selesai'), c: AMBER, size: 0.55, p: [0, 6.8, 0] });
+      it.push({ id: 'cap', shape: 'text', text: x.tr(users + ' of 1000 finish', users + ' dari 1000 sampai akhir'), c: AMBER, size: 0.55, p: [0, 6.8, 0] });
       return { items: it, cam: { r: 6 + n * 2.1, ty: 2.4 } };
     }
   };
@@ -110,7 +110,7 @@
         { id: 'title', n: ['Title', 'Judul'], w: title / 16 * 1.25 },
         { id: 'price', n: ['Price', 'Harga'], w: amber ? 1.9 : 1.0 },
         { id: 'desc', n: ['Description', 'Deskripsi'], w: 0.9 },
-        { id: 'btn', n: ['Button', 'Tombol'], w: solid ? 2.3 : 0.8 }
+        { id: 'btn', n: ['Button', 'Button'], w: solid ? 2.3 : 0.8 }
       ];
       var max = Math.max.apply(null, els.map(function (e) { return e.w; })), it = [];
       var tops = els.filter(function (e) { return e.w > max - 0.25; }).length;
@@ -119,12 +119,12 @@
         it.push({ id: e.id, shape: 'box', p: [px, h / 2, 0], s: [1.3, h, 1.3], c: top ? AMBER : (e.w > 1.1 ? SKY : GREY), e: top ? 0.8 : 0.25, edges: true, label: x.tr(e.n[0], e.n[1]), lc: top ? AMBER : INK });
         if (top) it.push({ id: 'crown', shape: 'oct', p: [px, h + 1.0, 0], s: [0.55, 0.55, 0.55], c: AMBER, e: 1.2, glow: true });
       });
-      it.push({ id: 'cap', shape: 'text', text: tops > 1 ? x.tr('two things shout: no clear focus', 'dua elemen berteriak: tidak ada fokus') : x.tr('one clear focal point', 'satu titik fokus yang jelas'), c: tops > 1 ? RED : MINT, size: 0.5, p: [0, max * 1.6 + 2.2, 0] });
+      it.push({ id: 'cap', shape: 'text', text: tops > 1 ? x.tr('two things shout: no clear focus', 'dua elemen teriak: fokusnya hilang') : x.tr('one clear focal point', 'satu fokus yang jelas'), c: tops > 1 ? RED : MINT, size: 0.5, p: [0, max * 1.6 + 2.2, 0] });
       return { items: it, cam: { r: 15, ty: 2 } };
     }
   };
   X.gestalt = {
-    legend: [[MINT, 'Read as one group', 'Terbaca sebagai satu kelompok'], [GREY, 'No grouping cue', 'Tidak ada petunjuk kelompok'], ['#3a4862', 'Common region (tray)', 'Wilayah bersama (nampan)']],
+    legend: [[MINT, 'Read as one group', 'Kebaca sebagai satu grup'], [GREY, 'No grouping cue', 'Nggak ada tanda grup'], ['#3a4862', 'Common region (tray)', 'Common region (nampan)']],
     build: function (v, x) {
       var inG = num(v, '--in', 16) / 16, between = num(v, '--between', 16) / 16, region = str(v, '--region', 'transparent') !== 'transparent';
       var map = { '#263042': GREY, '#1f4a3c': MINT, '#3a2f66': LILAC, '#5a4520': AMBER };
@@ -138,7 +138,7 @@
         if (region) it.push({ id: 'tray' + g, shape: 'box', p: [gx + gw / 2, 0.04, 0], s: [gw + 0.6, 0.08, chip + 0.8], c: '#3a4862', e: 0.2, edges: SKY });
         it.push({ id: 'lab' + g, shape: 'text', text: grouped ? x.tr(names[g][0], names[g][1]) : '?', c: grouped ? MINT : GREY, size: 0.42, p: [gx + gw / 2, 1.35, 0] });
       }
-      it.push({ id: 'cap', shape: 'text', text: grouped ? x.tr('3 groups: the eye sorts them instantly', '3 kelompok: mata langsung memilahnya') : x.tr('one long row: no groups yet', 'satu baris panjang: belum ada kelompok'), c: grouped ? MINT : AMBER, size: 0.48, p: [0, 2.6, 0] });
+      it.push({ id: 'cap', shape: 'text', text: grouped ? x.tr('3 groups: the eye sorts them instantly', '3 grup: mata langsung bisa milah') : x.tr('one long row: no groups yet', 'satu baris panjang: belum ada grup'), c: grouped ? MINT : AMBER, size: 0.48, p: [0, 2.6, 0] });
       return { items: it, cam: { r: Math.max(12, total * 1.2 + 4), ty: 0.8 } };
     }
   };
@@ -185,7 +185,7 @@
       var ok = function (px) { return px % 4 === 0; };
       var studs = 0;
       for (var gx = -5; gx <= 5; gx += u * S) for (var gz = -4; gz <= 4; gz += u * S) { if (studs++ > 160) break; it.push({ id: 'stud' + studs, shape: 'cyl', p: [gx, 0.05, gz], s: [0.22, 0.1, 0.22], c: SKY, e: 0.3, o: grid ? 0.8 : 0.18 }); }
-      var z = -3.2 + d * S, blocks = [['title', 0.5, ['Title', 'Judul']], ['text', 0.35, ['Text', 'Teks']], ['row', 0.6], ['row2', 0.6], ['row3', 0.6], ['btn', 0.6, ['Button', 'Tombol']]];
+      var z = -3.2 + d * S, blocks = [['title', 0.5, ['Title', 'Judul']], ['text', 0.35, ['Text', 'Teks']], ['row', 0.6], ['row2', 0.6], ['row3', 0.6], ['btn', 0.6, ['Button', 'Button']]];
       var gaps = [c, c + a, c + a * 2, c + a * 2, c + b];
       it.push({ id: 'card', shape: 'box', p: [0, 0.12, 0], s: [8, 0.12, 7], c: '#1A2130', e: 0.1, edges: '#3a4862' });
       blocks.forEach(function (bk, i) {
@@ -195,7 +195,7 @@
         if (i < gaps.length) { var g = gaps[i]; it.push({ id: 'gap' + i, shape: 'sphere', p: [4.4, 0.4, z + g * S / 2], s: [0.28, 0.28, 0.28], c: ok(g) ? MINT : RED, e: 0.8, label: g + 'px', lc: ok(g) ? MINT : RED, lh: 0.3, lmono: true }); z += g * S; }
       });
       var bad = [a, b, c, d].filter(function (p) { return !ok(p); }).length;
-      it.push({ id: 'cap', shape: 'text', text: bad ? x.tr(bad + ' gaps off the grid', bad + ' jarak keluar grid') : x.tr('everything snaps to ' + u + 'px', 'semua pas di kelipatan ' + u + 'px'), c: bad ? RED : MINT, size: 0.5, p: [0, 2.2, 0] });
+      it.push({ id: 'cap', shape: 'text', text: bad ? x.tr(bad + ' gaps off the grid', bad + ' jarak lepas dari grid') : x.tr('everything snaps to ' + u + 'px', 'semua pas ke kelipatan ' + u + 'px'), c: bad ? RED : MINT, size: 0.5, p: [0, 2.2, 0] });
       return { items: it, cam: { r: 14, ty: 0.4 } };
     }
   };
@@ -228,11 +228,11 @@
       var depth = level === 2 ? 0.6 : 0.12, dip = fb >= 1 && pressed ? depth * 0.6 : 0;
       if (level === 2) it.push({ id: 'base', shape: 'box', p: [0, 0.1, 0], s: [3.4, 0.2, 1.6], c: '#2f7d61', e: 0.2 });
       it.push({ id: 'btn', shape: 'box', p: [0, 0.2 + depth / 2 - dip, 0], s: [3.2, depth, 1.4], c: level === 2 ? MINT : level === 1 ? '#0D1016' : '#1A2130', e: level === 2 ? 0.6 : 0.1, o: level === 0 ? 0.4 : 1, edges: level === 1 ? MINT : level === 2 ? true : false, snap: true,
-        label: [x.tr('plain text: is it a button?', 'teks biasa: ini tombol?'), x.tr('outlined: probably clickable', 'garis tepi: sepertinya bisa diklik'), x.tr('raised: obviously pressable', 'timbul: jelas bisa ditekan')][level], lc: level ? MINT : GREY });
+        label: [x.tr('plain text: is it a button?', 'teks biasa: ini button?'), x.tr('outlined: probably clickable', 'ada outline: kayaknya bisa diklik'), x.tr('raised: obviously pressable', 'timbul: jelas bisa dipencet')][level], lc: level ? MINT : GREY });
       it.push({ id: 'finger', shape: 'cone', p: [0.6, pressed ? 1.2 : 2.2, 0.3], s: [0.35, 0.8, 0.35], r: [Math.PI, 0, 0], c: INK, e: 0.3, snap: true });
       if (fb >= 1) it.push({ id: 'ring', shape: 'torus', p: [0, 0.35, 0], s: [pressed ? 4.4 : 3.6, pressed ? 4.4 : 3.6, 3.6], r: [Math.PI / 2, 0, 0], c: AMBER, e: 1, o: pressed ? 1 : 0.25, snap: true });
       if (fb >= 2) for (var i = 0; i < 6; i++) { var lit = Math.floor(ph * 8) >= i; it.push({ id: 'floor' + i, shape: 'box', p: [3, 0.3 + i * 0.45, -0.4], s: [0.5, 0.35, 0.5], c: lit ? MINT : '#263042', e: lit ? 0.8 : 0.05, snap: true }); }
-      if (fb >= 2) it.push({ id: 'fl', shape: 'text', text: x.tr('elevator coming', 'lift datang'), c: MINT, size: 0.38, p: [3, 3.4, -0.4] });
+      if (fb >= 2) it.push({ id: 'fl', shape: 'text', text: x.tr('elevator coming', 'lift lagi datang'), c: MINT, size: 0.38, p: [3, 3.4, -0.4] });
       if (fb === 0) it.push({ id: 'q', shape: 'text', text: x.tr('...did it work?', '...berhasil nggak?'), c: GREY, size: 0.5, p: [0, 2.6, 0] });
       return { items: it, cam: { r: 11, ty: 1.2 } };
     }
@@ -254,7 +254,7 @@
         if (ring && i === focus) it.push({ id: 'ring', shape: 'box', p: [0, 0.3, -f[2]], s: [4.9, 0.45, 1.45], c: col(AMBER), e: 1, o: 0.35, edges: col(AMBER), snap: false });
       });
       if (!ring) it.push({ id: 'lost', shape: 'text', text: x.tr('Tab... where am I?', 'Tab... aku di mana?'), c: RED, size: 0.45, p: [0, 2.2, 0] });
-      else it.push({ id: 'kb', shape: 'text', text: x.tr('Tab moves the amber ring', 'Tab memindahkan ring amber'), c: AMBER, size: 0.4, p: [0, 2.2, 0] });
+      else it.push({ id: 'kb', shape: 'text', text: x.tr('Tab moves the amber ring', 'Tab bikin ring amber pindah'), c: AMBER, size: 0.4, p: [0, 2.2, 0] });
       return { items: it, cam: { r: 10, ty: 0.6 } };
     }
   };
@@ -282,7 +282,7 @@
     legend: [[MINT, 'Heuristic passes', 'Heuristik lolos'], [RED, 'Problem found', 'Masalah ditemukan'], [AMBER, 'The app under review', 'Aplikasi yang diperiksa']],
     build: function (v, x) {
       var fixes = clamp(Math.round(num(v, '--fixes', 0)), 0, 5), it = [];
-      var H = [['Status', 'Status'], ['Real words', 'Kata nyata'], ['Undo', 'Undo'], ['Consistency', 'Konsistensi'], ['Prevent errors', 'Cegah error'], ['Recognize', 'Kenali'], ['Shortcuts', 'Pintasan'], ['Minimal', 'Minimalis'], ['Error help', 'Bantuan error'], ['Help docs', 'Dokumentasi']];
+      var H = [['Status', 'Status'], ['Real words', 'Bahasa sehari-hari'], ['Undo', 'Undo'], ['Consistency', 'Konsistensi'], ['Prevent errors', 'Cegah error'], ['Recognize', 'Kenali'], ['Shortcuts', 'Pintasan'], ['Minimal', 'Minimalis'], ['Error help', 'Bantuan error'], ['Help docs', 'Dokumentasi']];
       var broken = [0, 1, 2, 4, 5], pass = 10;
       H.forEach(function (h, i) {
         var a = i / 10 * Math.PI * 2, px = Math.cos(a) * 5, pz = Math.sin(a) * 4, bi = broken.indexOf(i), ok = bi < 0 || bi < fixes;
@@ -302,7 +302,7 @@
     legend: [[FIG, 'Selected layer', 'Layer terpilih'], [LILAC, 'Frame (the container)', 'Frame (wadahnya)'], [GREY, 'Other layers in the stack', 'Layer lain di tumpukan']],
     build: function (v, x) {
       var ex = num(v, '--ex', 4) / 10, sel = str(v, '--sel', 'card'), it = [];
-      var L = [['bg', ['Frame', 'Frame'], [0, 0], [7, 4.6], '#1A2130'], ['card', ['Card', 'Kartu'], [0, 0], [4.8, 3.4], '#263042'], ['img', ['Image', 'Gambar'], [0, -0.6], [4, 1.3], '#B9A3FF'], ['title', ['Title', 'Judul'], [-0.6, 0.6], [2.6, 0.4], '#E6EDF3'], ['btn', ['Button', 'Tombol'], [-1, 1.3], [1.6, 0.5], '#7EF2C3']];
+      var L = [['bg', ['Frame', 'Frame'], [0, 0], [7, 4.6], '#1A2130'], ['card', ['Card', 'Card'], [0, 0], [4.8, 3.4], '#263042'], ['img', ['Image', 'Gambar'], [0, -0.6], [4, 1.3], '#B9A3FF'], ['title', ['Title', 'Judul'], [-0.6, 0.6], [2.6, 0.4], '#E6EDF3'], ['btn', ['Button', 'Button'], [-1, 1.3], [1.6, 0.5], '#7EF2C3']];
       L.forEach(function (l, i) {
         var on = l[0] === sel, y = 0.1 + i * (0.08 + ex * 1.1);
         it.push({ id: l[0], shape: 'box', p: [l[2][0], y, l[2][1]], s: [l[3][0], 0.06, l[3][1]], c: l[4], e: on ? 0.5 : 0.15, o: on ? 0.95 : 0.6, edges: on ? FIG : (i === 0 ? LILAC : '#3a4862'), label: x.tr(l[1][0], l[1][1]), lc: on ? FIG : GREY, lh: on ? 0.42 : 0.32 });
@@ -358,7 +358,7 @@
       it.push({ id: 'A', shape: 'box', p: [-3.2, 2.2, 0], s: [2.6, 4.4, 0.15], c: '#131821', edges: '#3a4862', label: x.tr('Screen A · list', 'Layar A · daftar'), lc: GREY, ly: 0.1 });
       it.push({ id: 'B', shape: 'box', p: [3.2, 2.2, 0], s: [2.6, 4.4, 0.15], c: '#131821', edges: '#3a4862', label: x.tr('Screen B · detail', 'Layar B · detail'), lc: GREY, ly: 0.1 });
       arrow(it, 'conn', [-1.6, 3.4, 0.2], [1.6, 3.4, 0.2], FIG, 1);
-      it.push({ id: 'trig', shape: 'text', text: trig === 'delay' ? x.tr('After delay', 'Setelah jeda') : x.tr('On click', 'Saat diklik'), c: AMBER, size: 0.4, p: [0, 3.95, 0.2] });
+      it.push({ id: 'trig', shape: 'text', text: trig === 'delay' ? x.tr('After delay', 'Setelah jeda') : x.tr('On click', 'Pas diklik'), c: AMBER, size: 0.4, p: [0, 3.95, 0.2] });
       var a = { p: [-3.2, 3.1, 0.15], s: [2.0, 0.8, 0.1] }, b = { p: [3.2, 2.6, 0.15], s: [2.3, 2.2, 0.1] };
       if (anim === 'smart') {
         var lp = function (i) { return a.p[i] + (b.p[i] - a.p[i]) * e; }, ls = function (i) { return a.s[i] + (b.s[i] - a.s[i]) * e; };
@@ -397,7 +397,7 @@
         it.push({ id: 'ty3', shape: 'text', text: 'Button · 600 · 14', c: SKY, size: 0.32, mono: true, p: [-1.4, 0.9, 1.0] });
       }
       if (ann) {
-        it.push({ id: 'note', shape: 'box', p: [2.6, 1.3, 1.4], s: [2.2, 1.2, 0.06], r: [-0.3, -0.3, 0], c: AMBER, e: 0.4, label: x.tr('spinner while saving', 'spinner saat menyimpan'), lc: AMBER, lh: 0.32 });
+        it.push({ id: 'note', shape: 'box', p: [2.6, 1.3, 1.4], s: [2.2, 1.2, 0.06], r: [-0.3, -0.3, 0], c: AMBER, e: 0.4, label: x.tr('spinner while saving', 'spinner pas lagi nyimpan'), lc: AMBER, lh: 0.32 });
         it.push({ id: 'noteL', shape: 'line', pts: [[1.6, 1.0, 1.3], [-0.6, 0.4, 1.0]], c: AMBER });
       }
       return { items: it, cam: { r: 10, ty: 0.8 } };
@@ -414,7 +414,7 @@
         var c = sem ? p[3] : '#5d6a80';
         it.push({ id: p[0], shape: p[0] === 'header' ? 'pyr' : 'box', p: p[1], s: p[0] === 'header' ? [7.6, 1.2, 6.2] : p[2], c: c, e: sem ? 0.35 : 0.08, o: p[0] === 'main' || p[0] === 'aside' ? 0.85 : 1, edges: true, label: '<' + (sem ? p[0] : 'div') + '>', lc: c, lmono: true, ly: p[0] === 'header' ? 0.2 : 0 });
       });
-      it.push({ id: 'cap', shape: 'text', text: sem ? x.tr('screen reader landmarks: 5', 'landmark untuk screen reader: 5') : x.tr('screen reader landmarks: 0', 'landmark untuk screen reader: 0'), c: sem ? MINT : RED, size: 0.48, p: [0, 5.6, 0] });
+      it.push({ id: 'cap', shape: 'text', text: sem ? x.tr('screen reader landmarks: 5', 'landmark buat screen reader: 5') : x.tr('screen reader landmarks: 0', 'landmark buat screen reader: 0'), c: sem ? MINT : RED, size: 0.48, p: [0, 5.6, 0] });
       return { items: it, cam: { r: 14, ty: 2.2 } };
     }
   };
@@ -489,7 +489,7 @@
       arrow(it, 'a2', [2.6, 0.5, 0.4], [0.9, 0.5, -2.1], status === 'dispensing' ? AMBER : GREY);
       arrow(it, 'a3', [-0.9, 0.5, -2.1], [-2.6, 0.5, 0.4], GREY);
       it.push({ id: 'l1', shape: 'text', text: x.tr('insert coin', 'masukkan koin'), c: GREY, size: 0.32, p: [0, 1.1, 2.1] });
-      it.push({ id: 'l2', shape: 'text', text: x.tr('pick snack', 'pilih camilan'), c: GREY, size: 0.32, p: [2.6, 1.1, -1.2] });
+      it.push({ id: 'l2', shape: 'text', text: x.tr('pick snack', 'pilih jajanan'), c: GREY, size: 0.32, p: [2.6, 1.1, -1.2] });
       it.push({ id: 'l3', shape: 'text', text: x.tr('done', 'selesai'), c: GREY, size: 0.32, p: [-2.6, 1.1, -1.2] });
       var coins = Math.min(16, Math.round(credit / 25));
       for (var i = 0; i < 16; i++) { if (i >= coins) continue; it.push({ id: 'coin' + i, shape: 'cyl', p: [5.8, 0.1 + i * 0.16, -1.2], s: [0.8, 0.12, 0.8], c: AMBER, e: 0.6 }); }

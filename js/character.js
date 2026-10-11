@@ -87,13 +87,14 @@ function lathe(T, prof, radial, zs = 1, samples = 28, phiStart = 0, phiLen = Mat
   return g;
 }
 /* a limb: rounded capsule following radii from the joint (y = 0) down to y = -len */
+let LIMB_SAMPLES = 18;
 function limb(T, len, radii, radial, zs = 0.92) {
   const n = radii.length, prof = [];
   const rb = radii[n - 1], rt = radii[0];
   for (let k = 0; k <= 3; k++) { const a = -Math.PI / 2 + (k / 3) * Math.PI / 2; prof.push([Math.cos(a) * rb, -len + Math.sin(a) * rb * 0.9]); }
   for (let i = n - 2; i >= 1; i--) prof.push([radii[i], -len * i / (n - 1)]);
   for (let k = 0; k <= 3; k++) { const a = (k / 3) * Math.PI / 2; prof.push([Math.cos(a) * rt, Math.sin(a) * rt * 0.9]); }
-  return lathe(T, prof, radial, zs, 30);
+  return lathe(T, prof, radial, zs, LIMB_SAMPLES);
 }
 /* a parametric surface; fn(u, v, out) fills a point. wrapU joins the last column to the first */
 function sheet(T, nu, nv, fn, wrapU) {
@@ -214,7 +215,8 @@ export function makeCharacter(T, lookIn, opts = {}) {
     const topC = CLOTH[look.topColor] || CLOTH[3], botC = CLOTH[look.bottomColor] || CLOTH[2], shoeC = CLOTH[look.shoesColor] || CLOTH[0];
     const w = look.build === 'slim' ? 0.9 : look.build === 'broad' ? 1.12 : 1;
     const wl = 1 + (w - 1) * 0.6;
-    const R = seg(32);
+    const R = seg(28);
+    LIMB_SAMPLES = low ? 8 : 18;
 
     const mSkin = mat('skin', () => phys(skinC, { roughness: 0.58, sheen: 0.12, sheenRoughness: 0.6, sheenColor: new T.Color('#7a2a20') }));
     const mHeadSkin = mat('headskin', () => phys('#ffffff', { roughness: 0.56, sheen: 0.12, sheenRoughness: 0.6, sheenColor: new T.Color('#7a2a20'), vertexColors: true }));
@@ -280,7 +282,7 @@ export function makeCharacter(T, lookIn, opts = {}) {
     const torsoCurve = new T.SplineCurve(TORSO.map(p => new T.Vector2(p[0] * w, p[1])));
     const ZS = 0.62;
     const jacket = look.top === 'jacket';
-    mesh(geo(lathe(T, TORSO.map(p => [p[0] * w, p[1]]), R, ZS, 36)), jacket ? mat('tee', () => phys('#E9ECEF', { roughness: 0.85 })) : mTop, spine);
+    mesh(geo(lathe(T, TORSO.map(p => [p[0] * w, p[1]]), R, ZS, low ? 14 : 30)), jacket ? mat('tee', () => phys('#E9ECEF', { roughness: 0.85 })) : mTop, spine);
     // hem of the top
     const hemR = 0.168 * w;
     const hem = mesh(geo(new T.TorusGeometry(hemR, low ? 0.006 : 0.008, 6, R * 2)), knit || look.top === 'hoodie' ? mTrim : mTop, spine, 0, -0.07, 0); hem.rotation.x = Math.PI / 2; hem.scale.set(1, ZS, 1);
@@ -436,7 +438,7 @@ export function makeCharacter(T, lookIn, opts = {}) {
 
     /* head, face, hair */
     function buildHead(head, spine) {
-      const { g: hg, dirs } = sculpt(T, low ? 40 : 128, low ? 30 : 96, v => headShape(v.x, v.y, v.z, v));
+      const { g: hg, dirs } = sculpt(T, low ? 28 : 112, low ? 20 : 84, v => headShape(v.x, v.y, v.z, v));
       // vertex colours: blush on the cheeks, soft shadow in the eye sockets and under the jaw
       const sc = new T.Color(skinC), blush = new T.Color('#E26F6A'), col = [], c = new T.Color();
       for (let i = 0; i < dirs.length / 3; i++) {
