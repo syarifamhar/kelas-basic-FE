@@ -67,6 +67,30 @@ button{font-family:inherit}
 .row-status{font:600 12px var(--font-mono);color:var(--ink-2)}
 .row-status.done{color:var(--mint)}
 
+/* provinces */
+.world-switch{position:absolute;right:16px;top:16px;display:flex;gap:4px;padding:4px;border-radius:10px;background:rgba(19,24,33,.9);border:1px solid var(--line)}
+.world-switch button{padding:6px 10px;border-radius:7px;border:1px solid transparent;background:transparent;color:var(--ink-2);font:600 12px var(--font-mono);cursor:pointer;transition:background var(--motion-fast),color var(--motion-fast)}
+.world-switch button:hover{color:var(--ink);border-color:var(--line)}
+.world-switch button.is-on{background:var(--raised);color:var(--mint);border-color:var(--line)}
+.world[data-focus=uiux] .chip[data-prov=frontend],.world[data-focus=frontend] .chip[data-prov=uiux]{display:none}
+.city-logo{display:inline-flex;flex:none;vertical-align:middle}
+.city-logo svg{display:block}
+.col-head h2{display:flex;align-items:center;gap:8px}
+.province{display:grid;gap:22px;padding-top:8px}
+.prov-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.prov-head>div{display:grid;gap:6px;max-width:720px}
+.prov-head h2{margin:0;font:700 clamp(28px,3.4vw,38px)/1.05 var(--font-display);letter-spacing:-.02em}
+.prov-head h2::after{content:'';display:inline-block;width:10px;height:10px;margin-left:10px;border-radius:3px;background:var(--pv);box-shadow:0 0 14px var(--pv);vertical-align:middle}
+.prov-head p{margin:0;color:var(--ink-2);line-height:1.55;text-wrap:pretty}
+.prov-count{font:600 12px var(--font-mono);color:var(--pv);padding:6px 10px;border-radius:8px;background:var(--raised)}
+.levels.two{grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}
+.figma-badge.logo{background:#0f1720;padding:5px}
+.level-chip{display:inline-flex;align-items:center;gap:6px}
+@media (max-width:640px){
+  .world-switch{left:16px;right:auto;top:auto;bottom:62px}
+  .world-hint{left:16px;right:16px}
+}
+
 /* ───────── lesson ───────── */
 .crumb{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font:13px var(--font-mono);color:var(--ink-2)}
 .crumb button{background:none;border:none;padding:0;color:var(--mint);font:inherit;cursor:pointer}

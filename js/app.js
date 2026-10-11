@@ -3,11 +3,45 @@
   var t = I18N.t;
   var FONTS = '<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">';
   var BASE = ':root{--bg:#0D1016;--surface:#131821;--raised:#1A2130;--line:#263042;--ink:#E6EDF3;--ink2:#A9B4C2;--mint:#7EF2C3;--lilac:#B9A3FF;--amber:#FFC877;--pink:#FF93B5;--sky:#7FD4FF}*{box-sizing:border-box}html{color-scheme:dark}body{margin:0;padding:20px;background:#131821;color:#E6EDF3;font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif}h1,h2,h3,h4{font-family:"Space Grotesk",sans-serif}';
-  var LEVELS = [
-    { key: 'beginner', color: '#7EF2C3', hex: 0x7EF2C3 },
-    { key: 'intermediate', color: '#B9A3FF', hex: 0xB9A3FF },
-    { key: 'advanced', color: '#FFC877', hex: 0xFFC877 }
+  var LOGOS = {
+    react: '<svg viewBox="-11.5 -10.23 23 20.46" width="100%" height="100%" aria-hidden="true"><circle r="2.05" fill="#61DAFB"/><g stroke="#61DAFB" stroke-width="1" fill="none"><ellipse rx="11" ry="4.2"/><ellipse rx="11" ry="4.2" transform="rotate(60)"/><ellipse rx="11" ry="4.2" transform="rotate(120)"/></g></svg>',
+    vue: '<svg viewBox="0 0 256 221" width="100%" height="100%" aria-hidden="true"><path fill="#41B883" d="M204.8 0H256L128 220.8L0 0h97.92L128 51.2L157.44 0h47.36Z"/><path fill="#41B883" d="m0 0l128 220.8L256 0h-51.2L128 132.48L50.56 0H0Z"/><path fill="#35495E" d="M50.56 0L128 133.12L204.8 0h-47.36L128 51.2L97.92 0H50.56Z"/></svg>'
+  };
+  /* provinces on the world map, and the districts / cities inside them */
+  var PROVINCES = [
+    { key: 'uiux', color: '#7EF2C3', hex: 0x7EF2C3 },
+    { key: 'frontend', color: '#61DAFB', hex: 0x61DAFB }
   ];
+  var LEVELS = [
+    { key: 'beginner', province: 'uiux', color: '#7EF2C3', hex: 0x7EF2C3 },
+    { key: 'intermediate', province: 'uiux', color: '#B9A3FF', hex: 0xB9A3FF },
+    { key: 'advanced', province: 'uiux', color: '#FFC877', hex: 0xFFC877 },
+    { key: 'react', province: 'frontend', color: '#61DAFB', hex: 0x61DAFB, logo: LOGOS.react },
+    { key: 'vue', province: 'frontend', color: '#42B883', hex: 0x42B883, logo: LOGOS.vue }
+  ];
+  /* React and Vue playgrounds load the library from a CDN and get a few helpers:
+     ux.render / ux.flow / ux.tree talk to the 3D view, useControl / controlRef read the controls. */
+  var CDN = {
+    react: ['https://unpkg.com/react@18.3.1/umd/react.development.js', 'https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js', 'https://unpkg.com/@babel/standalone@7.25.6/babel.min.js'],
+    vue: ['https://unpkg.com/vue@3.4.38/dist/vue.global.js']
+  };
+  var HELPER = "(function(){var vals={},subs=[];" +
+    "function post(m){m.uxlab=1;try{parent.postMessage(m,'*')}catch(e){}}" +
+    "function css(k){return getComputedStyle(document.documentElement).getPropertyValue(k).trim()}" +
+    "var stuck=false;function show(msg,keep){if(stuck)return;if(keep)stuck=true;var d=document.getElementById('ux-err');if(!d){d=document.createElement('pre');d.id='ux-err';d.style.cssText='position:fixed;left:12px;right:12px;bottom:12px;margin:0;padding:10px 12px;border-radius:8px;background:#2a1418;border:1px solid #FF8A8A;color:#FF8A8A;font:12px/1.5 JetBrains Mono,monospace;white-space:pre-wrap;z-index:99';(document.body||document.documentElement).appendChild(d)}d.textContent='\u26A0 '+msg}" +
+    "window.addEventListener('error',function(e){show(e.message||'Error')});" +
+    "window.onVar=function(k,v){vals[k]=String(v).trim();subs.slice().forEach(function(f){f(k)})};" +
+    "window.ux={get:function(k,fb){var v=vals[k]!=null?vals[k]:css(k);return v===''||v==null?fb:v}," +
+    "subscribe:function(f){subs.push(f);return function(){var i=subs.indexOf(f);if(i>=0)subs.splice(i,1)}}," +
+    "render:function(id){post({type:'render',id:String(id)})}," +
+    "flow:function(a,b,kind){post({type:'flow',from:String(a),to:String(b),kind:kind||'prop'})}," +
+    "tree:function(n){post({type:'tree',nodes:n})},show:show};})();";
+  var RUNTIME_HELPER = {
+    react: "if(!window.React||!window.ReactDOM||!window.Babel){ux.show('Could not load React. This playground needs an internet connection.',1)}" +
+      "function useControl(k,fb){var s=React.useState(function(){return ux.get(k,fb)}),set=s[1];React.useEffect(function(){return ux.subscribe(function(){set(ux.get(k,fb))})},[]);return s[0]}",
+    vue: "if(!window.Vue){ux.show('Could not load Vue. This playground needs an internet connection.',1)}" +
+      "function controlRef(k,fb){var r=Vue.ref(ux.get(k,fb));ux.subscribe(function(){r.value=ux.get(k,fb)});return r}"
+  };
   var LESSONS = window.UX_LESSONS;
   var DONE_KEY = 'uxlab.done';
 
@@ -15,8 +49,18 @@
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var levelName = function (key) { return t('level.' + key); };
   var levelOf = function (key) { return LEVELS.filter(function (x) { return x.key === key; })[0]; };
-  function buildDoc(html, css, js) {
-    return '<!doctype html><html><head><meta charset="utf-8">' + FONTS + '<style>' + BASE + (css || '') + '</style></head><body>' + (html || '') + '<scr' + 'ipt>' + (js || '') + '</scr' + 'ipt></body></html>';
+  var provOf = function (key) { return PROVINCES.filter(function (x) { return x.key === key; })[0]; };
+  var FOCUS_KEY = 'uxlab.focus';
+  var getFocus = function () { try { var f = localStorage.getItem(FOCUS_KEY); if (f === 'uiux' || f === 'frontend' || f === 'all') return f; } catch (e) {} return 'all'; };
+  var setFocus = function (f) { try { localStorage.setItem(FOCUS_KEY, f); } catch (e) {} };
+  var tag = function (attrs, body) { return '<scr' + 'ipt' + (attrs ? ' ' + attrs : '') + '>' + (body || '') + '</scr' + 'ipt>'; };
+  function buildDoc(html, css, js, runtime) {
+    var head = '', code = tag('', js);
+    if (runtime && CDN[runtime]) {
+      head = CDN[runtime].map(function (src) { return tag('src="' + src + '"'); }).join('') + tag('', HELPER + RUNTIME_HELPER[runtime]);
+      if (runtime === 'react') code = tag('type="text/babel" data-presets="react"', js);
+    }
+    return '<!doctype html><html><head><meta charset="utf-8">' + FONTS + '<style>' + BASE + (css || '') + '</style>' + head + '</head><body>' + (html || '') + code + '</body></html>';
   }
 
   /* Lesson text in the current language (falls back to English). */
@@ -49,7 +93,7 @@
   /* ───────── state ───────── */
   var S = { view: 'hub', lessonId: null, ctrl: {}, code: { html: '', css: '', js: '' }, doc: '', tab: 'html', showCode: false, quiz: {}, done: [] };
   try { S.done = JSON.parse(localStorage.getItem(DONE_KEY) || '[]'); } catch (e) { S.done = []; }
-  var hub = null, sc = null, lastVars = {}, debounce = 0;
+  var hub = null, sc = null, lastVars = {}, debounce = 0, lastTree = null;
 
   var app = document.getElementById('app');
   var progressEl = document.getElementById('progress');
@@ -69,7 +113,7 @@
     var ctrl = {};
     (l.controls || []).forEach(function (c, i) { ctrl[i] = c.type === 'range' ? c.value : (c.default || 0); });
     var code = { html: l.html || '', css: l.css || '', js: l.js || '' };
-    return { ctrl: ctrl, code: code, doc: buildDoc(code.html, code.css, code.js), tab: 'html' };
+    return { ctrl: ctrl, code: code, doc: buildDoc(code.html, code.css, code.js, l.runtime), tab: 'html' };
   }
 
   /* scenes.js is an ES module, so it may finish loading after this script runs */
@@ -101,24 +145,41 @@
   function goHub() { location.hash = '#/'; }
 
   /* ───────── hub ───────── */
+  function stat(k) {
+    var a = LESSONS.filter(function (l) { return l.level === k || (l.level && levelOf(l.level) && levelOf(l.level).province === k); });
+    return a.filter(function (l) { return isDone(l.id); }).length + '/' + a.length;
+  }
+  function logoHTML(lv, size) {
+    return lv.logo ? '<span class="city-logo" style="width:' + size + 'px;height:' + size + 'px">' + lv.logo + '</span>' : '';
+  }
   function renderHub() {
     disposeScenes();
-    var stat = function (k) {
-      var a = LESSONS.filter(function (l) { return l.level === k; });
-      return a.filter(function (l) { return isDone(l.id); }).length + '/' + a.length;
-    };
+    var focus = getFocus();
     var chips = LEVELS.map(function (lv) {
-      return '<div class="chip"><span class="sq" style="background:' + lv.color + '"></span><span>' + esc(levelName(lv.key)) + '</span><span class="muted">' + stat(lv.key) + '</span></div>';
+      return '<div class="chip" data-prov="' + lv.province + '"><span class="sq" style="background:' + lv.color + '"></span>' + logoHTML(lv, 14) +
+        '<span>' + esc(levelName(lv.key)) + '</span><span class="muted">' + stat(lv.key) + '</span></div>';
     }).join('');
-    var cols = LEVELS.map(function (lv) {
-      var rows = LESSONS.filter(function (l) { return l.level === lv.key; }).map(function (l) {
-        var x = loc(l), d = isDone(l.id);
-        return '<button class="row-btn" data-open="' + l.id + '">' +
-          '<span class="row-num">' + pad(l.n) + '</span>' +
-          '<span class="row-txt"><span class="row-title">' + esc(x.title) + '</span><span class="row-meta">' + esc(x.metaphor) + '</span></span>' +
-          '<span class="row-status' + (d ? ' done' : '') + '">' + t(d ? 'hub.status.done' : 'hub.status.start') + '</span></button>';
+    var switcher = ['uiux', 'frontend', 'all'].map(function (k) {
+      return '<button type="button" data-focus="' + k + '" class="' + (k === focus ? 'is-on' : '') + '" aria-pressed="' + (k === focus) + '">' +
+        esc(k === 'all' ? t('hub.focus.all') : t('prov.' + k + '.name')) + '</button>';
+    }).join('');
+    var provinces = PROVINCES.map(function (p) {
+      var levels = LEVELS.filter(function (lv) { return lv.province === p.key; });
+      var cols = levels.map(function (lv) {
+        var rows = LESSONS.filter(function (l) { return l.level === lv.key; }).map(function (l) {
+          var x = loc(l), d = isDone(l.id);
+          return '<button class="row-btn" data-open="' + l.id + '">' +
+            '<span class="row-num">' + pad(l.n) + '</span>' +
+            '<span class="row-txt"><span class="row-title">' + esc(x.title) + '</span><span class="row-meta">' + esc(x.metaphor) + '</span></span>' +
+            '<span class="row-status' + (d ? ' done' : '') + '">' + t(d ? 'hub.status.done' : 'hub.status.start') + '</span></button>';
+        }).join('');
+        return '<div class="level-col" style="--lv:' + lv.color + '"><div class="col-head"><h2>' + logoHTML(lv, 22) + esc(levelName(lv.key)) + '</h2><span>' + t('hub.done', { x: stat(lv.key) }) + '</span></div>' + rows + '</div>';
       }).join('');
-      return '<div class="level-col" style="--lv:' + lv.color + '"><div class="col-head"><h2>' + esc(levelName(lv.key)) + '</h2><span>' + t('hub.done', { x: stat(lv.key) }) + '</span></div>' + rows + '</div>';
+      return '<section class="province" id="prov-' + p.key + '" style="--pv:' + p.color + '">' +
+        '<div class="prov-head"><div><span class="kicker" style="color:var(--pv)">' + esc(t('prov.' + p.key + '.kind')) + '</span>' +
+          '<h2>' + esc(t('prov.' + p.key + '.name')) + '</h2><p>' + esc(t('prov.' + p.key + '.desc')) + '</p></div>' +
+          '<span class="prov-count">' + t('hub.done', { x: stat(p.key) }) + '</span></div>' +
+        '<div class="levels' + (levels.length === 2 ? ' two' : '') + '">' + cols + '</div></section>';
     }).join('');
 
     app.innerHTML =
@@ -128,24 +189,33 @@
           '<h1>' + esc(t('hub.title')) + '</h1>' +
           '<p>' + esc(t('hub.lede')) + '</p>' +
         '</section>' +
-        '<section class="world"><div class="world-canvas" id="hub3d"></div>' +
+        '<section class="world" data-focus="' + focus + '"><div class="world-canvas" id="hub3d"></div>' +
           '<div class="world-legend">' + chips + '</div>' +
+          '<div class="world-switch" role="group" aria-label="' + esc(t('hub.focus.label')) + '">' + switcher + '</div>' +
           '<div class="world-hint">' + esc(t('hub.hint')) + '</div>' +
         '</section>' +
-        '<section class="levels">' + cols + '</section>' +
+        provinces +
       '</main>';
 
     whenScenes(function () {
       var el = document.getElementById('hub3d');
       if (!el || hub || S.view !== 'hub') return;
-      hub = UXScenes.makeHub(document.getElementById('hub3d'), {
+      hub = UXScenes.makeHub(el, {
         lessons: LESSONS.map(function (l) { return { id: l.id, level: l.level, n: l.n, title: loc(l).title }; }),
         levels: LEVELS.map(function (lv) { return Object.assign({ name: levelName(lv.key) }, lv); }),
+        provinces: PROVINCES.map(function (p) { return { key: p.key, color: p.hex, name: (t('prov.' + p.key + '.name') + ' · ' + t('prov.' + p.key + '.kind')).toUpperCase() }; }),
         onOpen: open,
-        doneText: t('hub.tip.done')
+        doneText: t('hub.tip.done'),
+        focus: focus
       });
       hub.refresh(S.done);
     });
+  }
+  function focusWorld(k) {
+    setFocus(k);
+    var w = app.querySelector('.world'); if (w) w.setAttribute('data-focus', k);
+    app.querySelectorAll('[data-focus]').forEach(function (b) { if (b.tagName === 'BUTTON') { b.classList.toggle('is-on', b.getAttribute('data-focus') === k); b.setAttribute('aria-pressed', b.getAttribute('data-focus') === k); } });
+    if (hub) hub.focus(k);
   }
 
   /* ───────── lesson ───────── */
@@ -223,13 +293,15 @@
     var list = function (arr, cls) {
       return '<ol class="olist ' + (cls || '') + '">' + arr.map(function (s, i) { return '<li><span>' + pad(i + 1) + '</span><span>' + esc(s) + '</span></li>'; }).join('') + '</ol>';
     };
-    var scene = l.scene ? '<div class="scene3d"><div class="bar">' + esc(t('lesson.3d')) + '</div><div class="stage" id="scene3d"></div>' +
+    var practice = lv.logo ? '<span class="figma-badge logo">' + lv.logo + '</span><span class="label" style="color:var(--lv)">' + esc(t('lesson.practice')) + '</span>'
+      : '<span class="figma-badge">F</span><span class="label" style="color:var(--lilac)">' + esc(t('lesson.figma')) + '</span>';
+    var scene = l.scene ? '<div class="scene3d"><div class="bar">' + esc(t(l.scene === 'flow' ? 'lesson.3dflow' : 'lesson.3d')) + '</div><div class="stage" id="scene3d"></div>' +
       '<div class="legend">' + x.legend.map(function (g) { return '<span><i style="background:' + g.c + '"></i>' + esc(g.t) + '</span>'; }).join('') + '</div></div>' : '';
 
     app.innerHTML =
       '<main class="main lesson" data-screen-label="Lesson" style="--lv:' + lv.color + '">' +
-        '<div class="crumb"><button type="button" data-act="hub">' + esc(t('lesson.back')) + '</button><span>/</span><span style="color:var(--lv)">' + esc(levelName(l.level)) + '</span><span>/</span><span>' + esc(t('lesson.crumb', { n: pad(l.n) })) + '</span></div>' +
-        '<section class="title-block"><div class="title-meta"><span class="level-chip">' + esc(levelName(l.level)) + '</span>' +
+        '<div class="crumb"><button type="button" data-act="hub">' + esc(t('lesson.back')) + '</button><span>/</span><span>' + esc(t('prov.' + lv.province + '.name')) + '</span><span>/</span><span style="color:var(--lv)">' + esc(levelName(l.level)) + '</span><span>/</span><span>' + esc(t('lesson.crumb', { n: pad(l.n) })) + '</span></div>' +
+        '<section class="title-block"><div class="title-meta"><span class="level-chip">' + logoHTML(lv, 14) + esc(levelName(l.level)) + '</span>' +
           '<span class="mono muted" style="font-size:12px">' + esc(t('lesson.kicker', { n: pad(l.n), m: x.metaphor })) + '</span></div>' +
           '<h1>' + esc(x.title) + '</h1></section>' +
         '<section class="grid-fit story">' +
@@ -251,7 +323,7 @@
           '<div class="ad-card good"><div class="ad-head">' + esc(t('lesson.do')) + '</div><iframe id="good" title="' + esc(t('frame.good')) + '"></iframe><p>' + esc(x.good) + '</p></div>' +
         '</div></section>' +
         '<section class="grid-fit fq">' +
-          '<div class="card"><div class="figma-head"><span class="figma-badge">F</span><span class="label" style="color:var(--lilac)">' + esc(t('lesson.figma')) + '</span></div>' + list(x.figma, 'figma') + '</div>' +
+          '<div class="card"><div class="figma-head">' + practice + '</div>' + list(x.figma, 'figma') + '</div>' +
           '<div class="card quiz" id="quiz">' + quizHTML(l, x) + '</div>' +
         '</section>' +
         '<section class="lesson-foot">' +
@@ -262,14 +334,18 @@
       '</main>';
 
     renderDoneBtn();
-    lastVars = {};
+    lastVars = {}; lastTree = null;
+    setFocus(lv.province);
     loadFrame();
     document.getElementById('good').srcdoc = buildDoc(l.good.html, '', '');
     document.getElementById('bad').srcdoc = buildDoc(l.bad.html, '', '');
     if (l.scene) whenScenes(function () {
       var el = document.getElementById('scene3d');
       if (!el || sc || cur() !== l) return;
-      sc = l.scene === 'box' ? UXScenes.makeBox(el) : UXScenes.makeStack(el);
+      if (l.scene === 'flow') {
+        sc = UXScenes.makeFlow(el, { nodes: l.flow || [], color: lv.color });
+        if (lastTree) sc.message(lastTree);
+      } else sc = l.scene === 'box' ? UXScenes.makeBox(el) : UXScenes.makeStack(el);
       sc.update(vars());
     });
   }
@@ -286,10 +362,11 @@
 
   /* ───────── events ───────── */
   document.addEventListener('click', function (e) {
-    var el = e.target.closest('[data-open],[data-act],[data-sel],[data-q],[data-tab]');
+    var el = e.target.closest('[data-open],[data-act],[data-sel],[data-q],[data-tab],button[data-focus]');
     if (!el || !app.contains(el)) return;
     var l = cur();
     if (el.hasAttribute('data-open')) return open(el.getAttribute('data-open'));
+    if (el.hasAttribute('data-focus')) return focusWorld(el.getAttribute('data-focus'));
     if (el.hasAttribute('data-sel')) {
       var i = +el.getAttribute('data-sel'), oi = +el.getAttribute('data-opt');
       S.ctrl[i] = oi;
@@ -335,7 +412,7 @@
       S.code[S.tab] = el.value;
       clearTimeout(debounce);
       debounce = setTimeout(function () {
-        S.doc = buildDoc(S.code.html, S.code.css, S.code.js);
+        S.doc = buildDoc(S.code.html, S.code.css, S.code.js, cur() && cur().runtime);
         lastVars = {};
         loadFrame();
       }, 450);
@@ -365,6 +442,14 @@
       // keep controls, code and quiz answers; just redraw in the new language
       renderLesson();
     } else renderHub();
+  });
+
+  /* the React/Vue playgrounds post ux.render / ux.flow / ux.tree messages for the 3D view */
+  window.addEventListener('message', function (e) {
+    var f = document.getElementById('frame'), d = e.data;
+    if (!f || e.source !== f.contentWindow || !d || !d.uxlab) return;
+    if (d.type === 'tree') lastTree = d;
+    if (sc && sc.message) sc.message(d);
   });
 
   window.addEventListener('hashchange', route);

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ux.lab · sha-labs — Interactive UI/UX Learning Lab</title>
-<meta name="description" content="15 interactive UI/UX lessons with live playgrounds, a 3D world map and Figma tips. Available in Bahasa Indonesia and English.">
+<title>ux.lab · sha-labs — Interactive UI/UX & Frontend Lab</title>
+<meta name="description" content="Interactive UI/UX and frontend (React, Vue) lessons with live playgrounds and a 3D world map. Available in Bahasa Indonesia and English.">
 <meta name="theme-color" content="#0D1016">
 <link rel="icon" type="image/png" href="assets/img/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,7 +17,7 @@
 <header class="site-header">
   <button class="brand" id="brand" type="button" aria-label="sha-labs · ux.lab">
     <img src="assets/img/sha-labs-logo.png" alt="sha-labs" width="81" height="46">
-    <span class="brand-text"><span class="brand-name">ux.lab</span><span class="brand-sub" data-i18n="brand.sub">UI/UX learning lab</span></span>
+    <span class="brand-text"><span class="brand-name">ux.lab</span><span class="brand-sub" data-i18n="brand.sub">UI/UX &amp; frontend lab</span></span>
   </button>
   <nav class="nav">
     <button class="btn-nav" id="navHub" type="button" data-i18n="nav.world">World map</button>
@@ -41,6 +41,8 @@
 <script>document.getElementById('langSlot').outerHTML = I18N.switcher();</script>
 <script src="js/lessons.js"></script>
 <script src="js/lessons.id.js"></script>
+<script src="js/lessons-frontend.js"></script>
+<script src="js/lessons-frontend.id.js"></script>
 <script type="module" src="js/scenes.js"></script>
 <script src="js/app.js"></script>
 </body>
