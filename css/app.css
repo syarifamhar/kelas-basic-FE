@@ -71,6 +71,9 @@ button{font-family:inherit}
 .world-switch{position:absolute;right:16px;top:16px;display:flex;gap:4px;padding:4px;border-radius:10px;background:rgba(19,24,33,.9);border:1px solid var(--line)}
 .world-switch button{padding:6px 10px;border-radius:7px;border:1px solid transparent;background:transparent;color:var(--ink-2);font:600 12px var(--font-mono);cursor:pointer;transition:background var(--motion-fast),color var(--motion-fast)}
 .world-switch button:hover{color:var(--ink);border-color:var(--line)}
+.world-time{position:absolute;right:16px;top:62px;z-index:3;padding:7px 12px;border-radius:10px;background:rgba(19,24,33,.9);border:1px solid var(--line);color:var(--ink);font:600 12px var(--font-mono);cursor:pointer}
+.world-time:hover{border-color:var(--mint);color:var(--mint)}
+.world.exploring .world-time{top:208px}
 .world-switch button.is-on{background:var(--raised);color:var(--mint);border-color:var(--line)}
 .world[data-focus=uiux] .chip[data-prov=frontend],.world[data-focus=frontend] .chip[data-prov=uiux]{display:none}
 .city-logo{display:inline-flex;flex:none;vertical-align:middle}
@@ -91,6 +94,8 @@ button{font-family:inherit}
 .level-chip{display:inline-flex;align-items:center;gap:6px}
 @media (max-width:640px){
   .world-switch{left:16px;right:auto;top:auto;bottom:62px}
+  .world-time{top:16px}
+  .world.exploring .world-time{top:130px;right:10px}
   .world-hint{left:16px;right:16px}
 }
 
@@ -208,6 +213,7 @@ button{font-family:inherit}
 .cr-sw button:hover{transform:scale(1.12)}
 .cr-sw button.is-on{box-shadow:0 0 0 2px var(--mint);transform:scale(1.12)}
 .cr-row input[type=range]{width:100%;accent-color:var(--mint)}
+.cr-range{display:flex;align-items:center;gap:10px}.cr-range output{min-width:56px;text-align:right;font:500 12px var(--font-mono);color:var(--ink-2)}
 .cr-toggle{width:46px;height:26px;border-radius:999px;border:1px solid var(--line);background:var(--bg);padding:2px;cursor:pointer;position:relative;transition:background var(--motion-fast)}
 .cr-toggle i{display:block;width:20px;height:20px;border-radius:50%;background:var(--ink-2);transition:transform var(--motion-base) var(--ease-spring),background var(--motion-fast)}
 .cr-toggle.is-on{background:rgba(126,242,195,.18);border-color:var(--mint)}

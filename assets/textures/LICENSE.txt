@@ -1,2 +1,5 @@
 Textures from Poly Haven (https://polyhaven.com), CC0 1.0 Universal (public domain).
-asphalt_* : asphalt_02 · pavement_* : concrete_pavement_02 (resized to 512px)
+asphalt_* : asphalt_02 · pavement_* : concrete_pavement_02 · grass_* : aerial_grass_rock (resized to 512px)
+fabric/ (greyscale so they can be tinted, resized to 512px):
+  denim : denim_fabric · jersey : cotton_jersey · melange : jogging_melange · knit : knitted_fleece
+  poplin : stretch_poplin · leather : fabric_leather_01 · sneaker : leather_white · suede : scuba_suede
