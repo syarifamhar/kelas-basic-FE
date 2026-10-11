@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Night Shift · ux.lab design system · sha-labs</title>
+<meta name="description" content="Night Shift, the design system behind ux.lab by sha-labs: color, type, spacing, components, motion and tokens.">
+<meta name="theme-color" content="#0D1016">
+<link rel="icon" type="image/png" href="assets/img/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+<style>
+  html{scroll-behavior:smooth;scroll-padding-top:90px}
+  .ds-nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font:500 13px var(--font-mono)}
+  .ds-nav a{padding:6px 10px;border-radius:7px;color:var(--ink-2);transition:color var(--motion-fast),background var(--motion-fast)}
+  .ds-nav a:hover{color:var(--mint);background:var(--surface)}
+  .ds-nav a.back{padding:6px 12px;border:1px solid var(--line);color:var(--ink);margin-left:6px}
+  .ds-nav a.back:hover{border-color:var(--mint);background:none;color:var(--ink)}
+  .h-mint{transition:border-color var(--motion-fast)}
+  .h-mint:hover{border-color:var(--mint) !important}
+  .h-raised:hover{background:var(--raised) !important}
+  .h-danger:hover{background:rgba(255,138,138,.08) !important}
+  .in-focus:focus{border-color:var(--mint) !important;box-shadow:0 0 0 3px rgba(126,242,195,.18)}
+  .btn-primary{transition:transform var(--motion-fast) var(--ease-out),box-shadow var(--motion-fast)}
+  .btn-primary:hover{box-shadow:0 0 0 4px rgba(126,242,195,.18);transform:translateY(-1px)}
+  .btn-primary:active{transform:translateY(1px)}
+  .btn-copy{padding:11px 18px;border-radius:9px;border:1px solid var(--mint);background:transparent;color:var(--mint);font:600 14px var(--font-mono);cursor:pointer}
+  .btn-copy.is-done{background:var(--mint);color:var(--bg)}
+  .curve{display:grid;grid-template-columns:minmax(150px,220px) 1fr;gap:16px;align-items:center;padding:16px 22px;border-bottom:1px solid var(--line)}
+  .curve:last-child{border-bottom:0}
+  .track{position:relative;height:28px;border-radius:99px;background:var(--bg);border:1px solid var(--line)}
+  .ball{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%}
+  .curves-on .ball{left:calc(100% - 23px)}
+  @media (max-width:560px){.curve{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="index.html" aria-label="sha-labs · ux.lab">
+    <img src="assets/img/sha-labs-logo.png" alt="sha-labs" width="81" height="46">
+    <span class="brand-text"><span class="brand-name">ux.lab</span><span class="brand-sub" data-i18n="ds.crumb">/ design system</span></span>
+  </a>
+  <nav class="nav">
+    <span class="ds-nav">
+      <a href="#color" data-i18n="ds.nav.color">color</a>
+      <a href="#type" data-i18n="ds.nav.type">type</a>
+      <a href="#space" data-i18n="ds.nav.space">space</a>
+      <a href="#components" data-i18n="ds.nav.components">components</a>
+      <a href="#motion" data-i18n="ds.nav.motion">motion</a>
+      <a href="#tokens" data-i18n="ds.nav.tokens">tokens</a>
+      <a class="back" href="index.html" data-i18n="ds.back">← back to the lab</a>
+    </span>
+    <span id="langSlot"></span>
+  </nav>
+</header>
+
+  <main style="max-width:1180px;margin:0 auto;padding:48px clamp(16px,4vw,40px) 96px;display:grid;gap:72px">
+    <section data-screen-label="DS intro" style="display:grid;gap:18px;max-width:780px">
+      <span style="font:600 12px 'JetBrains Mono',ui-monospace,monospace;letter-spacing:.08em;color:#7EF2C3">// NIGHT SHIFT · v1.0</span>
+      <h1 style="margin:0;font:700 clamp(40px,6vw,68px)/1 'Space Grotesk',sans-serif;letter-spacing:-.025em" data-i18n="ds.title">A design system for late-night tinkerers.</h1>
+      <p style="margin:0;font-size:18px;line-height:1.6;color:#A9B4C2;text-wrap:pretty" data-i18n="ds.lede">It feels like your favorite code editor at 2am: deep, low-glare surfaces, soft neon used only where it means something, and monospace wherever a machine is talking.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px;margin-top:8px">
+        <div style="padding:16px;border-radius:12px;background:#131821;border:1px solid #263042"><div style="font:600 13px 'JetBrains Mono',ui-monospace,monospace;color:#7EF2C3;margin-bottom:6px" data-i18n="ds.p1">01 calm by default</div><div style="font-size:14px;color:#A9B4C2;line-height:1.5" data-i18n="ds.p1d">Neutrals do 90% of the work. Neon is a signal, not decoration.</div></div>
+        <div style="padding:16px;border-radius:12px;background:#131821;border:1px solid #263042"><div style="font:600 13px 'JetBrains Mono',ui-monospace,monospace;color:#B9A3FF;margin-bottom:6px" data-i18n="ds.p2">02 mono for machines</div><div style="font-size:14px;color:#A9B4C2;line-height:1.5" data-i18n="ds.p2d">Labels, values and code use mono. Humans get Plex Sans.</div></div>
+        <div style="padding:16px;border-radius:12px;background:#131821;border:1px solid #263042"><div style="font:600 13px 'JetBrains Mono',ui-monospace,monospace;color:#FFC877;margin-bottom:6px" data-i18n="ds.p3">03 snap to 4</div><div style="font-size:14px;color:#A9B4C2;line-height:1.5" data-i18n="ds.p3d">Every space, size and radius is a multiple of 4.</div></div>
+      </div>
+    </section>
+
+    <section id="color" data-screen-label="DS color" style="display:grid;gap:24px">
+      <div style="display:grid;gap:6px"><span style="font:600 12px 'JetBrains Mono',ui-monospace,monospace;letter-spacing:.08em;color:#A9B4C2" data-i18n="ds.color.k">01 / COLOR</span><h2 style="margin:0;font:700 34px 'Space Grotesk',sans-serif" data-i18n="ds.color.h">Surfaces &amp; ink</h2></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:12px">
+        <div style="display:grid;border-radius:12px;overflow:hidden;border:1px solid #263042"><div style="height:84px;background:#0D1016"></div><div style="padding:12px;background:#131821;display:grid;gap:2px"><span style="font:600 13px 'JetBrains Mono',ui-monospace,monospace">--bg</span><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">#0D1016 · <span data-i18n="ds.sw.page">page</span></span></div></div>
+        <div style="display:grid;border-radius:12px;overflow:hidden;border:1px solid #263042"><div style="height:84px;background:#131821"></div><div style="padding:12px;background:#131821;display:grid;gap:2px;border-top:1px solid #263042"><span style="font:600 13px 'JetBrains Mono',ui-monospace,monospace">--surface</span><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">#131821 · <span data-i18n="ds.sw.cards">cards</span></span></div></div>
+        <div style="display:grid;border-radius:12px;overflow:hidden;border:1px solid #263042"><div style="height:84px;background:#1A2130"></div><div style="padding:12px;background:#131821;display:grid;gap:2px"><span style="font:600 13px 'JetBrains Mono',ui-monospace,monospace">--raised</span><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">#1A2130 · <span data-i18n="ds.sw.popovers">popovers</span></span></div></div>
+        <div style="display:grid;border-radius:12px;overflow:hidden;border:1px solid #263042"><div style="height:84px;background:#263042"></div><div style="padding:12px;background:#131821;display:grid;gap:2px"><span style="font:600 13px 'JetBrains Mono',ui-monospace,monospace">--line</span><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">#263042 · <span data-i18n="ds.sw.borders">borders</span></span></div></div>
+        <div style="display:grid;border-radius:12px;overflow:hidden;border:1px solid #263042"><div style="height:84px;background:#A9B4C2"></div><div style="padding:12px;background:#131821;display:grid;gap:2px"><span style="font:600 13px 'JetBrains Mono',ui-monospace,monospace">--ink-2</span><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">#A9B4C2 · <span data-i18n="ds.sw.secondary">secondary</span></span></div></div>
+        <div style="display:grid;border-radius:12px;overflow:hidden;border:1px solid #263042"><div style="height:84px;background:#E6EDF3"></div><div style="padding:12px;background:#131821;display:grid;gap:2px"><span style="font:600 13px 'JetBrains Mono',ui-monospace,monospace">--ink</span><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">#E6EDF3 · <span data-i18n="ds.sw.text">text</span></span></div></div>
+      </div>
+      <h3 style="margin:16px 0 0;font:700 22px 'Space Grotesk',sans-serif" data-i18n="ds.accents">Soft neon accents</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:12px">
+        <div style="display:grid;gap:10px;padding:16px;border-radius:12px;background:#131821;border:1px solid #263042"><div style="height:56px;border-radius:8px;background:#7EF2C3;box-shadow:0 0 24px rgba(126,242,195,.25)"></div><span style="font:600 13px 'JetBrains Mono',ui-monospace,monospace;color:#7EF2C3">--mint #7EF2C3</span><span style="font-size:13px;color:#A9B4C2" data-i18n="ds.ac.mint">Primary action, success, Beginner</span></div>
+        <div style="display:grid;gap:10px;padding:16px;border-radius:12px;background:#131821;border:1px solid #263042"><div style="height:56px;border-radius:8px;background:#B9A3FF;box-shadow:0 0 24px rgba(185,163,255,.25)"></div><span style="font:600 13px 'JetBrains Mono',ui-monospace,monospace;color:#B9A3FF">--lilac #B9A3FF</span><span style="font-size:13px;color:#A9B4C2" data-i18n="ds.ac.lilac">Figma, selection, Intermediate</span></div>
+        <div style="display:grid;gap:10px;padding:16px;border-radius:12px;background:#131821;border:1px solid #263042"><div style="height:56px;border-radius:8px;background:#FFC877;box-shadow:0 0 24px rgba(255,200,119,.25)"></div><span style="font:600 13px 'JetBrains Mono',ui-monospace,monospace;color:#FFC877">--amber #FFC877</span><span style="font-size:13px;color:#A9B4C2" data-i18n="ds.ac.amber">Focus ring, warning, Advanced</span></div>
+        <div style="display:grid;gap:10px;padding:16px;border-radius:12px;background:#131821;border:1px solid #263042"><div style="height:56px;border-radius:8px;background:#7FD4FF;box-shadow:0 0 24px rgba(127,212,255,.25)"></div><span style="font:600 13px 'JetBrains Mono',ui-monospace,monospace;color:#7FD4FF">--sky #7FD4FF</span><span style="font-size:13px;color:#A9B4C2" data-i18n="ds.ac.sky">Info, links in code, guides</span></div>
+        <div style="display:grid;gap:10px;padding:16px;border-radius:12px;background:#131821;border:1px solid #263042"><div style="height:56px;border-radius:8px;background:#FF93B5;box-shadow:0 0 24px rgba(255,147,181,.25)"></div><span style="font:600 13px 'JetBrains Mono',ui-monospace,monospace;color:#FF93B5">--pink #FF93B5</span><span style="font-size:13px;color:#A9B4C2" data-i18n="ds.ac.pink">Playful highlights, reset</span></div>
+        <div style="display:grid;gap:10px;padding:16px;border-radius:12px;background:#131821;border:1px solid #263042"><div style="height:56px;border-radius:8px;background:#FF8A8A;box-shadow:0 0 24px rgba(255,138,138,.25)"></div><span style="font:600 13px 'JetBrains Mono',ui-monospace,monospace;color:#FF8A8A">--danger #FF8A8A</span><span style="font-size:13px;color:#A9B4C2" data-i18n="ds.ac.danger">Errors, "avoid" examples</span></div>
+      </div>
+      <p style="margin:0;font:13px/1.6 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2" data-i18n="ds.aa">Every accent passes AA (≥ 4.5:1) as text on --bg and --surface. Text on an accent fill is always --bg.</p>
+    </section>
+
+    <section id="type" data-screen-label="DS type" style="display:grid;gap:24px">
+      <div style="display:grid;gap:6px"><span style="font:600 12px 'JetBrains Mono',ui-monospace,monospace;letter-spacing:.08em;color:#A9B4C2" data-i18n="ds.type.k">02 / TYPE</span><h2 style="margin:0;font:700 34px 'Space Grotesk',sans-serif" data-i18n="ds.type.h">Three voices</h2></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px">
+        <div style="display:grid;gap:8px;padding:22px;border-radius:14px;background:#131821;border:1px solid #263042"><span style="font:700 44px/1 'Space Grotesk',sans-serif">Aa</span><span style="font:600 16px 'Space Grotesk',sans-serif">Space Grotesk</span><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2" data-i18n="ds.f1">display · headings · 500 / 700</span></div>
+        <div style="display:grid;gap:8px;padding:22px;border-radius:14px;background:#131821;border:1px solid #263042"><span style="font:500 44px/1 'IBM Plex Sans',system-ui,sans-serif">Aa</span><span style="font:600 16px 'IBM Plex Sans',system-ui,sans-serif">IBM Plex Sans</span><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2" data-i18n="ds.f2">body · UI · 400 / 500 / 600</span></div>
+        <div style="display:grid;gap:8px;padding:22px;border-radius:14px;background:#131821;border:1px solid #263042"><span style="font:600 44px/1 'JetBrains Mono',ui-monospace,monospace;color:#7EF2C3">{ }</span><span style="font:600 16px 'JetBrains Mono',ui-monospace,monospace">JetBrains Mono</span><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2" data-i18n="ds.f3">code · labels · values · 400 / 600</span></div>
+      </div>
+      <div style="display:grid;border-radius:14px;background:#131821;border:1px solid #263042;overflow:hidden">
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:baseline;padding:16px 22px;border-bottom:1px solid #263042"><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">display · 61</span><span style="font:700 61px/1 'Space Grotesk',sans-serif;letter-spacing:-.02em;overflow:hidden;text-overflow:ellipsis" data-i18n="ds.s.display">Poke it.</span></div>
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:baseline;padding:16px 22px;border-bottom:1px solid #263042"><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">h1 · 49</span><span style="font:700 49px/1.05 'Space Grotesk',sans-serif;letter-spacing:-.02em" data-i18n="ds.s.h1">The box model</span></div>
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:baseline;padding:16px 22px;border-bottom:1px solid #263042"><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">h2 · 31</span><span style="font:700 31px/1.15 'Space Grotesk',sans-serif">Playground</span></div>
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:baseline;padding:16px 22px;border-bottom:1px solid #263042"><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">h3 · 20</span><span style="font:600 20px/1.3 'Space Grotesk',sans-serif" data-i18n="ds.s.h3">Do it in Figma</span></div>
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:baseline;padding:16px 22px;border-bottom:1px solid #263042"><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">body · 16</span><span style="font:400 16px/1.6 'IBM Plex Sans',system-ui,sans-serif;max-width:62ch" data-i18n="ds.s.body">When you ship a mug, there's the mug itself, bubble wrap around it, and the cardboard box.</span></div>
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:baseline;padding:16px 22px;border-bottom:1px solid #263042"><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">small · 13</span><span style="font:400 13px/1.5 'IBM Plex Sans',system-ui,sans-serif;color:#A9B4C2" data-i18n="ds.s.small">Supporting copy, captions and hints.</span></div>
+        <div style="display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:baseline;padding:16px 22px"><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">label · 12</span><span style="font:600 12px 'JetBrains Mono',ui-monospace,monospace;letter-spacing:.08em;color:#7EF2C3" data-i18n="lesson.parable">// THE PARABLE</span></div>
+      </div>
+      <p style="margin:0;font:13px/1.6 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2" data-i18n="ds.scale">Scale: base 16 × 1.25 (major third), rounded. Body line height 1.6, headings 1.0–1.15. Measure ≤ 70ch.</p>
+    </section>
+
+    <section id="space" data-screen-label="DS space" style="display:grid;gap:24px">
+      <div style="display:grid;gap:6px"><span style="font:600 12px 'JetBrains Mono',ui-monospace,monospace;letter-spacing:.08em;color:#A9B4C2" data-i18n="ds.space.k">03 / SPACE &amp; SHAPE</span><h2 style="margin:0;font:700 34px 'Space Grotesk',sans-serif" data-i18n="ds.space.h">Snap to the grid</h2></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:16px;align-items:start">
+        <div style="display:grid;gap:10px;padding:22px;border-radius:14px;background:#131821;border:1px solid #263042">
+          <div style="display:grid;grid-template-columns:90px 1fr;gap:12px;align-items:center"><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">space-1 · 4</span><span style="height:12px;width:4px;background:#7EF2C3;border-radius:2px"></span></div>
+          <div style="display:grid;grid-template-columns:90px 1fr;gap:12px;align-items:center"><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">space-2 · 8</span><span style="height:12px;width:8px;background:#7EF2C3;border-radius:2px"></span></div>
+          <div style="display:grid;grid-template-columns:90px 1fr;gap:12px;align-items:center"><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">space-3 · 12</span><span style="height:12px;width:12px;background:#7EF2C3;border-radius:2px"></span></div>
+          <div style="display:grid;grid-template-columns:90px 1fr;gap:12px;align-items:center"><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">space-4 · 16</span><span style="height:12px;width:16px;background:#7EF2C3;border-radius:2px"></span></div>
+          <div style="display:grid;grid-template-columns:90px 1fr;gap:12px;align-items:center"><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">space-6 · 24</span><span style="height:12px;width:24px;background:#7EF2C3;border-radius:2px"></span></div>
+          <div style="display:grid;grid-template-columns:90px 1fr;gap:12px;align-items:center"><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">space-8 · 32</span><span style="height:12px;width:32px;background:#7EF2C3;border-radius:2px"></span></div>
+          <div style="display:grid;grid-template-columns:90px 1fr;gap:12px;align-items:center"><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">space-12 · 48</span><span style="height:12px;width:48px;background:#7EF2C3;border-radius:2px"></span></div>
+          <div style="display:grid;grid-template-columns:90px 1fr;gap:12px;align-items:center"><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">space-16 · 64</span><span style="height:12px;width:64px;background:#7EF2C3;border-radius:2px"></span></div>
+          <div style="display:grid;grid-template-columns:90px 1fr;gap:12px;align-items:center"><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">space-24 · 96</span><span style="height:12px;width:96px;background:#7EF2C3;border-radius:2px"></span></div>
+        </div>
+        <div style="display:grid;gap:16px">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:22px;border-radius:14px;background:#131821;border:1px solid #263042">
+            <div style="display:grid;gap:8px;justify-items:center"><div style="width:56px;height:56px;border:2px solid #B9A3FF;border-radius:4px"></div><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">sm · 4</span></div>
+            <div style="display:grid;gap:8px;justify-items:center"><div style="width:56px;height:56px;border:2px solid #B9A3FF;border-radius:8px"></div><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">md · 8</span></div>
+            <div style="display:grid;gap:8px;justify-items:center"><div style="width:56px;height:56px;border:2px solid #B9A3FF;border-radius:14px"></div><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">lg · 14</span></div>
+            <div style="display:grid;gap:8px;justify-items:center"><div style="width:56px;height:56px;border:2px solid #B9A3FF;border-radius:999px"></div><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2">pill</span></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:22px;border-radius:14px;background:#0D1016;border:1px solid #263042">
+            <div style="display:grid;gap:8px"><div style="height:56px;border-radius:10px;background:#131821;border:1px solid #263042"></div><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2" data-i18n="ds.el.flat">flat · border</span></div>
+            <div style="display:grid;gap:8px"><div style="height:56px;border-radius:10px;background:#1A2130;box-shadow:0 8px 24px rgba(0,0,0,.45)"></div><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2" data-i18n="ds.el.raised">raised · shadow</span></div>
+            <div style="display:grid;gap:8px"><div style="height:56px;border-radius:10px;background:#131821;border:1px solid #7EF2C3;box-shadow:0 0 0 4px rgba(126,242,195,.12)"></div><span style="font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2" data-i18n="ds.el.active">active · glow</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="components" data-screen-label="DS components" style="display:grid;gap:24px">
+      <div style="display:grid;gap:6px"><span style="font:600 12px 'JetBrains Mono',ui-monospace,monospace;letter-spacing:.08em;color:#A9B4C2" data-i18n="ds.comp.k">04 / COMPONENTS</span><h2 style="margin:0;font:700 34px 'Space Grotesk',sans-serif" data-i18n="ds.comp.h">Buttons, inputs, cards</h2></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:16px;align-items:start">
+        <div style="display:grid;gap:18px;padding:24px;border-radius:14px;background:#131821;border:1px solid #263042">
+          <span style="font:600 12px 'JetBrains Mono',ui-monospace,monospace;letter-spacing:.08em;color:#A9B4C2" data-i18n="ds.buttons">BUTTONS</span>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+            <button style="padding:11px 18px;border-radius:9px;border:1px solid #7EF2C3;background:#7EF2C3;color:#0D1016;font:600 14px 'IBM Plex Sans',system-ui,sans-serif;cursor:pointer;transition:transform .15s cubic-bezier(.2,.8,.2,1),box-shadow .15s" class="btn-primary" data-i18n="ds.b.run">Run lesson</button>
+            <button style="padding:11px 18px;border-radius:9px;border:1px solid #263042;background:#1A2130;color:#E6EDF3;font:600 14px 'IBM Plex Sans',system-ui,sans-serif;cursor:pointer" class="h-mint" data-i18n="ds.b.secondary">Secondary</button>
+            <button style="padding:11px 18px;border-radius:9px;border:1px solid transparent;background:transparent;color:#7EF2C3;font:600 14px 'IBM Plex Sans',system-ui,sans-serif;cursor:pointer" class="h-raised" data-i18n="ds.b.ghost">Ghost</button>
+            <button style="padding:11px 18px;border-radius:9px;border:1px solid #FF8A8A;background:transparent;color:#FF8A8A;font:600 14px 'IBM Plex Sans',system-ui,sans-serif;cursor:pointer" class="h-danger" data-i18n="ds.b.reset">Reset</button>
+            <button disabled="" style="padding:11px 18px;border-radius:9px;border:1px solid #263042;background:#131821;color:#A9B4C2;font:600 14px 'IBM Plex Sans',system-ui,sans-serif;opacity:.5;cursor:not-allowed" data-i18n="ds.b.disabled">Disabled</button>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+            <button style="padding:6px 11px;border-radius:7px;border:1px solid #7EF2C3;background:#7EF2C3;color:#0D1016;font:600 12px 'JetBrains Mono',ui-monospace,monospace;cursor:pointer">sm</button>
+            <button style="padding:11px 18px;border-radius:9px;border:1px solid #7EF2C3;background:#7EF2C3;color:#0D1016;font:600 14px 'IBM Plex Sans',system-ui,sans-serif;cursor:pointer">md · 44px</button>
+            <button style="padding:15px 24px;border-radius:11px;border:1px solid #7EF2C3;background:#7EF2C3;color:#0D1016;font:600 16px 'IBM Plex Sans',system-ui,sans-serif;cursor:pointer">lg</button>
+            <span style="display:flex;gap:4px;padding:4px;border-radius:9px;background:#0D1016;border:1px solid #263042"><span style="padding:6px 12px;border-radius:6px;background:#7EF2C3;color:#0D1016;font:600 12px 'JetBrains Mono',ui-monospace,monospace" data-i18n="ds.b.on">on</span><span style="padding:6px 12px;border-radius:6px;color:#A9B4C2;font:600 12px 'JetBrains Mono',ui-monospace,monospace" data-i18n="ds.b.off">off</span></span>
+          </div>
+        </div>
+        <div style="display:grid;gap:14px;padding:24px;border-radius:14px;background:#131821;border:1px solid #263042">
+          <span style="font:600 12px 'JetBrains Mono',ui-monospace,monospace;letter-spacing:.08em;color:#A9B4C2" data-i18n="ds.inputs">INPUTS</span>
+          <label style="display:grid;gap:6px;font-size:13px;color:#A9B4C2"><span data-i18n="ds.i.name">Project name</span><input value="ux.lab" style="padding:11px 12px;border-radius:9px;border:1px solid #33405a;background:#0D1016;color:#E6EDF3;font:14px 'IBM Plex Sans',system-ui,sans-serif;outline:none" class="in-focus"></label>
+          <label style="display:grid;gap:6px;font-size:13px;color:#A9B4C2"><span data-i18n="ds.i.focus">Focus state</span><span style="padding:11px 12px;border-radius:9px;border:1px solid #7EF2C3;box-shadow:0 0 0 3px rgba(126,242,195,.18);background:#0D1016;color:#E6EDF3;font:14px 'IBM Plex Sans',system-ui,sans-serif" data-i18n="ds.i.typing">typing…</span></label>
+          <label style="display:grid;gap:6px;font-size:13px;color:#A9B4C2"><span data-i18n="ds.i.error">Error state</span><span style="padding:11px 12px;border-radius:9px;border:2px solid #FF8A8A;background:#0D1016;color:#E6EDF3;font:14px 'IBM Plex Sans',system-ui,sans-serif">abc</span><span style="color:#FF8A8A" data-i18n="ds.i.errmsg">⚠ Must be 8+ characters</span></label>
+          <div style="display:grid;gap:6px"><div style="display:flex;justify-content:space-between;font:12px 'JetBrains Mono',ui-monospace,monospace"><span style="color:#A9B4C2">padding</span><span style="color:#7EF2C3">16px</span></div><input type="range" min="0" max="48" value="16" style="width:100%;margin:0"></div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px">
+        <div style="display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:14px 16px;border-radius:12px;border:1px solid #263042;background:#131821" class="h-mint"><span style="font:600 13px 'JetBrains Mono',ui-monospace,monospace;color:#7EF2C3">05</span><span style="display:grid;gap:2px"><span style="font:600 16px 'Space Grotesk',sans-serif" data-i18n="ds.card.title">The CSS Box Model</span><span style="font-size:13px;color:#A9B4C2" data-i18n="ds.card.meta">Shipping a package</span></span><span style="font:600 12px 'JetBrains Mono',ui-monospace,monospace;color:#7EF2C3" data-i18n="hub.status.done">✓ done</span></div>
+        <div style="display:grid;gap:10px;padding:22px;border-radius:14px;background:#131821;border:1px solid #263042"><span style="font:600 12px 'JetBrains Mono',ui-monospace,monospace;letter-spacing:.08em;color:#7EF2C3" data-i18n="lesson.parable">// THE PARABLE</span><p style="margin:0;font:500 16px/1.6 'IBM Plex Sans',system-ui,sans-serif" data-i18n="ds.card.parable">Curb cuts were built for wheelchairs, and now everyone uses them.</p></div>
+        <div style="display:grid;gap:8px;padding:18px;border-radius:12px;background:rgba(127,212,255,.06);border:1px solid #2b4a5e"><span style="font:600 12px 'JetBrains Mono',ui-monospace,monospace;color:#7FD4FF" data-i18n="ds.tip">ⓘ TIP</span><span style="font-size:14px;line-height:1.5" data-i18n="ds.tip.t">Press Tab to move through the form.</span></div>
+        <div style="display:grid;gap:8px;padding:18px;border-radius:12px;background:rgba(255,200,119,.06);border:1px solid #5a4825"><span style="font:600 12px 'JetBrains Mono',ui-monospace,monospace;color:#FFC877" data-i18n="ds.careful">⚠ CAREFUL</span><span style="font-size:14px;line-height:1.5" data-i18n="ds.careful.t">z-index can't escape its stacking context.</span></div>
+      </div>
+      <div style="display:grid;border-radius:14px;background:#0B0E13;border:1px solid #263042;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:6px;padding:10px 14px;border-bottom:1px solid #263042;font:12px 'JetBrains Mono',ui-monospace,monospace;color:#A9B4C2"><span style="width:9px;height:9px;border-radius:50%;background:#FF93B5"></span><span style="width:9px;height:9px;border-radius:50%;background:#FFC877"></span><span style="width:9px;height:9px;border-radius:50%;background:#7EF2C3"></span><span style="margin-left:8px">package.css</span></div>
+        <pre style="margin:0;padding:18px 20px;font:13px/1.7 'JetBrains Mono',ui-monospace,monospace;color:#E6EDF3;overflow:auto"><span style="color:#A9B4C2">/* the mug, wrapped and boxed */</span>
+<span style="color:#B9A3FF">.package</span> {
+  <span style="color:#7FD4FF">box-sizing</span>: <span style="color:#FFC877">border-box</span>;
+  <span style="color:#7FD4FF">padding</span>: <span style="color:#7EF2C3">var</span>(--space-4);      <span style="color:#A9B4C2">/* bubble wrap */</span>
+  <span style="color:#7FD4FF">border</span>: <span style="color:#FFC877">4px solid</span> <span style="color:#7EF2C3">var</span>(--amber);
+  <span style="color:#7FD4FF">margin</span>: <span style="color:#7EF2C3">var</span>(--space-4);       <span style="color:#A9B4C2">/* room in the van */</span>
+}</pre>
+      </div>
+    </section>
+
+    <section id="motion" data-screen-label="DS motion" style="display:grid;gap:24px">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+        <div style="display:grid;gap:6px"><span style="font:600 12px 'JetBrains Mono',ui-monospace,monospace;letter-spacing:.08em;color:#A9B4C2" data-i18n="ds.motion.k">05 / MOTION</span><h2 style="margin:0;font:700 34px 'Space Grotesk',sans-serif" data-i18n="ds.motion.h">Ease out, never slam</h2></div>
+        <button id="play" type="button" style="padding:11px 18px;border-radius:9px;border:1px solid #7EF2C3;background:#7EF2C3;color:#0D1016;font:600 14px 'JetBrains Mono',ui-monospace,monospace;cursor:pointer" data-i18n="ds.play">▶ play curves</button>
+      </div>
+      <div style="display:grid;border-radius:14px;background:#131821;border:1px solid #263042;overflow:hidden">
+        <div id="curves" style="display:contents"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px">
+        <div style="padding:16px;border-radius:12px;background:#131821;border:1px solid #263042;display:grid;gap:4px"><span style="font:600 13px 'JetBrains Mono',ui-monospace,monospace;color:#7EF2C3">--motion-fast · 150ms</span><span style="font-size:13px;color:#A9B4C2" data-i18n="ds.m.fast">hover, press, toggles</span></div>
+        <div style="padding:16px;border-radius:12px;background:#131821;border:1px solid #263042;display:grid;gap:4px"><span style="font:600 13px 'JetBrains Mono',ui-monospace,monospace;color:#B9A3FF">--motion-base · 250ms</span><span style="font-size:13px;color:#A9B4C2" data-i18n="ds.m.base">menus, tabs, cards</span></div>
+        <div style="padding:16px;border-radius:12px;background:#131821;border:1px solid #263042;display:grid;gap:4px"><span style="font:600 13px 'JetBrains Mono',ui-monospace,monospace;color:#FFC877">--motion-slow · 400ms</span><span style="font-size:13px;color:#A9B4C2" data-i18n="ds.m.slow">drawers, page, 3D camera</span></div>
+      </div>
+    </section>
+
+    <section id="tokens" data-screen-label="DS tokens" style="display:grid;gap:20px">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+        <div style="display:grid;gap:6px"><span style="font:600 12px 'JetBrains Mono',ui-monospace,monospace;letter-spacing:.08em;color:#A9B4C2" data-i18n="ds.tokens.k">06 / TOKENS</span><h2 style="margin:0;font:700 34px 'Space Grotesk',sans-serif" data-i18n="ds.tokens.h">Copy the variables</h2></div>
+        <button id="copy" type="button" class="btn-copy" data-i18n="ds.copy">copy CSS</button>
+      </div>
+      <pre style="margin:0;padding:22px;border-radius:14px;background:#0B0E13;border:1px solid #263042;font:13px/1.7 'JetBrains Mono',ui-monospace,monospace;color:#E6EDF3;overflow:auto" id="cssVars"></pre>
+    </section>
+  </main>
+
+<footer class="site-footer">
+  <div class="inner">
+    <span class="made"><span data-i18n="footer.made">Made with care by</span> <img src="assets/img/sha-labs-logo.png" alt="sha-labs" width="99" height="56"></span>
+    <a href="index.html" data-i18n="ds.back">← back to the lab</a>
+  </div>
+</footer>
+
+<script src="js/i18n.js"></script>
+<script>
+(function () {
+  document.getElementById('langSlot').outerHTML = I18N.switcher();
+
+  var CSS_VARS = `:root {
+  /* surfaces */
+  --bg: #0D1016;
+  --surface: #131821;
+  --raised: #1A2130;
+  --line: #263042;
+  /* ink */
+  --ink: #E6EDF3;
+  --ink-2: #A9B4C2;
+  /* soft neon */
+  --mint: #7EF2C3;
+  --lilac: #B9A3FF;
+  --amber: #FFC877;
+  --sky: #7FD4FF;
+  --pink: #FF93B5;
+  --danger: #FF8A8A;
+  /* semantic */
+  --color-action: var(--mint);
+  --color-focus: var(--amber);
+  --color-on-accent: var(--bg);
+  /* type */
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --text-12: 12px; --text-13: 13px; --text-16: 16px; --text-20: 20px;
+  --text-31: 31px; --text-49: 49px; --text-61: 61px;
+  /* space (4pt) */
+  --space-1: 4px;  --space-2: 8px;   --space-3: 12px; --space-4: 16px;
+  --space-6: 24px; --space-8: 32px;  --space-12: 48px; --space-16: 64px;
+  /* radius */
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 14px; --radius-pill: 999px;
+  /* elevation */
+  --shadow-raised: 0 8px 24px rgba(0,0,0,.45);
+  --glow-active: 0 0 0 4px rgba(126,242,195,.12);
+  /* motion */
+  --motion-fast: 150ms; --motion-base: 250ms; --motion-slow: 400ms;
+  --ease-out: cubic-bezier(.2,.8,.2,1);
+  --ease-in-out: cubic-bezier(.65,0,.35,1);
+  --ease-spring: cubic-bezier(.34,1.56,.64,1);
+}`;
+  var CURVES = [
+    { name: 'linear', spec: 'ds.linear', ease: 'linear', color: '#A9B4C2' },
+    { name: '--ease-out', spec: 'cubic-bezier(.2,.8,.2,1)', ease: 'cubic-bezier(.2,.8,.2,1)', color: '#7EF2C3' },
+    { name: '--ease-in-out', spec: 'cubic-bezier(.65,0,.35,1)', ease: 'cubic-bezier(.65,0,.35,1)', color: '#B9A3FF' },
+    { name: '--ease-spring', spec: 'cubic-bezier(.34,1.56,.64,1)', ease: 'cubic-bezier(.34,1.56,.64,1)', color: '#FFC877' }
+  ];
+
+  var box = document.getElementById('curves');
+  CURVES.forEach(function (c) {
+    var row = document.createElement('div');
+    row.className = 'curve';
+    row.innerHTML = '<div style="display:grid;gap:2px"><span style="font:600 13px var(--font-mono)"></span><span style="font:11px var(--font-mono);color:var(--ink-2)"></span></div>' +
+      '<div class="track"><div class="ball"></div></div>';
+    row.children[0].children[0].textContent = c.name;
+    var spec = row.children[0].children[1];
+    if (c.spec.indexOf('ds.') === 0) spec.setAttribute('data-i18n', c.spec);
+    spec.textContent = I18N.t(c.spec);
+    var ball = row.querySelector('.ball');
+    ball.style.background = c.color;
+    ball.style.transition = 'left 900ms ' + c.ease;
+    box.appendChild(row);
+  });
+  var wrap = box.parentNode;
+  document.getElementById('play').addEventListener('click', function () { wrap.classList.toggle('curves-on'); });
+
+  document.getElementById('cssVars').textContent = CSS_VARS;
+  var copyBtn = document.getElementById('copy'), timer = 0;
+  copyBtn.addEventListener('click', function () {
+    var done = function () {
+      copyBtn.classList.add('is-done'); copyBtn.textContent = I18N.t('ds.copied');
+      clearTimeout(timer);
+      timer = setTimeout(function () { copyBtn.classList.remove('is-done'); copyBtn.textContent = I18N.t('ds.copy'); }, 1600);
+    };
+    if (navigator.clipboard) navigator.clipboard.writeText(CSS_VARS).then(done, done); else done();
+  });
+
+  I18N.apply(document);
+})();
+</script>
+</body>
+</html>
