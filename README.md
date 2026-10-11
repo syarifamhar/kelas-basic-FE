@@ -1,13 +1,17 @@
 # ux.lab · by sha-labs
 
-An interactive learning world for UI/UX and frontend. Lessons live in **provinces** on a 3D world map, joined by one highway loop:
+An interactive learning world for UI/UX and frontend, shown as a 3D map: **world → city → district → lesson**. Two cities are joined by one highway loop:
 
-- **Pixelia · UI/UX Province**: 15 lessons in three districts (Beginner, Intermediate, Advanced).
-- **Frontera · Frontend Province**: 10 lessons in **React City** and **Vue City**, with React and Vue playgrounds and a 3D component tree that reacts to your code.
+- **Pixelia · UI/UX City**
+  - **Principia** (UI/UX theory, 13 lessons): the UX process, research & personas, user flows, hierarchy, Gestalt, color, type, spacing, Fitts & Hick, affordances, accessibility, motion, usability heuristics.
+  - **Vectoria** (Figma, 5 lessons): frames & layers, auto layout & components, variables & tokens, prototyping & Smart Animate, Dev Mode & handoff.
+- **Frontera · Frontend City**
+  - **Foundry** (HTML · CSS · JavaScript, 7 lessons): HTML semantics, selectors & the cascade, the box model, flexbox & grid, z-index, JavaScript & the DOM, events & state.
+  - **React District** (5 lessons) and **Vue District** (5 lessons), with real React/Vue playgrounds.
 
-Every lesson starts from an everyday story and ends in a live playground you can edit (HTML/CSS/JS, JSX or Vue templates). The **Night Shift** design system page documents the visual language.
+Every lesson starts from an everyday story, **explains the idea with a 3D model that follows the controls**, and ends in a live playground you can edit.
 
-- **Bilingual**: switch between 🇮🇩 **ID** (Bahasa Indonesia) and 🇺🇸 **ENG** (English) from the header. The choice is saved in `localStorage` (`uxlab.lang`).
+- **Bilingual**: switch between 🇮🇩 **ID** and 🇺🇸 **ENG** in the header (saved in `localStorage` as `uxlab.lang`).
 - **Progress** is saved in `localStorage` (`uxlab.done`).
 - Plain static site, no build step. Works on GitHub Pages.
 
@@ -19,10 +23,13 @@ design-system.html    Night Shift design system page
 css/tokens.css        design tokens (CSS custom properties)
 css/app.css           shared styles
 js/i18n.js            UI strings (ID/ENG) + language switcher
-js/lessons.js         Pixelia lessons + playground code (English, from the design handoff)
-js/lessons.id.js      Indonesian translations of the Pixelia lessons
-js/lessons-frontend.js     Frontera lessons (React City, Vue City)
-js/lessons-frontend.id.js  Indonesian translations of the Frontera lessons
+js/lessons.js              original lessons + playground code (English, from the design handoff)
+js/lessons-pixelia.js      new UX and Figma lessons
+js/lessons-frontend.js     React and Vue lessons
+js/lessons-foundry.js      new HTML / CSS / JS lessons
+js/syllabus.js             which district each lesson belongs to, and the order (edit this to reorganize)
+js/*.id.js                 Indonesian translations
+js/explainers.js           the 3D explainer for each lesson (declarative: controls → 3D objects)
 js/scenes.js          three.js scenes, ES module (neon city world map, box model, z-index stack)
 js/app.js             routing, rendering, playground engine, quiz, progress
 assets/img/           sha-labs logo + favicon
@@ -39,13 +46,12 @@ three.js (and its bloom/reflector addons) is loaded from unpkg through an import
 
 ## The 3D world map
 
-Everything is generated in code (no model files). Two provinces sit on either side of a river, joined by a single highway loop with bridges; every side street meets the highway at both ends, so no road dead-ends. Use the **Pixelia / Frontera / Whole map** buttons to fly between them.
+Everything is generated in code (no model files). The two cities sit on either side of a river, joined by a single highway loop with bridges. Each city also has its own ring road, and side streets cross each city to meet the ring and the highway at both ends, so no road dead-ends. Suburbs of houses, shophouses (ruko), apartments and trees fill the land around the highway (instanced meshes, so they stay cheap to draw). Use the **Pixelia / Frontera / Whole map** buttons to fly between cities.
 
-- **Pemula**: a friendly kampung with gable-roof houses, trees and lantern strings.
-- **Menengah**: a city of setback towers with water tanks, antennas and a sha-labs billboard.
-- **Mahir**: a futuristic downtown with hex towers, spinning holo rings, spires and searchlights.
-- **Kota React**: towers of stacked component modules joined by glowing seams, around a giant spinning React atom.
-- **Kota Vue**: terraced garden towers around a standing Vue logo.
+- **Principia**: academy halls with columns and pediments around a domed temple.
+- **Vectoria**: towers topped with Figma's shapes, around a 3D Figma logo.
+- **Foundry**: workshops with sawtooth roofs and smoking chimneys, tinted orange (HTML), blue (CSS) and yellow (JS), around three glowing pillars.
+- **React**: stacked component modules around a spinning atom. **Vue**: terraced garden towers around the V logo.
 - Lit windows, neon number signs, bloom glow, fog, floating particles in the logo colors, street lamps, a mirrored floor (desktop only), cars, drones with a spotlight.
 - Completed lessons light up with brighter windows and a light pillar. Clicking a building flies the camera in before opening the lesson.
 - `prefers-reduced-motion` turns off auto-rotation, traffic and the camera flight.
@@ -57,4 +63,10 @@ React and Vue lessons load the library from unpkg inside the playground iframe (
 - `useControl(name, fallback)` (React) / `controlRef(name, fallback)` (Vue) read the controls on the left.
 - `ux.tree(nodes)`, `ux.render(id)` and `ux.flow(from, to, kind)` drive the 3D component tree next to the preview.
 
-To add a province later (for example backend), add it to `PROVINCES` and `LEVELS` in `js/app.js`, give it a layout in `DISTRICTS` / `PROVINCES` in `js/scenes.js`, and extend the `LOOP` highway around it.
+## 3D explainers
+
+`js/explainers.js` holds one small function per lesson that turns the lesson's controls into a list of 3D objects (`{ id, shape, p, s, c, label, … }`). The engine (`makeExplain` in `js/scenes.js`) keeps one object per id and animates it to its new position, size, color and opacity whenever the controls change, like React for 3D. Playgrounds can also send their state (`ux.state({...})`), which the vending-machine lesson uses.
+
+## Adding a city later (for example backend)
+
+Add the city to `PROVINCES` and its districts to `LEVELS` in `js/app.js`, list the lessons in `js/syllabus.js`, give the districts and city a place in `DISTRICTS`, `CITIES` and `RINGS` in `js/scenes.js`, and extend the `LOOP` highway around it.

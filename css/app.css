@@ -84,6 +84,9 @@ button{font-family:inherit}
 .prov-head p{margin:0;color:var(--ink-2);line-height:1.55;text-wrap:pretty}
 .prov-count{font:600 12px var(--font-mono);color:var(--pv);padding:6px 10px;border-radius:8px;background:var(--raised)}
 .levels.two{grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}
+.levels.three{grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}
+.col-head h2>span{display:grid;gap:1px}
+.col-head h2 small{font:500 11px var(--font-mono);letter-spacing:.06em;color:var(--ink-2)}
 .figma-badge.logo{background:#0f1720;padding:5px}
 .level-chip{display:inline-flex;align-items:center;gap:6px}
 @media (max-width:640px){

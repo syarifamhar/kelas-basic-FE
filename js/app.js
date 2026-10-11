@@ -5,17 +5,21 @@
   var BASE = ':root{--bg:#0D1016;--surface:#131821;--raised:#1A2130;--line:#263042;--ink:#E6EDF3;--ink2:#A9B4C2;--mint:#7EF2C3;--lilac:#B9A3FF;--amber:#FFC877;--pink:#FF93B5;--sky:#7FD4FF}*{box-sizing:border-box}html{color-scheme:dark}body{margin:0;padding:20px;background:#131821;color:#E6EDF3;font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif}h1,h2,h3,h4{font-family:"Space Grotesk",sans-serif}';
   var LOGOS = {
     react: '<svg viewBox="-11.5 -10.23 23 20.46" width="100%" height="100%" aria-hidden="true"><circle r="2.05" fill="#61DAFB"/><g stroke="#61DAFB" stroke-width="1" fill="none"><ellipse rx="11" ry="4.2"/><ellipse rx="11" ry="4.2" transform="rotate(60)"/><ellipse rx="11" ry="4.2" transform="rotate(120)"/></g></svg>',
-    vue: '<svg viewBox="0 0 256 221" width="100%" height="100%" aria-hidden="true"><path fill="#41B883" d="M204.8 0H256L128 220.8L0 0h97.92L128 51.2L157.44 0h47.36Z"/><path fill="#41B883" d="m0 0l128 220.8L256 0h-51.2L128 132.48L50.56 0H0Z"/><path fill="#35495E" d="M50.56 0L128 133.12L204.8 0h-47.36L128 51.2L97.92 0H50.56Z"/></svg>'
+    vue: '<svg viewBox="0 0 256 221" width="100%" height="100%" aria-hidden="true"><path fill="#41B883" d="M204.8 0H256L128 220.8L0 0h97.92L128 51.2L157.44 0h47.36Z"/><path fill="#41B883" d="m0 0l128 220.8L256 0h-51.2L128 132.48L50.56 0H0Z"/><path fill="#35495E" d="M50.56 0L128 133.12L204.8 0h-47.36L128 51.2L97.92 0H50.56Z"/></svg>',
+    figma: '<svg viewBox="0 0 38 57" width="100%" height="100%" aria-hidden="true"><path fill="#1abcfe" d="M19 28.5a9.5 9.5 0 1 1 19 0 9.5 9.5 0 0 1-19 0z"/><path fill="#0acf83" d="M0 47.5A9.5 9.5 0 0 1 9.5 38H19v9.5a9.5 9.5 0 1 1-19 0z"/><path fill="#ff7262" d="M19 0v19h9.5a9.5 9.5 0 1 0 0-19H19z"/><path fill="#f24e1e" d="M0 9.5A9.5 9.5 0 0 0 9.5 19H19V0H9.5A9.5 9.5 0 0 0 0 9.5z"/><path fill="#a259ff" d="M0 28.5A9.5 9.5 0 0 0 9.5 38H19V19H9.5A9.5 9.5 0 0 0 0 28.5z"/></svg>',
+    basics: '<svg viewBox="0 0 24 24" width="100%" height="100%" aria-hidden="true" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6 2 12l6 6" stroke="#FF8A4C"/><path d="m14 4-4 16" stroke="#7FD4FF"/><path d="m16 6 6 6-6 6" stroke="#F7DF1E"/></svg>',
+    theory: '<svg viewBox="0 0 24 24" width="100%" height="100%" aria-hidden="true" fill="none" stroke="#7EF2C3" stroke-width="2" stroke-linecap="round"><path d="M3 9h18L12 3z"/><path d="M5 9v9M9.5 9v9M14.5 9v9M19 9v9M3 21h18"/></svg>'
   };
-  /* provinces on the world map, and the districts / cities inside them */
+  /* cities on the world map, and the districts inside them (world → city → district → lesson).
+     The order of lessons inside each district comes from js/syllabus.js. */
   var PROVINCES = [
     { key: 'uiux', color: '#7EF2C3', hex: 0x7EF2C3 },
     { key: 'frontend', color: '#61DAFB', hex: 0x61DAFB }
   ];
   var LEVELS = [
-    { key: 'beginner', province: 'uiux', color: '#7EF2C3', hex: 0x7EF2C3 },
-    { key: 'intermediate', province: 'uiux', color: '#B9A3FF', hex: 0xB9A3FF },
-    { key: 'advanced', province: 'uiux', color: '#FFC877', hex: 0xFFC877 },
+    { key: 'theory', province: 'uiux', color: '#7EF2C3', hex: 0x7EF2C3, logo: LOGOS.theory },
+    { key: 'figma', province: 'uiux', color: '#A259FF', hex: 0xA259FF, logo: LOGOS.figma },
+    { key: 'basics', province: 'frontend', color: '#FF8A4C', hex: 0xFF8A4C, logo: LOGOS.basics },
     { key: 'react', province: 'frontend', color: '#61DAFB', hex: 0x61DAFB, logo: LOGOS.react },
     { key: 'vue', province: 'frontend', color: '#42B883', hex: 0x42B883, logo: LOGOS.vue }
   ];
@@ -35,7 +39,7 @@
     "subscribe:function(f){subs.push(f);return function(){var i=subs.indexOf(f);if(i>=0)subs.splice(i,1)}}," +
     "render:function(id){post({type:'render',id:String(id)})}," +
     "flow:function(a,b,kind){post({type:'flow',from:String(a),to:String(b),kind:kind||'prop'})}," +
-    "tree:function(n){post({type:'tree',nodes:n})},show:show};})();";
+    "tree:function(n){post({type:'tree',nodes:n})},state:function(d){post({type:'state',data:d})},show:show};})();";
   var RUNTIME_HELPER = {
     react: "if(!window.React||!window.ReactDOM||!window.Babel){ux.show('Could not load React. This playground needs an internet connection.',1)}" +
       "function useControl(k,fb){var s=React.useState(function(){return ux.get(k,fb)}),set=s[1];React.useEffect(function(){return ux.subscribe(function(){set(ux.get(k,fb))})},[]);return s[0]}",
@@ -43,6 +47,9 @@
       "function controlRef(k,fb){var r=Vue.ref(ux.get(k,fb));ux.subscribe(function(){r.value=ux.get(k,fb)});return r}"
   };
   var LESSONS = window.UX_LESSONS;
+  var EXPLAIN = window.UX_EXPLAIN || {};
+  /* every lesson gets a 3D view: its own scene, or a declarative explainer from js/explainers.js */
+  var sceneOf = function (l) { return l.scene || (EXPLAIN[l.id] ? 'explain' : null); };
   var DONE_KEY = 'uxlab.done';
 
   var pad = function (n) { return (n < 10 ? '0' : '') + n; };
@@ -55,7 +62,7 @@
   var setFocus = function (f) { try { localStorage.setItem(FOCUS_KEY, f); } catch (e) {} };
   var tag = function (attrs, body) { return '<scr' + 'ipt' + (attrs ? ' ' + attrs : '') + '>' + (body || '') + '</scr' + 'ipt>'; };
   function buildDoc(html, css, js, runtime) {
-    var head = '', code = tag('', js);
+    var head = tag('', HELPER), code = tag('', js);
     if (runtime && CDN[runtime]) {
       head = CDN[runtime].map(function (src) { return tag('src="' + src + '"'); }).join('') + tag('', HELPER + RUNTIME_HELPER[runtime]);
       if (runtime === 'react') code = tag('type="text/babel" data-presets="react"', js);
@@ -75,7 +82,8 @@
       figma: pickArr(tr.figma, l.figma),
       good: tr.good || l.good.label,
       bad: tr.bad || l.bad.label,
-      legend: (l.legend || []).map(function (g, i) { return { c: g.c, t: (tr.legend && tr.legend[i]) || g.t }; }),
+      legend: l.legend ? l.legend.map(function (g, i) { return { c: g.c, t: (tr.legend && tr.legend[i]) || g.t }; })
+        : ((EXPLAIN[l.id] && EXPLAIN[l.id].legend) || []).map(function (g) { return { c: g[0], t: I18N.lang === 'id' ? g[2] : g[1] }; }),
       controls: (l.controls || []).map(function (c, i) {
         var o = (tr.controls && tr.controls[i]) || {};
         return {
@@ -93,7 +101,7 @@
   /* ───────── state ───────── */
   var S = { view: 'hub', lessonId: null, ctrl: {}, code: { html: '', css: '', js: '' }, doc: '', tab: 'html', showCode: false, quiz: {}, done: [] };
   try { S.done = JSON.parse(localStorage.getItem(DONE_KEY) || '[]'); } catch (e) { S.done = []; }
-  var hub = null, sc = null, lastVars = {}, debounce = 0, lastTree = null;
+  var hub = null, sc = null, lastVars = {}, debounce = 0, lastTree = null, lastState = null;
 
   var app = document.getElementById('app');
   var progressEl = document.getElementById('progress');
@@ -173,13 +181,13 @@
             '<span class="row-txt"><span class="row-title">' + esc(x.title) + '</span><span class="row-meta">' + esc(x.metaphor) + '</span></span>' +
             '<span class="row-status' + (d ? ' done' : '') + '">' + t(d ? 'hub.status.done' : 'hub.status.start') + '</span></button>';
         }).join('');
-        return '<div class="level-col" style="--lv:' + lv.color + '"><div class="col-head"><h2>' + logoHTML(lv, 22) + esc(levelName(lv.key)) + '</h2><span>' + t('hub.done', { x: stat(lv.key) }) + '</span></div>' + rows + '</div>';
+        return '<div class="level-col" style="--lv:' + lv.color + '"><div class="col-head"><h2>' + logoHTML(lv, 22) + '<span>' + esc(levelName(lv.key)) + '<small>' + esc(t('level.' + lv.key + '.sub')) + '</small></span></h2><span>' + t('hub.done', { x: stat(lv.key) }) + '</span></div>' + rows + '</div>';
       }).join('');
       return '<section class="province" id="prov-' + p.key + '" style="--pv:' + p.color + '">' +
         '<div class="prov-head"><div><span class="kicker" style="color:var(--pv)">' + esc(t('prov.' + p.key + '.kind')) + '</span>' +
           '<h2>' + esc(t('prov.' + p.key + '.name')) + '</h2><p>' + esc(t('prov.' + p.key + '.desc')) + '</p></div>' +
           '<span class="prov-count">' + t('hub.done', { x: stat(p.key) }) + '</span></div>' +
-        '<div class="levels' + (levels.length === 2 ? ' two' : '') + '">' + cols + '</div></section>';
+        '<div class="levels' + (levels.length === 2 ? ' two' : ' three') + '">' + cols + '</div></section>';
     }).join('');
 
     app.innerHTML =
@@ -203,7 +211,7 @@
       hub = UXScenes.makeHub(el, {
         lessons: LESSONS.map(function (l) { return { id: l.id, level: l.level, n: l.n, title: loc(l).title }; }),
         levels: LEVELS.map(function (lv) { return Object.assign({ name: levelName(lv.key) }, lv); }),
-        provinces: PROVINCES.map(function (p) { return { key: p.key, color: p.hex, name: (t('prov.' + p.key + '.name') + ' · ' + t('prov.' + p.key + '.kind')).toUpperCase() }; }),
+        cities: PROVINCES.map(function (p) { return { key: p.key, color: p.hex, name: (t('prov.' + p.key + '.name') + ' · ' + t('prov.' + p.key + '.kind')).toUpperCase() }; }),
         onOpen: open,
         doneText: t('hub.tip.done'),
         focus: focus
@@ -293,9 +301,12 @@
     var list = function (arr, cls) {
       return '<ol class="olist ' + (cls || '') + '">' + arr.map(function (s, i) { return '<li><span>' + pad(i + 1) + '</span><span>' + esc(s) + '</span></li>'; }).join('') + '</ol>';
     };
-    var practice = lv.logo ? '<span class="figma-badge logo">' + lv.logo + '</span><span class="label" style="color:var(--lv)">' + esc(t('lesson.practice')) + '</span>'
-      : '<span class="figma-badge">F</span><span class="label" style="color:var(--lilac)">' + esc(t('lesson.figma')) + '</span>';
-    var scene = l.scene ? '<div class="scene3d"><div class="bar">' + esc(t(l.scene === 'flow' ? 'lesson.3dflow' : 'lesson.3d')) + '</div><div class="stage" id="scene3d"></div>' +
+    var figmaTips = l.practice === 'figma' || lv.province === 'uiux';
+    var practice = figmaTips
+      ? '<span class="figma-badge logo">' + LOGOS.figma + '</span><span class="label" style="color:var(--lilac)">' + esc(t('lesson.figma')) + '</span>'
+      : '<span class="figma-badge logo">' + lv.logo + '</span><span class="label" style="color:var(--lv)">' + esc(t('lesson.practice')) + '</span>';
+    var kind = sceneOf(l);
+    var scene = kind ? '<div class="scene3d"><div class="bar">' + esc(t(kind === 'flow' ? 'lesson.3dflow' : kind === 'explain' ? 'lesson.3dexplain' : 'lesson.3d')) + '</div><div class="stage" id="scene3d"></div>' +
       '<div class="legend">' + x.legend.map(function (g) { return '<span><i style="background:' + g.c + '"></i>' + esc(g.t) + '</span>'; }).join('') + '</div></div>' : '';
 
     app.innerHTML =
@@ -334,18 +345,21 @@
       '</main>';
 
     renderDoneBtn();
-    lastVars = {}; lastTree = null;
+    lastVars = {}; lastTree = null; lastState = null;
     setFocus(lv.province);
     loadFrame();
     document.getElementById('good').srcdoc = buildDoc(l.good.html, '', '');
     document.getElementById('bad').srcdoc = buildDoc(l.bad.html, '', '');
-    if (l.scene) whenScenes(function () {
+    if (kind) whenScenes(function () {
       var el = document.getElementById('scene3d');
       if (!el || sc || cur() !== l) return;
-      if (l.scene === 'flow') {
+      if (kind === 'flow') {
         sc = UXScenes.makeFlow(el, { nodes: l.flow || [], color: lv.color });
         if (lastTree) sc.message(lastTree);
-      } else sc = l.scene === 'box' ? UXScenes.makeBox(el) : UXScenes.makeStack(el);
+      } else if (kind === 'explain') {
+        sc = UXScenes.makeExplain(el, { build: EXPLAIN[l.id].build, live: !!EXPLAIN[l.id].live });
+        if (lastState) sc.message(lastState);
+      } else sc = kind === 'box' ? UXScenes.makeBox(el) : UXScenes.makeStack(el);
       sc.update(vars());
     });
   }
@@ -449,6 +463,7 @@
     var f = document.getElementById('frame'), d = e.data;
     if (!f || e.source !== f.contentWindow || !d || !d.uxlab) return;
     if (d.type === 'tree') lastTree = d;
+    if (d.type === 'state') lastState = d;
     if (sc && sc.message) sc.message(d);
   });
 
