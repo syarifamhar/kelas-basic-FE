@@ -7,6 +7,8 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { mergeBufferGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { makeCharacter, randomLook, DEFAULT_LOOK, OPTIONS, SKIN, HAIR_COLORS, EYE_COLORS, CLOTH } from './character.js';
 import { carGeometry, carMaterials, resetShared, treeGeometry, benchGeometry, lampPostGeometry, propGeometry, shadowTexture, townGeometry, awningGeometry, tierTrim, entranceGeometry } from './models.js';
 
@@ -170,7 +172,7 @@ function makeStage(el, o) {
       free(ob.geometry);
       (Array.isArray(ob.material) ? ob.material : [ob.material]).forEach(m => {
         if (!m) return;
-        ['map', 'emissiveMap', 'alphaMap'].forEach(k => free(m[k]));
+        ['map', 'emissiveMap', 'alphaMap', 'normalMap'].forEach(k => free(m[k]));
         if (m.uniforms && m.uniforms.tDiffuse) free(m.uniforms.tDiffuse.value);
         free(m);
       });
@@ -295,7 +297,11 @@ function makeHub(el, opts) {
   const blinkers = [], searchlights = [], spinners = [], smoke = [];
   const dummy = new T.Object3D();
   const poleMat = new T.MeshStandardMaterial({ color: 0x2a3344, roughness: 0.6, metalness: 0.5 });
-  const roadMat = new T.MeshStandardMaterial({ color: 0x11151e, roughness: 0.5, metalness: 0.3, side: T.DoubleSide });
+  const texL = new T.TextureLoader();
+  const tex = (f, rx, ry) => { const t = texL.load('assets/textures/' + f); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(rx, ry); t.anisotropy = 4; return t; };
+  const asphalt = (rx, ry) => new T.MeshStandardMaterial({ color: 0x5a6274, map: tex('asphalt_diff.jpg', rx, ry), normalMap: tex('asphalt_nor.jpg', rx, ry), normalScale: new T.Vector2(0.7, 0.7), roughness: 0.82, metalness: 0.05, side: T.DoubleSide });
+  const pavement = (rx, ry) => new T.MeshStandardMaterial({ color: 0x6d7484, map: tex('pavement_diff.jpg', rx, ry), normalMap: tex('pavement_nor.jpg', rx, ry), normalScale: new T.Vector2(0.6, 0.6), roughness: 0.85 });
+  const roadMat = asphalt(1, 1);
   const dashMat = basic(0x3a4862);
 
   /* camera distance for the focused area; pulled back on narrow screens */
@@ -332,13 +338,14 @@ function makeHub(el, opts) {
   function loopRoad(curve, width, samples, rails, lamps) {
     const pts = curve.getSpacedPoints(samples), normals = [], tangents = [], hw = width / 2;
     for (let i = 0; i < samples; i++) { const t = curve.getTangentAt(i / samples); tangents.push(t); normals.push(new T.Vector3(-t.z, 0, t.x).normalize()); }
-    const arr = new Float32Array(samples * 6), idx = [];
+    const arr = new Float32Array(samples * 6), uv = new Float32Array(samples * 4), idx = [], len = curve.getLength();
     for (let i = 0; i < samples; i++) {
-      const p = pts[i], n = normals[i];
+      const p = pts[i], n = normals[i], v = (i / samples) * len / width;
       arr.set([p.x + n.x * hw, p.y + 0.05, p.z + n.z * hw, p.x - n.x * hw, p.y + 0.05, p.z - n.z * hw], i * 6);
+      uv.set([0, v, 1, v], i * 4);
       const a = i * 2, b = ((i + 1) % samples) * 2; idx.push(a, a + 1, b, a + 1, b + 1, b);
     }
-    const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(arr, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+    const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.BufferAttribute(arr, 3)); geo.setAttribute('uv', new T.BufferAttribute(uv, 2)); geo.setIndex(idx); geo.computeVertexNormals();
     scene.add(new T.Mesh(geo, roadMat));
     if (rails) rails.forEach(([s, c]) => {
       const a = [];
@@ -371,7 +378,7 @@ function makeHub(el, opts) {
   });
   // side streets: straight roads from the back highway, across the ring, to the front highway
   STREETS.forEach(x => {
-    const r = new T.Mesh(G.box, roadMat); r.scale.set(2.1, 0.06, 28.6); r.position.set(x, 0.045, -4); scene.add(r);
+    const r = new T.Mesh(G.box, asphalt(1, 13.6)); r.scale.set(2.1, 0.06, 28.6); r.position.set(x, 0.045, -4); scene.add(r);
     for (let z = -17; z <= 9; z += 2) { const d = new T.Mesh(G.box, dashMat); d.scale.set(0.1, 0.02, 0.8); d.position.set(x, 0.085, z); scene.add(d); }
   });
 
@@ -764,7 +771,7 @@ function makeHub(el, opts) {
     for (let z = 2.6; z < D.d / 2 - 0.2; z += 0.7) [-0.75, 0.75].forEach(x => studSpots.push([top, x, z, lv.hex]));
     [1, -1].forEach(side => {
       const zc = side * (D.d / 2 + APRON / 2);
-      const apron = new T.Mesh(G.box, new T.MeshStandardMaterial({ color: 0x18202c, roughness: 0.8 })); apron.scale.set(D.w, 0.3, APRON); apron.position.set(D.x, 0.15, D.z + zc); scene.add(apron);
+      const apron = new T.Mesh(G.box, pavement(D.w / 2.6, 0.5)); apron.scale.set(D.w, 0.3, APRON); apron.position.set(D.x, 0.15, D.z + zc); scene.add(apron);
       const edge = new T.Mesh(G.box, basic(lv.hex, { transparent: true, opacity: 0.45 })); edge.scale.set(D.w, 0.03, 0.05); edge.position.set(D.x, 0.31, D.z + zc + side * APRON / 2); scene.add(edge);
       const lamps = [];
       for (let x = -D.w / 2 + 0.8; x <= D.w / 2 - 0.6; x += 2.5) { lamps.push(x); lampSpots.push([D.x + x, D.z + zc + side * 0.42, lv.hex, side]); }
@@ -811,7 +818,7 @@ function makeHub(el, opts) {
     });
     dummy.rotation.set(0, 0, 0); dummy.scale.setScalar(1);
     // people: real (low-detail) humans with random looks, spread evenly over the districts
-    const max = small ? 8 : 16, every = Math.max(1, Math.ceil(walkers.length / max));
+    const max = small ? 6 : 10, every = Math.max(1, Math.ceil(walkers.length / max));
     walkers.forEach((w, i) => {
       if (i % every) return;
       w.ch = makeCharacter(T, randomLook(rand), { detail: 'low' });
@@ -887,7 +894,7 @@ function makeHub(el, opts) {
 
   /* ───── the town: houses, shophouses (ruko), apartments and trees, as instanced meshes ───── */
   const town = [];
-  const variant = (kind, w, h, d, roof) => ({ geo: townGeometry(kind), w, h, d, roof });
+  const variant = (kind, w, h, d, roof) => ({ get geo() { return this._g || (this._g = townGeometry(kind)); }, w, h, d, roof });
   const VARIANTS = {
     house: variant('house', 1.7, 1.2, 1.6, 'gable'),
     house2: variant('house2', 1.9, 2.0, 1.7, 'gable'),
@@ -910,6 +917,8 @@ function makeHub(el, opts) {
     const r = rand();
     if (r < 0.18) { const k = rand(); treeSpots.push([jx, jz, 0.7 + rand() * 0.6, k < 0.55 ? 'round' : k < 0.82 ? 'pine' : 'palm', rand() * 6]); continue; }
     if (r < 0.26) continue;
+    // thinner towards the edge of the map, where fog hides most of it anyway
+    if (rand() > (dist < 12 ? 1 : dist < 22 ? 0.6 : 0.32) * (small && dist >= 6 ? 0.6 : 1)) continue;
     // taller buildings further out, small homes and ruko near the highway
     let kind;
     if (dist < 8) kind = rand() < 0.45 ? 'ruko' : (rand() < 0.6 ? 'house' : 'house2');
@@ -927,7 +936,7 @@ function makeHub(el, opts) {
   const tint = new T.Color();
   const TINTS = [0xffffff, 0xd8e6ff, 0xffe9d6, 0xe6ffe9, 0xf1e6ff];
   const AWNING = [0xFF7262, 0x7FD4FF, 0x7EF2C3, 0xFFC877, 0xB9A3FF, 0xFF93B5];
-  Object.keys(VARIANTS).forEach(k => {
+  const buildProcTown = () => Object.keys(VARIANTS).forEach(k => {
     const V = VARIANTS[k], list = spots[k]; if (!list.length) return;
     chunked(V.geo, [townMat, townRoof, townTrim, warmLight], list, (s, i, m) => {
       dummy.position.set(s[0], 0, s[1]); dummy.rotation.set(0, s[2], 0); dummy.scale.setScalar(1);
@@ -984,6 +993,84 @@ function makeHub(el, opts) {
     });
   });
   const tmpP = new T.Vector3(), tmpT = new T.Vector3();
+
+  /* ───── Kenney city kits (CC0, kenney.nl): textured houses, shops, towers and cars.
+     They load in the background; if anything fails the procedural town stays. ───── */
+  let dead = false;
+  const KIT = {
+    house: 'abcdefghij'.split('').map(k => 'houses/building-type-' + k),
+    shop: 'abcdefgh'.split('').map(k => 'shops/building-' + k),
+    tower: 'abcd'.split('').map(k => 'shops/building-skyscraper-' + k),
+    car: ['sedan', 'sedan-sports', 'suv', 'taxi', 'van', 'sedan', 'police', 'suv', 'delivery', 'sedan-sports', 'ambulance'].map(k => 'cars/' + k)
+  };
+  const gl = new GLTFLoader();
+  const loadAll = list => Promise.all(list.map(p => gl.loadAsync('assets/3d/' + p + '.glb').catch(() => null)));
+  /* one material per kit; the blue window colours of the palette become warm lit windows at night */
+  const kitMat = (src, glowAmt) => {
+    const map = src.map, m = new T.MeshStandardMaterial({ map, roughness: 0.78, metalness: 0.04 });
+    if (map && map.image && map.image.width) {
+      const img = map.image, c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+      const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+      const d = g.getImageData(0, 0, c.width, c.height), px = d.data;
+      for (let i = 0; i < px.length; i += 4) {
+        const r = px[i], gg = px[i + 1], b = px[i + 2], win = b > 100 && b > r * 1.35 && b > gg * 1.08;
+        px[i] = win ? 255 : 0; px[i + 1] = win ? 200 : 0; px[i + 2] = win ? 130 : 0;
+      }
+      g.putImageData(d, 0, 0);
+      const em = new T.CanvasTexture(c); em.flipY = map.flipY;
+      Object.assign(m, { emissive: new T.Color(0xffffff), emissiveMap: em, emissiveIntensity: glowAmt });
+    }
+    return m;
+  };
+  /* all meshes of a model baked into one geometry (kept in model space) */
+  const bake = gltf => {
+    gltf.scene.updateMatrixWorld(true);
+    const geos = [];
+    gltf.scene.traverse(o => { if (o.isMesh) { const g = o.geometry.clone().applyMatrix4(o.matrixWorld); Object.keys(g.attributes).forEach(a => { if (['position', 'normal', 'uv'].indexOf(a) < 0) g.deleteAttribute(a); }); geos.push(g); } });
+    const g = geos.length > 1 ? mergeBufferGeometries(geos) : geos[0];
+    g.computeBoundingBox();
+    return g;
+  };
+  const buildKitTown = (houses, shops, towers) => {
+    const mats = { house: kitMat(houses[0].scene.getObjectByProperty('isMesh', true).material, 0.7), shop: kitMat(shops[0].scene.getObjectByProperty('isMesh', true).material, 0.5) };
+    const pack = (list, mat) => list.map(gl => ({ g: bake(gl), mat }));
+    const SET = { house: pack(houses, mats.house), shop: pack(shops, mats.shop), tower: pack(towers, mats.shop) };
+    // free the per-file copies of the palette texture; one per kit is enough
+    houses.concat(shops, towers).forEach(gl => gl.scene.traverse(o => { if (o.isMesh) { o.geometry.dispose(); if (o.material.map && o.material.map !== mats.house.map && o.material.map !== mats.shop.map) o.material.map.dispose(); } }));
+    const RULES = { house: ['house', 2.3], house2: ['house', 2.6], ruko: ['shop', 2.5], apt: ['shop', 2.75], tower: ['tower', 2.5] };
+    const groups = new Map();
+    Object.keys(spots).forEach(kind => spots[kind].forEach(sp => {
+      const [setName, size] = RULES[kind], list = SET[setName];
+      const k = Math.abs(Math.round(sp[0] * 7 + sp[1] * 13)) % list.length, key = setName + k;
+      (groups.get(key) || groups.set(key, { model: list[k], size, items: [] }).get(key)).items.push(sp);
+    }));
+    groups.forEach(({ model, size, items }) => {
+      const bb = model.g.boundingBox, sc = size / Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z);
+      chunked(model.g, model.mat, items, sp => { dummy.position.set(sp[0], -bb.min.y * sc, sp[1]); dummy.rotation.set(0, sp[2], 0); dummy.scale.setScalar(sc); }, (bb.max.y - bb.min.y) * sc).forEach(m => town.push(m));
+    });
+    dummy.scale.setScalar(1); dummy.rotation.set(0, 0, 0);
+  };
+  /* cars: swap the procedural body for a Kenney model; wheels are separate nodes and roll */
+  const swapCars = models => {
+    const ref = new T.Box3().setFromObject(models[0].scene), sc = 1.3 / (ref.max.z - ref.min.z);
+    models.forEach(gl => gl.scene.traverse(o => { if (o.isMesh) o.material.side = T.FrontSide; }));
+    cars.forEach((c, i) => {
+      const u = c.userData, src = models[i % models.length];
+      const obj = src.scene.clone(), bb = new T.Box3().setFromObject(src.scene), holder = new T.Group();
+      obj.scale.setScalar(sc); obj.position.y = -bb.min.y * sc; holder.add(obj);
+      c.remove(u.body); c.add(holder); u.body = holder;
+      u.wheels = []; obj.traverse(o => { if (/wheel/i.test(o.name)) u.wheels.push(o); });
+      u.wr = 0.3 * sc;
+    });
+    Object.values(carGeo).forEach(g => g.dispose());
+    Object.values(paints).forEach(ms => ms.forEach(m => m.dispose()));
+  };
+  Promise.all([loadAll(KIT.house), loadAll(KIT.shop), loadAll(KIT.tower), loadAll(KIT.car)]).then(([h, sh, tw, cr]) => {
+    if (dead) return;
+    const ok = a => a.filter(Boolean);
+    try { if (ok(h).length && ok(sh).length && ok(tw).length) buildKitTown(ok(h), ok(sh), ok(tw)); else buildProcTown(); } catch (e) { buildProcTown(); }
+    try { if (ok(cr).length) swapCars(ok(cr)); } catch (e) { /* keep the procedural cars */ }
+  }, () => { if (!dead) buildProcTown(); });
 
   /* drones: blinking lights circling each city, one per city carrying a spotlight */
   const drones = [];
@@ -1073,10 +1160,12 @@ function makeHub(el, opts) {
         // lean into the bends a little
         const h = Math.atan2(tmpT.x * u.dir, tmpT.z * u.dir); let dh = h - u.h; while (dh > Math.PI) dh -= Math.PI * 2; while (dh < -Math.PI) dh += Math.PI * 2; u.h = h;
         if (d > 0) { u.roll += (Math.max(-0.07, Math.min(0.07, -dh / d * 0.05)) - u.roll) * Math.min(1, d * 4); u.body.rotation.z = u.roll; }
+        if (u.wheels) u.wheels.forEach(w => { w.rotation.x += u.speed * d / u.wr; });
       } else {
         u.pos += u.dir * u.speed * d;
         if (u.pos > u.max) u.pos = u.min; if (u.pos < u.min) u.pos = u.max;
         c.position.set(u.lane, 0.075, u.pos); c.rotation.set(0, u.dir > 0 ? 0 : Math.PI, 0);
+        if (u.wheels) u.wheels.forEach(w => { w.rotation.x += u.speed * d / u.wr; });
       }
     });
     drones.forEach(dr => { dr.a += dr.s * d; dr.g.position.set(dr.cx + Math.cos(dr.a) * dr.r, dr.y + Math.sin(t * 1.3 + dr.r) * 0.3, -3 + Math.sin(dr.a) * dr.r * 0.55); dr.g.rotation.y += d; });
@@ -1291,6 +1380,7 @@ function makeHub(el, opts) {
   const baseDispose = st.dispose;
   st.dispose = () => {
     if (ex) { savePos(); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); ex.ch.dispose(); ex = null; }
+    dead = true;
     walkers.forEach(w => w.ch && w.ch.dispose()); guides.forEach(g => g.ch.dispose());
     baseDispose(); env.dispose(); pmrem.dispose();
   };
@@ -1715,7 +1805,7 @@ function makeCreator(el, look) {
   const ring = new T.Mesh(new T.TorusGeometry(0.78, 0.012, 8, 96), new T.MeshBasicMaterial({ color: 0x7EF2C3, toneMapped: false })); ring.rotation.x = Math.PI / 2; ring.position.y = 0.0; scene.add(ring);
   const ch = makeCharacter(T, look); ch.group.scale.setScalar(1); scene.add(ch.group);
   const shade = () => ch.group.traverse(o => { if (o.isMesh) o.castShadow = true; });
-  shade();
+  shade(); ch.ready.then(shade);
   let spin = 0.35, view = 'full';
   st.tick = ({ dt }) => { ch.animate(dt, 0); if (!st.flight) ch.group.rotation.y += spin * dt * 0.3; };
   st.setLook = l => { ch.setLook(l); shade(); };
@@ -1723,7 +1813,7 @@ function makeCreator(el, look) {
   st.view = v => {
     view = v;
     const face = v === 'face', h = (ch.look.height || 1);
-    st.flyTo(new T.Vector3(0, face ? 1.66 * h : 0.95, 0), face ? 1.1 : 4.6, face ? 1.5 : 1.32, () => {}, 0, 600);
+    st.flyTo(new T.Vector3(0, face ? 1.5 * h : 0.95, 0), face ? 1.15 : 4.6, face ? 1.66 : 1.32, () => {}, 0, 600);
   };
   st.spin = on => { spin = on ? 0.35 : 0; if (!on) ch.group.rotation.y = 0; };
   const base = st.dispose; st.dispose = () => { ch.dispose(); base(); env.dispose(); pmrem.dispose(); };
