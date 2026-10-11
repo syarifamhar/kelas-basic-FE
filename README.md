@@ -30,7 +30,8 @@ js/lessons-foundry.js      new HTML / CSS / JS lessons
 js/syllabus.js             which district each lesson belongs to, and the order (edit this to reorganize)
 js/*.id.js                 Indonesian translations
 js/explainers.js           the 3D explainer for each lesson (declarative: controls → 3D objects)
-js/character.js       procedural human characters (player, guides, pedestrians)
+js/character.js       procedural human characters: sculpted head, hair shells, skinned long hair, walk / run / idle
+js/models.js          smooth city models: cars, trees, benches, lamp posts, town buildings, props
 js/game.js            XP, levels, badges, toasts, saved character
 js/scenes.js          three.js scenes, ES module (neon city world map, explore mode, creator, box model, z-index stack)
 js/app.js             routing, rendering, playground engine, quiz, progress
