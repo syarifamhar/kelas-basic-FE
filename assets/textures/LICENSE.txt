@@ -1,0 +1,2 @@
+Textures from Poly Haven (https://polyhaven.com), CC0 1.0 Universal (public domain).
+asphalt_* : asphalt_02 · pavement_* : concrete_pavement_02 (resized to 512px)

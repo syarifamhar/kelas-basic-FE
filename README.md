@@ -82,3 +82,9 @@ React and Vue lessons load the library from unpkg inside the playground iframe (
 ## Adding a city later (for example backend)
 
 Add the city to `PROVINCES` and its districts to `LEVELS` in `js/app.js`, list the lessons in `js/syllabus.js`, give the districts and city a place in `DISTRICTS`, `CITIES` and `RINGS` in `js/scenes.js`, and extend the `LOOP` highway around it.
+
+## 3D assets and textures
+
+- `assets/3d/` (cars, houses, shops, towers): [Kenney](https://kenney.nl) Car Kit, City Kit Suburban and City Kit Commercial, CC0. Loaded in the background with `GLTFLoader`; if they fail to load, the procedural town and cars are used instead.
+- `assets/textures/` (asphalt, pavement): [Poly Haven](https://polyhaven.com) `asphalt_02` and `concrete_pavement_02`, CC0, resized to 512 px.
+
